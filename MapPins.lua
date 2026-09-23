@@ -79,6 +79,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Engineering" },
         { npc = 2857, name = "Thund", note = "Journeyman Engineer", x = 0.7596, y = 0.2415,
           icon = "Interface\\Icons\\Trade_Engineering" },
+        { npc = 3345, name = "Godan", note = "Expert Enchanter", x = 0.5390, y = 0.3866,
+          icon = "Interface\\Icons\\Trade_Engraving" },
+        { npc = 11066, name = "Jhag", note = "Journeyman Enchanter", x = 0.5347, y = 0.3855,
+          icon = "Interface\\Icons\\Trade_Engraving" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
