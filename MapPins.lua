@@ -53,7 +53,7 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Ability_DualWield" },
     },
     [1456] = { -- Thunder Bluff
-        { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4093, y = 0.6272,
+        { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
           icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }

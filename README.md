@@ -72,7 +72,7 @@ Hover a vendor and its tooltip lists the recipes it sells, with a green check fo
 
 Built-in vendors live at the top of `Recipes.lua`: NPC ID, name, location and the item IDs of the recipes sold.
 
-Opening any merchant window does two more things, whether or not that vendor is in the list. Recipes sold there that you do not know are pointed out in chat and on screen, once per vendor per session. And the vendor's recipes are remembered, so the list of purchasable recipes grows as you visit vendors without you typing anything.
+Opening any merchant window remembers the vendor's recipes, whether or not that vendor is in the list, so the list of purchasable recipes grows as you visit vendors without you typing anything. Nothing is printed.
 
 `/sink recipes missing` opens a small movable window with every listed recipe you still lack, grouped by vendor with its location. It refreshes when you learn a recipe or a merchant window updates, and Escape closes it.
 
@@ -88,15 +88,15 @@ Wowhead's Forever database is the quickest place to find IDs (`wowhead.com/forev
 
 ## Weapon skills
 
-Which weapon skills your class can learn, which you have and how far along they are, and which weapon master teaches the rest. Hover a weapon master, or their map icon, and the tooltip lists what they teach: a check with your rank for a skill you know, a cross for one you can learn, grey for one your class cannot. Opening a weapon master's window prints the skills you can learn there, once per master per session. On by default.
+Which weapon skills your class can learn, which you have and how far along they are, and which weapon master teaches the rest. Hover a weapon master, or their map icon, and the tooltip lists everything they teach: a green check for a skill you know, a red cross for one you can learn, plain grey for one your class cannot. Opening a weapon master's window records what they teach and prints nothing. On by default.
 
 Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API behind Forever's own Skills panel, keyed by the same skill line IDs vanilla used (Swords 43, Daggers 173, and so on); Forever folds fist weapons into the unarmed line, 162. What a weapon master teaches comes from the built-in table at the top of `Weapons.lua`, seeded from Wowhead's Forever database and Warcraft Wiki for the eight vanilla masters, and from the trainer window itself: opening one records what it lists, the way merchants record recipes. Which skills your class can learn has no API, so it is a table of the vanilla proficiencies; the trainer window only lists what your class can take, which confirms the table as you visit, and a skill you turn out to know is shown whether or not the table lists it. Wands come from class trainers, not weapon masters, and the table says so.
 
 | Command | Effect |
 | --- | --- |
-| `/sink weapons` | Your class's weapon skills: the rank of each you know, or who teaches each you lack |
-| `/sink weapons masters` | Every weapon master and what they teach, marked the same way |
-| `/sink weapons on`, `/sink weapons off` | Turn the tooltip lines and reminders on or off |
+| `/sink weapons` | The weapon skills your class can still learn, each with the city of a weapon master on your side who teaches it, such as `Guns (Thunder Bluff)` |
+| `/sink weapons masters` | The weapon masters on your side and what they teach, marked the same way |
+| `/sink weapons on`, `/sink weapons off` | Turn the tooltip lines on or off |
 
 `/sink dump trainer` prints the open trainer window's services and a line for the master table. The window's own Available, Unavailable and Already Known boxes decide what it lists, so untick nothing before dumping. Like the other in-game recordings, masters recorded from the window are lost on logout until the beta's saved-variables bug is fixed.
 
@@ -155,7 +155,7 @@ The client only reports positions for the player and group members, never for an
 
 ## Identity colour
 
-Everything Sink prints or draws uses one colour, `ns.accent` at the top of `Core.lua`: the `Sink:` chat prefix, the `Sink:` lines on tooltips, vendor names in the recipe list and its window title, and the ring and tooltip of each map icon. Change it there and everything follows; `ns.Accent(text)` wraps a string in it for chat and tooltips. Colours that carry meaning are not tied to it: green on and red off, the yellow quest item warnings, the check and cross marks.
+Everything Sink prints or draws uses one colour, `ns.accent` at the top of `Core.lua`: the `Sink:` chat prefix, the sold-by line on recipe tooltips, vendor names in the recipe list and its window title, and the ring and tooltip title of each map icon. Change it there and everything follows; `ns.Accent(text)` wraps a string in it for chat and tooltips. Colours that carry meaning are not tied to it: green on and red off, the yellow quest item warnings, the check and cross marks.
 
 The value is oklch(0.558 0.146 230), which in sRGB is 0, 0.505, 0.721 or `#0081B8`; the red channel lands just below zero, so the colour sits a hair outside sRGB and clamps.
 

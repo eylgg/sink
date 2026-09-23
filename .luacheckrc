@@ -59,6 +59,7 @@ read_globals = {
     "StaticPopup_Show",
     "UnitClass",
     "UnitExists",
+    "UnitFactionGroup",
     "UnitGUID",
     "UnitName",
     "hooksecurefunc",

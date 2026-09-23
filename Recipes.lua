@@ -11,10 +11,10 @@
 -- yet, the line shows as loading, the data is requested, and the next hover
 -- has the answer.
 --
--- Opening any merchant window does two more things: recipes sold there that
--- you do not know are pointed out once per vendor per session, and the vendor's
--- recipes are remembered so "/sink recipes missing" can list every purchasable
--- recipe you still lack, in a small window.
+-- Opening any merchant window remembers the vendor's recipes, so "/sink
+-- recipes missing" can list every purchasable recipe you still lack, in a
+-- small window. Nothing is printed; the tooltips and the commands are the
+-- only output.
 --------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
@@ -158,8 +158,9 @@ end
 -- Tooltip lines
 --------------------------------------------------------------------------------
 
--- "Recipes sold here" plus one line per recipe, on any tooltip. The map icons
--- in MapPins.lua use it too. Returns true when lines were added.
+-- One line per recipe the vendor sells, on any tooltip: green check when you
+-- know it, red cross when you do not. The map icons in MapPins.lua use it too.
+-- Returns true when lines were added.
 local function AddVendorLines(tooltip, npcID)
     if not Enabled() then
         return false
@@ -169,15 +170,14 @@ local function AddVendorLines(tooltip, npcID)
         return false
     end
 
-    tooltip:AddLine("Sink: recipes sold here", ns.accent.r, ns.accent.g, ns.accent.b)
     for _, itemID in ipairs(vendor.recipes) do
         local known = RecipeKnown(itemID)
         if known == true then
-            tooltip:AddLine(CHECK .. " " .. ItemName(itemID), 0.6, 0.6, 0.6)
+            tooltip:AddLine(CHECK .. " " .. ItemName(itemID), ns.known.r, ns.known.g, ns.known.b)
         elseif known == false then
-            tooltip:AddLine(CROSS .. " " .. ItemName(itemID), 1.0, 0.4, 0.4)
+            tooltip:AddLine(CROSS .. " " .. ItemName(itemID), ns.missing.r, ns.missing.g, ns.missing.b)
         else
-            tooltip:AddLine(WAIT .. " " .. ItemName(itemID) .. " (loading)", 0.8, 0.8, 0.8)
+            tooltip:AddLine(WAIT .. " " .. ItemName(itemID) .. " (loading)", ns.grey.r, ns.grey.g, ns.grey.b)
         end
     end
     return true
@@ -215,7 +215,7 @@ local function AddItemTooltipLines(tooltip, data)
         end
     end)
     if #sellers > 0 then
-        tooltip:AddLine("Sink: sold by " .. table.concat(sellers, ", "), ns.accent.r, ns.accent.g, ns.accent.b, true)
+        tooltip:AddLine("Sold by " .. table.concat(sellers, ", "), ns.accent.r, ns.accent.g, ns.accent.b, true)
     end
 end
 
@@ -229,11 +229,10 @@ if TooltipDataProcessor and Enum and Enum.TooltipDataType then
 end
 
 --------------------------------------------------------------------------------
--- Merchant windows: remember what a vendor sells, point out what you lack
+-- Merchant windows: remember what a vendor sells
 --------------------------------------------------------------------------------
 
 local RECIPE_CLASS = (Enum and Enum.ItemClass and Enum.ItemClass.Recipe) or 9
-local remindedVendors = {}   -- npcID (or vendor name) -> true once reminded this session
 
 local function IsRecipeItem(itemID)
     if not C_Item.GetItemInfoInstant then
@@ -297,28 +296,8 @@ local function OnMerchantShow()
     end
 
     local npcID = NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
-    local name = UnitName and UnitName("npc") or nil
     if npcID then
-        RememberVendor(npcID, name, recipes)
-    end
-
-    local key = npcID or name
-    if not key or remindedVendors[key] then
-        return
-    end
-    local missing = {}
-    for _, recipe in ipairs(recipes) do
-        if RecipeKnown(recipe.itemID) == false then
-            missing[#missing + 1] = recipe.link or ItemName(recipe.itemID)
-        end
-    end
-    if #missing > 0 then
-        remindedVendors[key] = true
-        ns.Print("recipes sold here that you do not know: " .. table.concat(missing, ", ")
-            .. ". /sink recipes missing lists every one.")
-        if UIErrorsFrame and UIErrorsFrame.AddMessage then
-            UIErrorsFrame:AddMessage(#missing .. (#missing == 1 and " recipe" or " recipes") .. " to buy here", 1.0, 0.82, 0.0)
-        end
+        RememberVendor(npcID, UnitName and UnitName("npc") or nil, recipes)
     end
 end
 

@@ -13,10 +13,10 @@
 -- so it is a table of the vanilla proficiencies; the trainer window only lists
 -- what your class can take, which confirms the table as you visit.
 --
--- Shown on a weapon master's tooltip and map icon (a check with your rank, a
--- cross for a skill you can learn, grey for one your class cannot), in chat
--- when you open a weapon master who has something for you, and by
--- "/sink weapons".
+-- Shown on a weapon master's tooltip and map icon (green check for a skill you
+-- know, red cross for one you can learn, plain grey for one your class cannot)
+-- and by "/sink weapons", which lists what you can still learn and the city of
+-- a master on your side who teaches it. Nothing is printed on its own.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -62,18 +62,17 @@ ns.classWeaponSkills = {
 -- trainer window live in SinkDB.weaponMasters and are merged with these;
 -- "/sink dump trainer" prints a line for this table.
 ns.weaponMasters = {
-    [11867] = { name = "Woo Ping", location = "Stormwind City", skills = { 226, 173, 43, 55, 229, 136 } },
-    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", skills = { 46, 44, 172, 54, 160, 162 } },
-    [13084] = { name = "Bixi Wobblebonk", location = "Ironforge", skills = { 173, 226, 176 } },
-    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", skills = { 45, 173, 162, 136, 176 } },
-    [2704]  = { name = "Hanashi", location = "Orgrimmar", skills = { 45, 44, 172, 136, 176 } },
-    [11868] = { name = "Sayoc", location = "Orgrimmar", skills = { 45, 173, 162, 44, 172, 136, 176 } },
-    [11869] = { name = "Ansekhwa", location = "Thunder Bluff", skills = { 46, 54, 160, 136 } },
-    [11870] = { name = "Archibald", location = "Undercity", skills = { 226, 173, 43, 55, 229 } },
+    [11867] = { name = "Woo Ping", location = "Stormwind City", faction = "Alliance", skills = { 226, 173, 43, 55, 229, 136 } },
+    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", faction = "Alliance", skills = { 46, 44, 172, 54, 160, 162 } },
+    [13084] = { name = "Bixi Wobblebonk", location = "Ironforge", faction = "Alliance", skills = { 173, 226, 176 } },
+    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", faction = "Alliance", skills = { 45, 173, 162, 136, 176 } },
+    [2704]  = { name = "Hanashi", location = "Orgrimmar", faction = "Horde", skills = { 45, 44, 172, 136, 176 } },
+    [11868] = { name = "Sayoc", location = "Orgrimmar", faction = "Horde", skills = { 45, 173, 162, 44, 172, 136, 176 } },
+    [11869] = { name = "Ansekhwa", location = "Thunder Bluff", faction = "Horde", skills = { 46, 54, 160, 136 } },
+    [11870] = { name = "Archibald", location = "Undercity", faction = "Horde", skills = { 226, 173, 43, 55, 229 } },
 }
 
 local CHECK, CROSS = ns.CHECK, ns.CROSS
-local reminded = {} -- npcID (or name) -> true once reminded this session
 
 local skillByID, skillByName = {}, {}
 for _, skill in ipairs(ns.weaponSkills) do
@@ -126,6 +125,16 @@ local function ClassCanLearn(skill)
     return set == nil or set[skill.id] == true
 end
 
+-- Whether a master is on the player's side. Built-in masters carry a faction;
+-- a recorded one was visited, so it counts.
+local function Reachable(master)
+    if not master.faction then
+        return true
+    end
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    return faction == nil or faction == master.faction
+end
+
 function ns.WeaponSkillID(name)
     local skill = name and skillByName[name:lower()]
     return skill and skill.id
@@ -150,6 +159,7 @@ local function MasterInfo(npcID)
     local info = {
         name = (builtin and builtin.name) or (custom and custom.name) or ("NPC #" .. npcID),
         location = builtin and builtin.location,
+        faction = builtin and builtin.faction,
         skills = {},
     }
     local seen = {}
@@ -185,25 +195,29 @@ local function EachMaster(fn)
     end
 end
 
--- Masters teaching a skill, as "Name (City)".
-local function TeachersOf(skill)
-    local names = {}
+-- Cities with a master on your side who teaches the skill, each once.
+local function CitiesTeaching(skill)
+    local cities, seen = {}, {}
     EachMaster(function(_, master)
-        for _, taught in ipairs(master.skills) do
-            if taught == skill then
-                names[#names + 1] = master.location and (master.name .. " (" .. master.location .. ")") or master.name
+        if Reachable(master) then
+            local city = master.location or master.name
+            for _, taught in ipairs(master.skills) do
+                if taught == skill and not seen[city] then
+                    seen[city] = true
+                    cities[#cities + 1] = city
+                end
             end
         end
     end)
-    return names
+    return cities
 end
 
 --------------------------------------------------------------------------------
 -- Tooltip lines
 --------------------------------------------------------------------------------
 
--- "Weapon skills taught here" plus one line per skill: a check with your rank
--- when you know it, a cross when your class can learn it, grey when it cannot.
+-- One line per skill the master teaches, on any tooltip: green check when you
+-- know it, red cross when your class can learn it, plain grey when it cannot.
 -- The map icons in MapPins.lua use it too. Returns true when lines were added.
 local function AddMasterLines(tooltip, npcID)
     if not Enabled() then
@@ -213,15 +227,14 @@ local function AddMasterLines(tooltip, npcID)
     if not master or #master.skills == 0 then
         return false
     end
-    tooltip:AddLine("Sink: weapon skills taught here", ns.accent.r, ns.accent.g, ns.accent.b)
     for _, skill in ipairs(master.skills) do
-        local info = Known(skill)
-        if info then
-            tooltip:AddLine(("%s %s %d/%d"):format(CHECK, info.name, info.rank or 0, info.maxRank or 0), 0.6, 0.6, 0.6)
+        local name = SkillName(skill)
+        if Known(skill) then
+            tooltip:AddLine(CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
         elseif ClassCanLearn(skill) then
-            tooltip:AddLine(CROSS .. " " .. SkillName(skill), 1.0, 0.4, 0.4)
+            tooltip:AddLine(CROSS .. " " .. name, ns.missing.r, ns.missing.g, ns.missing.b)
         else
-            tooltip:AddLine(SkillName(skill) .. ", not for your class", 0.5, 0.5, 0.5)
+            tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
         end
     end
     return true
@@ -246,7 +259,7 @@ if TooltipDataProcessor and Enum and Enum.TooltipDataType and Enum.TooltipDataTy
 end
 
 --------------------------------------------------------------------------------
--- The trainer window: remember what a master teaches, point out what you lack
+-- The trainer window: remember what a master teaches
 --------------------------------------------------------------------------------
 
 -- Weapon skills the open trainer window lists: { skill, name, type }, the type
@@ -302,28 +315,8 @@ local function OnTrainerShow()
     end
 
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
-    local name = UnitName and UnitName("npc") or nil
     if npcID then
-        RememberMaster(npcID, name, rows)
-    end
-
-    local key = npcID or name
-    if not Enabled() or not key or reminded[key] then
-        return
-    end
-    local learnable = {}
-    for _, row in ipairs(rows) do
-        if row.type == "available" then
-            learnable[#learnable + 1] = row.name
-        end
-    end
-    if #learnable > 0 then
-        reminded[key] = true
-        ns.Print("weapon skills you can learn here: " .. table.concat(learnable, ", ") .. ".")
-        if UIErrorsFrame and UIErrorsFrame.AddMessage then
-            UIErrorsFrame:AddMessage(#learnable .. (#learnable == 1 and " weapon skill" or " weapon skills")
-                .. " to learn here", 1.0, 0.82, 0.0)
-        end
+        RememberMaster(npcID, UnitName and UnitName("npc") or nil, rows)
     end
 end
 
@@ -333,51 +326,58 @@ end
 
 local function WeaponsHelp()
     ns.Print("weapon skill commands")
-    print("  /sink weapons           your class's weapon skills: the rank, or who teaches the ones you lack")
-    print("  /sink weapons masters   every weapon master and what they teach")
-    print("  /sink weapons on | off  turn the tooltip lines and reminders on or off")
+    print("  /sink weapons           weapon skills you can still learn, and the city that teaches each")
+    print("  /sink weapons masters   the weapon masters on your side and what they teach")
+    print("  /sink weapons on | off  turn the tooltip lines on or off")
 end
 
+-- The skills your class can still learn, each with where to get it.
 local function ListSkills()
-    local className = UnitClass("player")
     local set = ClassSkillSet()
-    ns.Print(("weapon skills for %s%s"):format(className or "your class",
-        set == nil and " (class not in the table, showing every skill)" or ""))
+    local lines = {}
     for _, skill in ipairs(ns.weaponSkills) do
-        local info = Known(skill)
-        if info then
-            print(("  %s %s %d/%d"):format(CHECK, info.name, info.rank or 0, info.maxRank or 0))
-        elseif set == nil or set[skill.id] then
-            local from
+        if not Known(skill) and (set == nil or set[skill.id]) then
+            local where
             if skill.classTrainer then
-                from = "from your class trainer"
+                where = "class trainer"
             else
-                local teachers = TeachersOf(skill)
-                from = #teachers > 0 and table.concat(teachers, ", ") or "no weapon master listed yet"
+                local cities = CitiesTeaching(skill)
+                where = #cities > 0 and table.concat(cities, ", ") or "no weapon master on your side listed"
             end
-            print(("  %s %s, %s"):format(CROSS, SkillName(skill), from))
+            lines[#lines + 1] = ("  %s %s%s|r (%s)"):format(CROSS, ns.missing.hex, SkillName(skill), where)
         end
+    end
+    if #lines == 0 then
+        ns.Print("nothing to learn: you know every weapon skill your class can.")
+        return
+    end
+    ns.Print("weapon skills to learn" .. (set == nil and " (class not in the table, showing every skill)" or ""))
+    for _, line in ipairs(lines) do
+        print(line)
     end
 end
 
 local function ListMasters()
     local any = false
     EachMaster(function(npcID, master)
+        if not Reachable(master) then
+            return
+        end
         any = true
         print(("  %s (%d)%s"):format(master.name, npcID, master.location and (", " .. master.location) or ""))
         for _, skill in ipairs(master.skills) do
-            local info = Known(skill)
-            if info then
-                print(("    %s %s %d/%d"):format(CHECK, info.name, info.rank or 0, info.maxRank or 0))
+            local name = SkillName(skill)
+            if Known(skill) then
+                print(("    %s %s%s|r"):format(CHECK, ns.known.hex, name))
             elseif ClassCanLearn(skill) then
-                print(("    %s %s"):format(CROSS, SkillName(skill)))
+                print(("    %s %s%s|r"):format(CROSS, ns.missing.hex, name))
             else
-                print("    |cff808080" .. SkillName(skill) .. ", not for your class|r")
+                print("    " .. ns.grey.hex .. name .. "|r")
             end
         end
     end)
     if not any then
-        ns.Print("no weapon masters listed. Open one's window and it is recorded.")
+        ns.Print("no weapon masters on your side listed. Open one's window and it is recorded.")
     end
 end
 

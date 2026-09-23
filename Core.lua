@@ -51,10 +51,10 @@ ns.defaults = {
 }
 
 -- Sink's identity colour, used for everything it prints or draws: the chat
--- prefix, the "Sink:" lines on tooltips, vendor names in the recipe list, the
--- ring around each map icon. Change it here and everything follows. Colours
--- that carry meaning are not tied to it: green on and red off, the yellow quest
--- item warnings, the check and cross marks.
+-- prefix, the sold-by line on recipe tooltips, vendor names in the recipe list,
+-- the ring and tooltip title of each map icon. Change it here and everything
+-- follows. Colours that carry meaning are not tied to it: green on and red
+-- off, the yellow quest item warnings, the known and missing marks below.
 --
 -- This is oklch(0.558 0.146 230) in sRGB; the red channel lands just below
 -- zero, so it is a hair outside sRGB and clamps to 0. As hex: #0081B8.
@@ -70,10 +70,15 @@ end
 
 local PREFIX = ns.Accent("Sink") .. ": "
 
--- Marks shared by the tooltip lines and lists: known, missing, still loading.
+-- Marks and colours shared by the tooltip lines and lists. Known is a green
+-- check with green text, missing a red cross with red text, and something that
+-- does not apply to you is plain grey text with no mark.
 ns.CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
 ns.CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
 ns.WAIT = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t"
+ns.known = { r = 0.1, g = 1.0, b = 0.1, hex = "|cff1aff1a" }
+ns.missing = { r = 1.0, g = 0.1, b = 0.1, hex = "|cffff1a1a" }
+ns.grey = { r = 0.5, g = 0.5, b = 0.5, hex = "|cff808080" }
 local applying = false          -- true while we are the one calling SetPoint
 local pendingAfterCombat = false
 local hooked = false
