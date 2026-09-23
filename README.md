@@ -193,6 +193,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `Options.lua` | `/sink` commands, the options panel, the addon compartment click |
 | `.luacheckrc` | Globals list for `luacheck`, if you lint |
 | `scripts/package.sh` | Builds `dist/release/Sink.zip` from the files the TOC lists |
+| `scripts/check-globals.sh` | Flags globals a Lua file uses that are neither standard nor listed in `.luacheckrc`, for when luacheck is not installed; a missing function shows up here, not as a syntax error |
 | `.github/workflows/release.yml` | GitHub Actions: builds the zip and attaches it to a release named after the version on every `v*` tag |
 | `.gitattributes` | Keeps GitHub's automatic "Source code" archives to the addon files only |
 

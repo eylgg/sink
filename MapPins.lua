@@ -271,6 +271,30 @@ local function PinsToShow(mapID)
     return shown
 end
 
+-- Map ID and position (0 to 1) of a unit on the player's current map, or nil.
+-- The client only answers for the player and group members; an NPC target
+-- comes back nil, so record an NPC by standing next to it.
+local function UnitMapPosition(unit)
+    if not C_Map.GetBestMapForUnit or not C_Map.GetPlayerMapPosition then
+        return nil
+    end
+    local mapID = C_Map.GetBestMapForUnit("player")
+    if not mapID then
+        return nil
+    end
+    local ok, pos = pcall(C_Map.GetPlayerMapPosition, mapID, unit)
+    local x, y
+    if ok and pos then
+        x, y = pos:GetXY()
+    end
+    if not x or not y then
+        return nil
+    end
+    return mapID, x, y
+end
+ns.UnitMapPosition = UnitMapPosition
+ns.MapName = MapName
+
 --------------------------------------------------------------------------------
 -- The pin: one icon, positioned by the map, with the tooltip
 --------------------------------------------------------------------------------
