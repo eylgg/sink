@@ -37,7 +37,10 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- there is no note; npc ties the icon to a vendor in Recipes.lua or a weapon
 -- master in Weapons.lua so the tooltip also lists what they sell or teach. A
 -- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
--- for one whose note is a title such as "High Priest".
+-- for one whose note is a title such as "High Priest". A dungeon has
+-- dungeon = true, levels ("11-24", shown after the name) and quests, a list of
+-- { id, name } whose names stand in until the client has the quest cached;
+-- atlas draws a map atlas instead of an icon texture.
 -- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
@@ -51,6 +54,12 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_BlackSmithing" },
         { npc = 4598, name = "Brom Killian", note = "Mining Trainer", x = 0.5603, y = 0.3746,
           icon = "Interface\\Icons\\Trade_Mining" },
+        { npc = 15683, name = "Auctioneer Naxxremis", note = "Auction House", x = 0.6440, y = 0.3580,
+          icon = "Interface\\Icons\\INV_Misc_Coin_01" },
+        { name = "Ruins of Lordaeron", dungeon = true, levels = "11-24", x = 0.7261, y = 0.1148,
+          atlas = "Dungeon", quests = {
+              { id = 92401, name = "A Frightened Request" },
+          } },
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
@@ -178,6 +187,9 @@ local RANK_CAPS = { Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 3
 
 local function NoteText(pin)
     local note = pin.note or pin.name
+    if pin.levels then
+        return note .. " (" .. pin.levels .. ")"
+    end
     local cap = RANK_CAPS[note:match("^(%a+)") or ""]
     return cap and (note .. " (" .. cap .. ")") or note
 end
@@ -280,7 +292,8 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- The pins to draw on a map. Trainers are filtered first: a class trainer
+-- The pins to draw on a map. Dungeons only while "show dungeons" is on.
+-- Trainers are filtered first: a class trainer
 -- only for your class unless "show all class trainers" is on; with "show all
 -- profession trainers" off, secondary professions and your own primary ones
 -- always, other primary ones only while you still have a free slot. Then of a
@@ -290,11 +303,16 @@ local function PinsToShow(mapID)
     local shown, groups = {}, {}
     local showAll = ns.db and ns.db.showAllTrainers
     local showAllClasses = ns.db and ns.db.showAllClassTrainers
+    local showDungeons = not (ns.db and ns.db.showDungeons == false)
     local freeSlot = PrimaryCount() < 2
     local _, playerClass = UnitClass("player")
     EachPin(mapID, function(pin)
         local profession, cap, word = TrainerInfo(pin)
-        if profession == nil then
+        if pin.dungeon then
+            if showDungeons then
+                shown[#shown + 1] = pin
+            end
+        elseif profession == nil then
             shown[#shown + 1] = pin
         elseif profession and profession.class then
             if showAllClasses or profession.class == playerClass then
@@ -429,12 +447,66 @@ end
 
 function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or ns.db.mapPins
     self.pin = pin
-    self.Icon:SetTexture(pin.icon or DEFAULT_ICON)
-    self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) -- trim the icon's dark edge before the circle clips it
+    -- An atlas sets its own coordinates; an icon has its dark edge trimmed
+    -- before the circle clips it. An atlas the client lacks falls back to the default icon.
+    if not (pin.atlas and self.Icon:SetAtlas(pin.atlas)) then
+        self.Icon:SetTexture(pin.icon or DEFAULT_ICON)
+        self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    end
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
     self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
+end
+
+-- A dungeon's quests: the title the client has, else the name in the table,
+-- and ask the server so the next hover has the real one.
+local function QuestTitle(quest)
+    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(quest.id)
+    if title and title ~= "" then
+        return title
+    end
+    if C_QuestLog.RequestLoadQuestByID then
+        C_QuestLog.RequestLoadQuestByID(quest.id)
+    end
+    return quest.name or ("quest #" .. quest.id)
+end
+
+local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
+
+local function QuestState(questID)
+    if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+        return DONE
+    end
+    if C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID) then
+        return IN_LOG
+    end
+    return NOT_TAKEN
+end
+
+-- One line per quest: red cross for one not in your log, yellow waiting mark
+-- for one in it, green check for one done; in that order, each group
+-- alphabetical.
+local function AddQuestLines(tooltip, quests)
+    local rows = {}
+    for _, quest in ipairs(quests) do
+        rows[#rows + 1] = { state = QuestState(quest.id), title = QuestTitle(quest) }
+    end
+    table.sort(rows, function(a, b)
+        if a.state ~= b.state then
+            return a.state < b.state
+        end
+        return a.title < b.title
+    end)
+    for _, row in ipairs(rows) do
+        if row.state == NOT_TAKEN then
+            tooltip:AddLine(ns.CROSS .. " " .. row.title, ns.missing.r, ns.missing.g, ns.missing.b)
+        elseif row.state == IN_LOG then
+            tooltip:AddLine(ns.WAIT .. " " .. row.title, ns.active.r, ns.active.g, ns.active.b)
+        else
+            tooltip:AddLine(ns.CHECK .. " " .. row.title, ns.known.r, ns.known.g, ns.known.b)
+        end
+    end
 end
 
 function SinkMapPinMixin:OnMouseEnter()
@@ -450,6 +522,9 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.npc and ns.AddWeaponMasterLines then
         ns.AddWeaponMasterLines(GameTooltip, pin.npc)
+    end
+    if pin.quests then
+        AddQuestLines(GameTooltip, pin.quests)
     end
     GameTooltip:Show()
 end

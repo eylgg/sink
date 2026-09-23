@@ -50,6 +50,24 @@
                         <MaskedTexture childKey="Ring"/>
                     </MaskedTextures>
                 </MaskTexture>
+                <!-- A dark disc under the icon, so an atlas with a transparent
+                     background (the dungeon portal) sits on dark rather than on the ring. -->
+                <Texture parentKey="IconBackground" texelSnappingBias="0.0" snapToPixelGrid="false" textureSubLevel="1">
+                    <Size x="16" y="16"/>
+                    <Anchors>
+                        <Anchor point="CENTER"/>
+                    </Anchors>
+                    <Color r="0.1" g="0.1" b="0.1"/>
+                </Texture>
+                <MaskTexture parentKey="IconBackgroundMask" atlas="CircleMask" hWrapMode="CLAMPTOBLACKADDITIVE" vWrapMode="CLAMPTOBLACKADDITIVE" texelSnappingBias="0.0" snapToPixelGrid="false">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeKey="$parent.IconBackground"/>
+                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.IconBackground"/>
+                    </Anchors>
+                    <MaskedTextures>
+                        <MaskedTexture childKey="IconBackground"/>
+                    </MaskedTextures>
+                </MaskTexture>
             </Layer>
             <Layer level="ARTWORK">
                 <Texture parentKey="Icon" texelSnappingBias="0.0" snapToPixelGrid="false">

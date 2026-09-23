@@ -44,7 +44,7 @@ local function OnChanged(key)
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
-    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" then
+    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" or key == "showDungeons" then
         if ns.RefreshMapPins then
             ns.RefreshMapPins()
         end
@@ -212,6 +212,10 @@ local PAGES = {
         { header = "Class Trainers" },
         { key = "showAllClassTrainers", label = "Show all class trainers",
           tooltip = "Off: class trainers for your class only. On: every class trainer." },
+        { header = "Dungeons" },
+        { key = "showDungeons", label = "Show dungeons",
+          tooltip = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
+              .. " in your log or not taken." },
     },
 }
 

@@ -46,6 +46,7 @@ ns.defaults = {
     mapPins = {},              -- icons added in game: [uiMapID] = { { name = ..., x = ..., y = ... }, ... }
     showAllTrainers = false,   -- every profession trainer, not just the ones for your professions
     showAllClassTrainers = false, -- every class trainer, not just your class's
+    showDungeons = true,       -- dungeon entrances, with their quests on the tooltip
 
     -- Weapons.lua
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
@@ -75,13 +76,15 @@ local PREFIX = ns.Accent("Sink") .. ": "
 
 -- Marks and colours shared by the tooltip lines and lists. Known is a green
 -- check with green text, missing a red cross with red text, and something that
--- does not apply to you is plain grey text with no mark.
+-- does not apply to you is plain grey text with no mark. A quest in your log
+-- is the one in between: a yellow waiting mark with yellow text.
 ns.CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
 ns.CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
 ns.WAIT = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t"
 ns.known = { r = 0.1, g = 1.0, b = 0.1, hex = "|cff1aff1a" }
 ns.missing = { r = 1.0, g = 0.1, b = 0.1, hex = "|cffff1a1a" }
 ns.grey = { r = 0.5, g = 0.5, b = 0.5, hex = "|cff808080" }
+ns.active = { r = 1.0, g = 0.8, b = 0.0, hex = "|cffffcc00" }
 local applying = false          -- true while we are the one calling SetPoint
 local pendingAfterCombat = false
 local hooked = false
