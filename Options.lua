@@ -73,6 +73,7 @@ local function Help()
     print("  /sink config          open the options panel")
     print("  /sink items           quest items that are safe to delete (/sink items help)")
     print("  /sink recipes         vendor recipes you know or not (/sink recipes help)")
+    print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
     print("  /sink errors          hide \"not enough energy\" errors when spamming (/sink errors help)")
     print("  /sink map             icons with tooltips on the world map (/sink map help)")
     print("  /sink dump            developer dumps of IDs and coordinates (/sink dump help)")
@@ -128,6 +129,10 @@ SlashCmdList.SINK = function(msg)
     elseif command == "recipes" or command == "recipe" then
         if ns.RecipesCommand then
             ns.RecipesCommand(arg)
+        end
+    elseif command == "weapons" or command == "weapon" then
+        if ns.WeaponsCommand then
+            ns.WeaponsCommand(arg)
         end
     elseif command == "errors" or command == "error" then
         if ns.ErrorsCommand then

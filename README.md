@@ -1,7 +1,7 @@
 # Sink
 
 A starter addon for **World of Warcraft: Forever**, the Classic+ flavor that entered beta on 2026-09-17 and launches on 2026-11-04.
-It does five things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, and it puts icons with tooltips on the world map.
+It does six things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, it puts icons with tooltips on the world map, and it tracks which weapon skills your class can still learn and who teaches them.
 
 ## Install
 
@@ -36,6 +36,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | `/sink config` | Open the options panel (also under Options > AddOns > Sink) |
 | `/sink items ...` | Quest item warnings, see below |
 | `/sink recipes ...` | Recipe vendor tooltips, see below |
+| `/sink weapons ...` | Weapon skills and weapon masters, see below |
 | `/sink errors ...` | Ability error spam, see below |
 | `/sink map ...` | Icons on the world map, see below |
 | `/sink dump ...` | Developer dumps of IDs and coordinates, see below |
@@ -51,14 +52,7 @@ Some quest items stay in your bags after the quest that needed them is done. Sin
 
 The bag check runs after a quest turn-in, on login, and whenever your bags change, so it also catches an item you loot late. Nothing is shown during combat; the check waits until combat ends.
 
-Built-in rules live at the top of `QuestItems.lua`:
-
-```lua
-ns.questItemRules = {
-    [286176] = 99134,                -- item 286176 is safe once quest 99134 is complete
-    -- [itemID] = { questA, questB }, -- or once every listed quest is complete
-}
-```
+Built-in rules live at the top of `QuestItems.lua`, one per item: the item ID and the quest ID, or a list of quest IDs when every one of them must be complete.
 
 | Command | Effect |
 | --- | --- |
@@ -76,14 +70,7 @@ Hover a vendor and its tooltip lists the recipes it sells, with a green check fo
 
 "Known" is read from the recipe item's tooltip data, which carries the red "Already known" line once you have learned it. That works for every profession without opening a profession window. If the item is not in the client cache yet the line shows "(loading)", the data is requested, and the next hover has the answer.
 
-Built-in vendors live at the top of `Recipes.lua`:
-
-```lua
-ns.recipeVendors = {
-    [2118] = { name = "Abigail Shiel", location = "Brill, Tirisfal Glades", recipes = { 12226 } },
-    [3550] = { name = "Martine Tramblay", location = "Brill, Tirisfal Glades", recipes = { 6325 } },
-}
-```
+Built-in vendors live at the top of `Recipes.lua`: NPC ID, name, location and the item IDs of the recipes sold.
 
 Opening any merchant window does two more things, whether or not that vendor is in the list. Recipes sold there that you do not know are pointed out in chat and on screen, once per vendor per session. And the vendor's recipes are remembered, so the list of purchasable recipes grows as you visit vendors without you typing anything.
 
@@ -97,7 +84,21 @@ Opening any merchant window does two more things, whether or not that vendor is 
 | `/sink recipes missing` | Window listing recipes you can buy but do not know, by vendor |
 | `/sink recipes on`, `/sink recipes off` | Turn the tooltip lines on or off |
 
-Wowhead's Forever database is the quickest place to find IDs (`wowhead.com/forever/npc=2118`, `wowhead.com/forever/item=12226`). In game, `/sink recipes add 12226` while targeting the vendor records the same thing without looking anything up. Like the quest item rules, vendors added in game are lost on logout until the beta's saved-variables bug is fixed.
+Wowhead's Forever database is the quickest place to find IDs (`wowhead.com/forever/npc=<id>`, `wowhead.com/forever/item=<id>`). In game, `/sink recipes add <itemID>` while targeting the vendor records the same thing without looking anything up. Like the quest item rules, vendors added in game are lost on logout until the beta's saved-variables bug is fixed.
+
+## Weapon skills
+
+Which weapon skills your class can learn, which you have and how far along they are, and which weapon master teaches the rest. Hover a weapon master, or their map icon, and the tooltip lists what they teach: a check with your rank for a skill you know, a cross for one you can learn, grey for one your class cannot. Opening a weapon master's window prints the skills you can learn there, once per master per session. On by default.
+
+Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API behind Forever's own Skills panel, keyed by the same skill line IDs vanilla used (Swords 43, Daggers 173, and so on); Forever folds fist weapons into the unarmed line, 162. What a weapon master teaches comes from the built-in table at the top of `Weapons.lua`, seeded from Wowhead's Forever database and Warcraft Wiki for the eight vanilla masters, and from the trainer window itself: opening one records what it lists, the way merchants record recipes. Which skills your class can learn has no API, so it is a table of the vanilla proficiencies; the trainer window only lists what your class can take, which confirms the table as you visit, and a skill you turn out to know is shown whether or not the table lists it. Wands come from class trainers, not weapon masters, and the table says so.
+
+| Command | Effect |
+| --- | --- |
+| `/sink weapons` | Your class's weapon skills: the rank of each you know, or who teaches each you lack |
+| `/sink weapons masters` | Every weapon master and what they teach, marked the same way |
+| `/sink weapons on`, `/sink weapons off` | Turn the tooltip lines and reminders on or off |
+
+`/sink dump trainer` prints the open trainer window's services and a line for the master table. The window's own Available, Unavailable and Already Known boxes decide what it lists, so untick nothing before dumping. Like the other in-game recordings, masters recorded from the window are lost on logout until the beta's saved-variables bug is fixed.
 
 ## Ability errors
 
@@ -119,7 +120,7 @@ To silence every error voice line instead, including ones Sink leaves alone, unt
 
 ## Map icons
 
-Icons on the world map with a tooltip on mouseover. The built-in ones mark Martine Tramblay, the fishing supplies vendor in Brill, three people in Undercity: Archibald the weapon master, James Van Brunt the expert blacksmith and Brom Killian the mining trainer, and Hanashi and Sayoc, the two weapon masters in Orgrimmar. The tooltip says what the icon is for, "Fishing Supplies" or "Weapon Master", in Sink's colour; Martine's also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. Clicking an icon that marks an NPC targets them. On by default.
+Icons on the world map with a tooltip on mouseover. The tooltip says what the icon is for, in Sink's colour; for a recipe vendor it also lists the recipes sold and whether you know them, and for a weapon master the skills taught, the same lines those modules put on the NPCs' own tooltips. Clicking an icon that marks an NPC targets them. On by default.
 
 Forever runs the Retail map, which is built for this. `WorldMapFrame` holds a list of data providers; whenever the map opens or changes zone it asks each one to refresh, and the provider asks the map for pins from a named template (`SinkMapPinTemplate` in `MapPins.xml`, the one XML file, because the map's pin pools need a virtual template). A pin is an ordinary frame the map positions from normalized coordinates, and the map wires its mouse scripts to the pin's `OnMouseEnter` and `OnMouseLeave` methods, which is where the tooltip lives.
 
@@ -127,32 +128,9 @@ Targeting is a protected action an addon cannot perform itself, so each icon car
 
 Each icon is drawn round, inside a one-pixel ring in Sink's identity colour (see below) with a one-pixel dark outline. That is three textures in the template, each clipped to a circle by Blizzard's `CircleMask` atlas, the mask the party and totem frames use, so no artwork ships with the addon. Pixel snapping is off on the textures and masks, as on Blizzard's small round frames, which keeps the circle edges smooth at this size. The ring turns white under the mouse.
 
-Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID:
+Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Each one has `x` and `y`, an `icon` texture, a `note` that becomes the tooltip's text, a `name` shown when there is no note and used by the list and `/sink map remove`, and an `npc` ID that ties it to a vendor in `Recipes.lua` or a weapon master in `Weapons.lua`.
 
-```lua
-ns.mapPins = {
-    [1420] = { -- Tirisfal Glades
-        { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
-          icon = "Interface\\Icons\\Trade_Fishing" },
-    },
-    [1458] = { -- Undercity
-        { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
-          icon = "Interface\\Icons\\Ability_DualWield" },
-        { npc = 4596, name = "James Van Brunt", note = "Expert Blacksmith", x = 0.6126, y = 0.3062,
-          icon = "Interface\\Icons\\Trade_BlackSmithing" },
-        { npc = 4598, name = "Brom Killian", note = "Mining Trainer", x = 0.5603, y = 0.3746,
-          icon = "Interface\\Icons\\Trade_Mining" },
-    },
-    [1454] = { -- Orgrimmar
-        { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
-          icon = "Interface\\Icons\\Ability_DualWield" },
-        { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
-          icon = "Interface\\Icons\\Ability_DualWield" },
-    },
-}
-```
-
-`note` is what the tooltip says (`name` is shown when there is none, and is what the list and `/sink map remove` use) and `npc` ties the icon to a vendor in `Recipes.lua`. Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
+Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
 
 | Command | Effect |
 | --- | --- |
@@ -171,6 +149,7 @@ Like the other in-game additions, icons added with `/sink map add` are lost on l
 | --- | --- |
 | `/sink dump loc` | Zone, map ID and parent map, subzone, and your position both as percent and as the 0 to 1 values, then a map icon line to paste |
 | `/sink dump target` | Your target's name, NPC ID, GUID and tooltip lines, then a map icon line with the NPC ID, name and title filled in |
+| `/sink dump trainer` | The open trainer window's services, and for a weapon master a line for the table in `Weapons.lua` |
 
 The client only reports positions for the player and group members, never for an NPC, so `/sink dump target` uses your own position for the icon line; stand next to the NPC first. For a vendor that never moves that is exact. Wowhead's page source carries one-decimal coordinates for every spawn point (`g_mapperData`) and the same map ID, which is where the built-in entries came from.
 
@@ -202,6 +181,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `Core.lua` | Saved variables, the positioning logic, event handling, the `SetPoint` hook |
 | `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
 | `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
+| `Weapons.lua` | Weapon skill lines, class proficiencies, the weapon master table, trainer window recording, the tooltip lines, `/sink weapons` |
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |

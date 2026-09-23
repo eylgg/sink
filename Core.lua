@@ -44,6 +44,10 @@ ns.defaults = {
     -- MapPins.lua
     mapIcons = true,           -- icons with tooltips on the world map
     mapPins = {},              -- icons added in game: [uiMapID] = { { name = ..., x = ..., y = ... }, ... }
+
+    -- Weapons.lua
+    weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
+    weaponMasters = {},        -- masters recorded from the trainer window: [npcID] = { name = ..., skills = { id, ... } }
 }
 
 -- Sink's identity colour, used for everything it prints or draws: the chat
@@ -65,6 +69,11 @@ function ns.Accent(text)
 end
 
 local PREFIX = ns.Accent("Sink") .. ": "
+
+-- Marks shared by the tooltip lines and lists: known, missing, still loading.
+ns.CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
+ns.CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
+ns.WAIT = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t"
 local applying = false          -- true while we are the one calling SetPoint
 local pendingAfterCombat = false
 local hooked = false

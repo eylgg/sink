@@ -13,6 +13,7 @@ local function DumpHelp()
     ns.Print("dump commands, for filling in the tables in the Lua files")
     print("  /sink dump loc      zone, map ID and your position, with a map icon line to paste")
     print("  /sink dump target   your target's name, NPC ID, GUID and tooltip lines, with a map icon line")
+    print("  /sink dump trainer  the open trainer window's services, with a weapon master line to paste")
 end
 
 -- Zone name, map ID and its parent, subzone, and the position in both forms.
@@ -103,6 +104,35 @@ local function DumpTarget()
     print(ns.MapPinLine(mapID, { npc = npcID, name = name, note = TitleFrom(lines), x = x, y = y }))
 end
 
+-- Every service the open trainer window lists, as its filter boxes show them,
+-- and for a weapon master the line for the table in Weapons.lua.
+local function DumpTrainer()
+    local count = GetNumTrainerServices and GetNumTrainerServices() or 0
+    if count == 0 then
+        ns.Print("no trainer window is open, or its filters hide everything.")
+        return
+    end
+    local name = UnitName and UnitName("npc") or "?"
+    local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
+    ns.Print(("trainer %s%s, %d services as the window's filters show them"):format(
+        name, npcID and (", NPC " .. npcID) or "", count))
+    local ids = {}
+    for index = 1, count do
+        local service, serviceType, _, reqLevel, _, category = GetTrainerServiceInfo(index)
+        local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
+        print(("  %d. %s | %s | level %s | %s | %s"):format(index, tostring(service), tostring(serviceType),
+            tostring(reqLevel), tostring(category), tostring(skillLine)))
+        local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
+        if id then
+            ids[#ids + 1] = tostring(id)
+        end
+    end
+    if npcID and #ids > 0 then
+        print(("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua"):format(
+            npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", ")))
+    end
+end
+
 function ns.DumpCommand(arg)
     if not ns.UnitMapPosition or not ns.MapPinLine then
         ns.Print("MapPins.lua is not loaded.")
@@ -114,6 +144,8 @@ function ns.DumpCommand(arg)
         DumpLocation()
     elseif sub == "target" then
         DumpTarget()
+    elseif sub == "trainer" then
+        DumpTrainer()
     else
         DumpHelp()
     end

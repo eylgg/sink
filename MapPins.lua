@@ -30,9 +30,9 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 
 -- Built-in icons: uiMapID -> list of { x, y, name, icon, note, npc }. The
 -- tooltip shows note ("Fishing Supplies") in Sink's colour, or name when there
--- is no note; npc ties the icon to a vendor in Recipes.lua so the tooltip also
--- lists the recipes sold there and whether you know them.
--- On the Forever build Tirisfal Glades is map 1420, Undercity 1458 and Orgrimmar 1454.
+-- is no note; npc ties the icon to a vendor in Recipes.lua or a weapon master
+-- in Weapons.lua so the tooltip also lists what they sell or teach.
+-- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
@@ -50,6 +50,10 @@ ns.mapPins = {
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
           icon = "Interface\\Icons\\Ability_DualWield" },
         { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
+          icon = "Interface\\Icons\\Ability_DualWield" },
+    },
+    [1456] = { -- Thunder Bluff
+        { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4093, y = 0.6272,
           icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }
@@ -188,6 +192,9 @@ function SinkMapPinMixin:OnMouseEnter()
     GameTooltip:SetText(pin.note or pin.name, ns.accent.r, ns.accent.g, ns.accent.b)
     if pin.npc and ns.AddRecipeVendorLines then
         ns.AddRecipeVendorLines(GameTooltip, pin.npc)
+    end
+    if pin.npc and ns.AddWeaponMasterLines then
+        ns.AddWeaponMasterLines(GameTooltip, pin.npc)
     end
     GameTooltip:Show()
 end

@@ -9,12 +9,13 @@
 ## AddonCompartmentFunc: Sink_OnAddonCompartmentClick
 
 # Load order matters: Core.lua defines the shared "ns" table the other files use,
-# and Options.lua dispatches /sink items, /sink recipes, /sink errors, /sink map and
-# /sink dump to the modules. MapPins.xml holds the map pin template that MapPins.lua
-# fills in; Dump.lua uses helpers from Recipes.lua and MapPins.lua.
+# and Options.lua dispatches /sink items, /sink recipes, /sink weapons, /sink errors,
+# /sink map and /sink dump to the modules. MapPins.xml holds the map pin template that
+# MapPins.lua fills in; Dump.lua uses helpers from Recipes.lua, Weapons.lua and MapPins.lua.
 Core.lua
 QuestItems.lua
 Recipes.lua
+Weapons.lua
 Errors.lua
 MapPins.lua
 MapPins.xml

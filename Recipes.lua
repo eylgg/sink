@@ -27,9 +27,7 @@ ns.recipeVendors = {
     [3550] = { name = "Martine Tramblay", location = "Brill, Tirisfal Glades", recipes = { 6325 } },
 }
 
-local CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
-local CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
-local WAIT = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t"
+local CHECK, CROSS, WAIT = ns.CHECK, ns.CROSS, ns.WAIT -- marks defined in Core.lua
 local KNOWN_TEXT = ITEM_SPELL_KNOWN or "Already known"
 
 local function Enabled()
