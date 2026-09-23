@@ -30,7 +30,7 @@ local _, ns = ...
 -- inside. The entrance is on uiMap map at x, y.
 ns.dungeons = {
     [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148 },
-    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 19, map = 1454, x = 0.5302, y = 0.4876 },
+    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 18, map = 1454, x = 0.5302, y = 0.4876 },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y; one
