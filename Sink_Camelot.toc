@@ -4,7 +4,7 @@
 ## Author: eyl
 ## Version: 0.0.1
 ## Category: UI Customization
-## IconTexture: Interface\Icons\Spell_Arcane_Blink
+## IconTexture: Interface\Icons\INV_Enchant_EssenceMagicLarge
 ## SavedVariables: SinkDB
 ## AddonCompartmentFunc: Sink_OnAddonCompartmentClick
 

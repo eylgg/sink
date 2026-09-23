@@ -34,7 +34,7 @@ ns.weaponSkills = {
     { id = 54,  names = { "One-Handed Maces", "Maces" } },
     { id = 160, names = { "Two-Handed Maces" } },
     { id = 173, names = { "Daggers" } },
-    { id = 162, names = { "Fist Weapons", "Unarmed" } }, -- Forever folds fist weapons into the unarmed line
+    { id = 473, names = { "Fist Weapons" } }, -- Unarmed (line 162) is separate and nobody trains it
     { id = 136, names = { "Staves" } },
     { id = 229, names = { "Polearms" }, level = 20 },
     { id = 45,  names = { "Bows" } },
@@ -48,28 +48,29 @@ ns.weaponSkills = {
 -- proficiencies. A skill you turn out to know is shown whether or not it is
 -- listed here, so a mistake shows up rather than hiding anything.
 ns.classWeaponSkills = {
-    WARRIOR = { 43, 55, 44, 172, 54, 160, 173, 162, 136, 229, 45, 46, 226, 176 },
+    WARRIOR = { 43, 55, 44, 172, 54, 160, 173, 473, 136, 229, 45, 46, 226, 176 },
     PALADIN = { 43, 55, 44, 172, 54, 160, 229 },
-    HUNTER  = { 43, 55, 44, 172, 173, 162, 136, 229, 45, 46, 226, 176 },
-    ROGUE   = { 43, 54, 173, 162, 45, 46, 226, 176 },
+    HUNTER  = { 43, 55, 44, 172, 173, 473, 136, 229, 45, 46, 226, 176 },
+    ROGUE   = { 43, 54, 173, 473, 45, 46, 226, 176 },
     PRIEST  = { 54, 173, 136, 228 },
-    SHAMAN  = { 44, 172, 54, 160, 173, 162, 136 },
+    SHAMAN  = { 44, 172, 54, 160, 173, 473, 136 },
     MAGE    = { 43, 173, 136, 228 },
     WARLOCK = { 43, 173, 136, 228 },
-    DRUID   = { 54, 160, 173, 162, 136, 229 },
+    DRUID   = { 54, 160, 173, 473, 136, 229 },
 }
 
 -- Built-in weapon masters: npcID -> { name, location, skills = { skill line ID, ... } },
--- from Wowhead's Forever database and Warcraft Wiki. Masters recorded from the
+-- from Wowhead's Forever database and Warcraft Wiki; the Horde ones were
+-- checked against what the masters say in game. Masters recorded from the
 -- trainer window live in SinkDB.weaponMasters and are merged with these;
 -- "/sink dump trainer" prints a line for this table.
 ns.weaponMasters = {
     [11867] = { name = "Woo Ping", location = "Stormwind City", faction = "Alliance", skills = { 226, 173, 43, 55, 229, 136 } },
-    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", faction = "Alliance", skills = { 46, 44, 172, 54, 160, 162 } },
+    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", faction = "Alliance", skills = { 46, 44, 172, 54, 160, 473 } },
     [13084] = { name = "Bixi Wobblebonk", location = "Ironforge", faction = "Alliance", skills = { 173, 226, 176 } },
-    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", faction = "Alliance", skills = { 45, 173, 162, 136, 176 } },
+    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", faction = "Alliance", skills = { 45, 173, 473, 136, 176 } },
     [2704]  = { name = "Hanashi", location = "Orgrimmar", faction = "Horde", skills = { 45, 44, 172, 136, 176 } },
-    [11868] = { name = "Sayoc", location = "Orgrimmar", faction = "Horde", skills = { 45, 173, 162, 44, 172, 136, 176 } },
+    [11868] = { name = "Sayoc", location = "Orgrimmar", faction = "Horde", skills = { 45, 173, 473, 44, 172, 176 } },
     [11869] = { name = "Ansekhwa", location = "Thunder Bluff", faction = "Horde", skills = { 46, 54, 160, 136 } },
     [11870] = { name = "Archibald", location = "Undercity", faction = "Horde", skills = { 226, 173, 43, 55, 229 } },
 }
@@ -89,14 +90,26 @@ local function Enabled()
 end
 
 -- The skill line attributes (name, rank, maxRank) when the character knows
--- this skill, else nil.
+-- this skill, else nil. Looked up by ID first and, failing that, by name among
+-- the lines the client lists, in case Forever numbers a line differently.
 local function Known(skill)
-    if not (C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+    if not C_SkillInfo then
         return nil
     end
-    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, skill.id)
-    if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
-        return info
+    if C_SkillInfo.GetSkillLineInfoByID then
+        local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, skill.id)
+        if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
+            return info
+        end
+    end
+    if C_SkillInfo.GetNumSkillLines and C_SkillInfo.GetSkillLineInfo then
+        for index = 1, C_SkillInfo.GetNumSkillLines() do
+            local info = C_SkillInfo.GetSkillLineInfo(index)
+            if info and not info.isHeader and (info.maxRank or 0) > 0
+                and info.name and skillByName[info.name:lower()] == skill then
+                return info
+            end
+        end
     end
     return nil
 end
@@ -227,12 +240,42 @@ local function CitiesTeaching(skill)
 end
 
 --------------------------------------------------------------------------------
--- Tooltip lines
+-- Display order and tooltip lines
 --------------------------------------------------------------------------------
 
--- One line per skill the master teaches, on any tooltip: green check when you
--- know it, red cross when your class can learn it, plain grey when it cannot.
--- The map icons in MapPins.lua use it too. Returns true when lines were added.
+local MISSING, KNOWN, OTHER = 1, 2, 3
+
+-- Rows for a set of skills in display order: the ones you can still learn
+-- first, by level and then name; then the ones you know; then the ones your
+-- class cannot take. Each group is alphabetical.
+local function SortedRows(skills)
+    local rows = {}
+    for _, skill in ipairs(skills) do
+        local info = Known(skill)
+        local group = (info and KNOWN) or (ClassCanLearn(skill) and MISSING) or OTHER
+        rows[#rows + 1] = {
+            skill = skill,
+            group = group,
+            level = group == MISSING and SkillLevel(skill) or 0,
+            name = (info and info.name) or SkillName(skill),
+        }
+    end
+    table.sort(rows, function(a, b)
+        if a.group ~= b.group then
+            return a.group < b.group
+        end
+        if a.level ~= b.level then
+            return a.level < b.level
+        end
+        return a.name < b.name
+    end)
+    return rows
+end
+
+-- One line per skill the master teaches, on any tooltip, in display order:
+-- red cross for one your class can learn, green check for one you know, plain
+-- grey for one it cannot. The map icons in MapPins.lua use it too. Returns
+-- true when lines were added.
 local function AddMasterLines(tooltip, npcID)
     if not Enabled() then
         return false
@@ -241,14 +284,13 @@ local function AddMasterLines(tooltip, npcID)
     if not master or #master.skills == 0 then
         return false
     end
-    for _, skill in ipairs(master.skills) do
-        local name = SkillName(skill)
-        if Known(skill) then
-            tooltip:AddLine(CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
-        elseif ClassCanLearn(skill) then
-            tooltip:AddLine(CROSS .. " " .. NameWithLevel(skill), ns.missing.r, ns.missing.g, ns.missing.b)
+    for _, row in ipairs(SortedRows(master.skills)) do
+        if row.group == MISSING then
+            tooltip:AddLine(CROSS .. " " .. NameWithLevel(row.skill), ns.missing.r, ns.missing.g, ns.missing.b)
+        elseif row.group == KNOWN then
+            tooltip:AddLine(CHECK .. " " .. row.name, ns.known.r, ns.known.g, ns.known.b)
         else
-            tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
+            tooltip:AddLine(row.name, ns.grey.r, ns.grey.g, ns.grey.b)
         end
     end
     return true
@@ -357,12 +399,14 @@ local function WeaponsHelp()
     print("  /sink weapons on | off  turn the tooltip lines on or off")
 end
 
--- The skills your class can still learn, each with where to get it.
+-- The skills your class can still learn, by level then name, each with where
+-- to get it.
 local function ListSkills()
     local set = ClassSkillSet()
     local lines = {}
-    for _, skill in ipairs(ns.weaponSkills) do
-        if not Known(skill) and (set == nil or set[skill.id]) then
+    for _, row in ipairs(SortedRows(ns.weaponSkills)) do
+        local skill = row.skill
+        if row.group == MISSING then
             local where
             if skill.classTrainer then
                 where = "class trainer"
@@ -395,14 +439,13 @@ local function ListMasters()
         end
         any = true
         print(("  %s (%d)%s"):format(master.name, npcID, master.location and (", " .. master.location) or ""))
-        for _, skill in ipairs(master.skills) do
-            local name = SkillName(skill)
-            if Known(skill) then
-                print(("    %s %s%s|r"):format(CHECK, ns.known.hex, name))
-            elseif ClassCanLearn(skill) then
-                print(("    %s %s%s|r"):format(CROSS, ns.missing.hex, NameWithLevel(skill)))
+        for _, row in ipairs(SortedRows(master.skills)) do
+            if row.group == MISSING then
+                print(("    %s %s%s|r"):format(CROSS, ns.missing.hex, NameWithLevel(row.skill)))
+            elseif row.group == KNOWN then
+                print(("    %s %s%s|r"):format(CHECK, ns.known.hex, row.name))
             else
-                print("    " .. ns.grey.hex .. name .. "|r")
+                print("    " .. ns.grey.hex .. row.name .. "|r")
             end
         end
     end)
