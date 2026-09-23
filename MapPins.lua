@@ -15,6 +15,12 @@
 --
 -- Coordinates are 0 to 1 across the zone map, Wowhead's numbers divided by
 -- 100, keyed by the zone's uiMapID from the client's UiMap table.
+--
+-- Clicking an icon that marks an NPC targets it. Targeting is a protected
+-- action an addon cannot perform itself, so each pin carries a secure action
+-- button as an overlay that runs "/targetexact <name>" on a real click. That
+-- finds the NPC when it is loaded around you, so it is for "which one is the
+-- blacksmith" in town, not for locating someone across the zone.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -22,10 +28,11 @@ local _, ns = ...
 local TEMPLATE = "SinkMapPinTemplate"
 local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 
--- Built-in icons: uiMapID -> list of { x, y, name, icon, note, npc }. note is
--- an extra tooltip line; npc ties the icon to a vendor in Recipes.lua so the
--- tooltip also lists the recipes sold there and whether you know them.
--- Tirisfal Glades is map 1420 and Undercity 1458 on the Forever build.
+-- Built-in icons: uiMapID -> list of { x, y, name, icon, note, npc }. The
+-- tooltip shows note ("Fishing Supplies") in Sink's colour, or name when there
+-- is no note; npc ties the icon to a vendor in Recipes.lua so the tooltip also
+-- lists the recipes sold there and whether you know them.
+-- On the Forever build Tirisfal Glades is map 1420, Undercity 1458 and Orgrimmar 1454.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
@@ -34,10 +41,19 @@ ns.mapPins = {
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
           icon = "Interface\\Icons\\Ability_DualWield" },
+        { npc = 4596, name = "James Van Brunt", note = "Expert Blacksmith", x = 0.6126, y = 0.3062,
+          icon = "Interface\\Icons\\Trade_BlackSmithing" },
+        { npc = 4598, name = "Brom Killian", note = "Mining Trainer", x = 0.5603, y = 0.3746,
+          icon = "Interface\\Icons\\Trade_Mining" },
+    },
+    [1454] = { -- Orgrimmar
+        { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
+          icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }
 
 local provider -- our data provider, once added to WorldMapFrame
+local refreshAfterCombat = false -- a pin was acquired in combat; redo them all when it ends
 
 local function Enabled()
     return ns.db ~= nil and ns.db.mapIcons ~= false
@@ -107,6 +123,49 @@ end
 -- Global because MapPins.xml names it as the template's mixin.
 SinkMapPinMixin = CreateFromMixins(MapCanvasPinMixin or {})
 
+-- Called by the map once per pin frame. The overlay button forwards mouse
+-- enter and leave to the pin so the tooltip still works, and lets right clicks
+-- through so the map still zooms out.
+function SinkMapPinMixin:OnLoad()
+    local button = CreateFrame("Button", nil, self, "SecureActionButtonTemplate")
+    button:SetAllPoints(self)
+    -- The secure handler runs the action once, on down or up per ActionButtonUseKeyDown.
+    button:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
+    if button.SetPassThroughButtons then
+        pcall(button.SetPassThroughButtons, button, "RightButton")
+    end
+    button:SetScript("OnEnter", function(b)
+        b:GetParent():OnMouseEnter()
+    end)
+    button:SetScript("OnLeave", function(b)
+        b:GetParent():OnMouseLeave()
+    end)
+    button:Hide()
+    self.ClickButton = button
+end
+
+-- A secure button's attributes can only be changed out of combat. A pin
+-- acquired during a fight is left as it was, and every pin is redone when the
+-- fight ends.
+function SinkMapPinMixin:SetClickTarget(name)
+    local button = self.ClickButton
+    if not button then
+        return
+    end
+    if InCombatLockdown() then
+        refreshAfterCombat = true
+        return
+    end
+    if name then
+        button:SetAttribute("type", "macro")
+        button:SetAttribute("macrotext", "/targetexact " .. name)
+        button:Show()
+    else
+        button:SetAttribute("type", nil)
+        button:Hide()
+    end
+end
+
 function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or ns.db.mapPins
     self.pin = pin
     self.Icon:SetTexture(pin.icon or DEFAULT_ICON)
@@ -114,6 +173,7 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
+    self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
 end
 
 function SinkMapPinMixin:OnMouseEnter()
@@ -123,10 +183,7 @@ function SinkMapPinMixin:OnMouseEnter()
         return
     end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText(pin.name)
-    if pin.note then
-        GameTooltip:AddLine(pin.note, 1, 1, 1)
-    end
+    GameTooltip:SetText(pin.note or pin.name, ns.accent.r, ns.accent.g, ns.accent.b)
     if pin.npc and ns.AddRecipeVendorLines then
         ns.AddRecipeVendorLines(GameTooltip, pin.npc)
     end
@@ -296,8 +353,12 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
+    elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
+        refreshAfterCombat = false
+        Refresh()
     end
 end)

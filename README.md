@@ -119,11 +119,13 @@ To silence every error voice line instead, including ones Sink leaves alone, unt
 
 ## Map icons
 
-Icons on the world map with a tooltip on mouseover. The first two mark Martine Tramblay, the fishing supplies vendor in Brill, and Archibald, the weapon master in Undercity. Martine's tooltip also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. On by default.
+Icons on the world map with a tooltip on mouseover. The built-in ones mark Martine Tramblay, the fishing supplies vendor in Brill, three people in Undercity: Archibald the weapon master, James Van Brunt the expert blacksmith and Brom Killian the mining trainer, and Hanashi, the weapon master in Orgrimmar. The tooltip says what the icon is for, "Fishing Supplies" or "Weapon Master", in Sink's colour; Martine's also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. Clicking an icon that marks an NPC targets them. On by default.
 
 Forever runs the Retail map, which is built for this. `WorldMapFrame` holds a list of data providers; whenever the map opens or changes zone it asks each one to refresh, and the provider asks the map for pins from a named template (`SinkMapPinTemplate` in `MapPins.xml`, the one XML file, because the map's pin pools need a virtual template). A pin is an ordinary frame the map positions from normalized coordinates, and the map wires its mouse scripts to the pin's `OnMouseEnter` and `OnMouseLeave` methods, which is where the tooltip lives.
 
-Each icon is drawn round, inside a ring in Sink's identity colour (see below) with a dark outline. That is three textures in the template, each clipped to a circle by Blizzard's `CircleMask` atlas, the mask the party and totem frames use, so no artwork ships with the addon. Pixel snapping is off on the textures and masks, as on Blizzard's small round frames, which keeps the circle edges smooth at this size. The ring turns white under the mouse.
+Targeting is a protected action an addon cannot perform itself, so each icon carries a secure action button as an overlay that runs `/targetexact <name>` on a real click. That finds the NPC when they are loaded around you, so it is for "which one is the blacksmith" in town, not for locating someone across the zone. A secure button's attributes can only be set out of combat, so icons first shown during a fight are redone when it ends; right-click still zooms the map out.
+
+Each icon is drawn round, inside a one-pixel ring in Sink's identity colour (see below) with a one-pixel dark outline. That is three textures in the template, each clipped to a circle by Blizzard's `CircleMask` atlas, the mask the party and totem frames use, so no artwork ships with the addon. Pixel snapping is off on the textures and masks, as on Blizzard's small round frames, which keeps the circle edges smooth at this size. The ring turns white under the mouse.
 
 Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID:
 
@@ -136,11 +138,19 @@ ns.mapPins = {
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
           icon = "Interface\\Icons\\Ability_DualWield" },
+        { npc = 4596, name = "James Van Brunt", note = "Expert Blacksmith", x = 0.6126, y = 0.3062,
+          icon = "Interface\\Icons\\Trade_BlackSmithing" },
+        { npc = 4598, name = "Brom Killian", note = "Mining Trainer", x = 0.5603, y = 0.3746,
+          icon = "Interface\\Icons\\Trade_Mining" },
+    },
+    [1454] = { -- Orgrimmar
+        { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
+          icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }
 ```
 
-`note` is an extra tooltip line and `npc` ties the icon to a vendor in `Recipes.lua`. Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
+`note` is what the tooltip says (`name` is shown when there is none, and is what the list and `/sink map remove` use) and `npc` ties the icon to a vendor in `Recipes.lua`. Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
 
 | Command | Effect |
 | --- | --- |
@@ -164,7 +174,7 @@ The client only reports positions for the player and group members, never for an
 
 ## Identity colour
 
-Everything Sink prints or draws uses one colour, `ns.accent` at the top of `Core.lua`: the `Sink:` chat prefix, the `Sink:` lines on tooltips, vendor names in the recipe list and its window title, and the ring around each map icon. Change it there and everything follows; `ns.Accent(text)` wraps a string in it for chat and tooltips. Colours that carry meaning are not tied to it: green on and red off, the yellow quest item warnings, the check and cross marks.
+Everything Sink prints or draws uses one colour, `ns.accent` at the top of `Core.lua`: the `Sink:` chat prefix, the `Sink:` lines on tooltips, vendor names in the recipe list and its window title, and the ring and tooltip of each map icon. Change it there and everything follows; `ns.Accent(text)` wraps a string in it for chat and tooltips. Colours that carry meaning are not tied to it: green on and red off, the yellow quest item warnings, the check and cross marks.
 
 The value is oklch(0.558 0.146 230), which in sRGB is 0, 0.505, 0.721 or `#0081B8`; the red channel lands just below zero, so the colour sits a hair outside sRGB and clamps.
 
@@ -191,7 +201,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
 | `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
-| `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip, the data provider, the `/sink map` commands |
+| `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
 | `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
 | `Options.lua` | `/sink` commands, the options panel, the addon compartment click |

@@ -2,14 +2,14 @@
     <!-- The world map creates its pins from a named virtual template, so this one
          has to be XML. MapPins.lua defines SinkMapPinMixin and fills the icon in.
 
-         The look is a round icon inside a ring (Sink's accent colour, set in Lua)
-         with a dark outline: three textures, each clipped to a circle by the
+         The look is a round icon inside a one-pixel ring (Sink's identity colour,
+         set in Lua) with a one-pixel dark outline: three textures, each clipped to a circle by the
          CircleMask atlas, the mask Blizzard's party and totem frames use. A mask
          only covers its own area, so each texture gets a mask of its own size.
          Pixel snapping is off on all of them, as on Blizzard's small round
          frames, so the circle edges blend instead of stepping. -->
     <Frame name="SinkMapPinTemplate" mixin="SinkMapPinMixin" enableMouseMotion="true" virtual="true">
-        <Size x="26" y="26"/>
+        <Size x="24" y="24"/>
         <Layers>
             <Layer level="BACKGROUND">
                 <Texture parentKey="Outline" setAllPoints="true" texelSnappingBias="0.0" snapToPixelGrid="false">
@@ -28,7 +28,7 @@
             <Layer level="BORDER">
                 <!-- White here; MapPins.lua tints it with ns.accent and brightens it under the mouse. -->
                 <Texture parentKey="Ring" texelSnappingBias="0.0" snapToPixelGrid="false">
-                    <Size x="24" y="24"/>
+                    <Size x="22" y="22"/>
                     <Anchors>
                         <Anchor point="CENTER"/>
                     </Anchors>
