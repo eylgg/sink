@@ -93,6 +93,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Rogue" },
         { npc = 3401, name = "Shenthul", note = "Rogue Trainer", x = 0.4305, y = 0.5374,
           icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 3327, name = "Gest", note = "Rogue Trainer", x = 0.4269, y = 0.5148,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
