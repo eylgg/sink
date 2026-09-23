@@ -139,14 +139,18 @@ function SinkMapPinMixin:OnLoad()
     self:SetScalingLimits(1, 1.0, 1.0)
 
     -- Pins that land on each other push apart on screen; the stored position
-    -- stays exact. These are the values Blizzard's flight points use. Every
-    -- Sink pin is both a nudge source and a target, so two of them separate
-    -- symmetrically, and pins more than about 1.5% of the map apart are left alone.
+    -- stays exact. Every Sink pin is both a nudge source and a target, so two
+    -- of them separate symmetrically; pins more than 1.5% of the map apart are
+    -- left alone. A fully overlapping pin moves by 1.5% of the map times the
+    -- zoom factor, which is the product of the target's zoomed-out or zoomed-in
+    -- factor and the source's magnitude. Pins keep a fixed pixel size while the
+    -- push is a fraction of the map, so the zoomed-in factor is smaller: two
+    -- 24 px pins end up just clear of each other at either end of the zoom.
     self:SetNudgeSourceRadius(1)
-    self:SetNudgeSourceMagnitude(1.25, 1)
+    self:SetNudgeSourceMagnitude(1, 1)
     self:SetNudgeTargetFactor(0.015)
-    self:SetNudgeZoomedOutFactor(1.25)
-    self:SetNudgeZoomedInFactor(1)
+    self:SetNudgeZoomedOutFactor(1)
+    self:SetNudgeZoomedInFactor(0.5)
 
     local button = CreateFrame("Button", nil, self, "SecureActionButtonTemplate")
     button:SetAllPoints(self)
