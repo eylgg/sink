@@ -40,7 +40,9 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- for one whose note is a title such as "High Priest". A dungeon has
 -- dungeon = true, minLevel and maxLevel (shown after the name as "11 - 24")
 -- and quests, a list of { id, name } whose names stand in until the client
--- has the quest cached; atlas draws a map atlas instead of an icon texture.
+-- has the quest cached. A quest you get inside, from a drop, adds start, how
+-- to get it; it shows as "Name (start)" and is yellow until it is done, never
+-- red. atlas draws a map atlas instead of an icon texture.
 -- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
@@ -59,6 +61,8 @@ ns.mapPins = {
         { name = "Ruins of Lordaeron", dungeon = true, minLevel = 11, maxLevel = 24, x = 0.7261, y = 0.1148,
           atlas = "Dungeon", quests = {
               { id = 92401, name = "A Frightened Request" },
+              -- The Baron (NPC 250660) drops the head that starts the chain (Quests.lua).
+              { id = 97288, name = "Unending Torment", start = "Kill \"The Baron\" inside" },
           } },
     },
     [1454] = { -- Orgrimmar
@@ -461,15 +465,15 @@ end
 
 -- A dungeon's quests: the title the client has, else the name in the table,
 -- and ask the server so the next hover has the real one.
-local function QuestTitle(quest)
-    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(quest.id)
+local function QuestTitle(questID, fallback)
+    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
     if title and title ~= "" then
         return title
     end
     if C_QuestLog.RequestLoadQuestByID then
-        C_QuestLog.RequestLoadQuestByID(quest.id)
+        C_QuestLog.RequestLoadQuestByID(questID)
     end
-    return quest.name or ("quest #" .. quest.id)
+    return fallback or ("quest #" .. questID)
 end
 
 local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
@@ -486,11 +490,20 @@ end
 
 -- One line per quest: red cross for one not in your log, yellow waiting mark
 -- for one in it, green check for one done; in that order, each group
--- alphabetical.
+-- alphabetical. A quest started inside the dungeon is yellow until done,
+-- with how to get it after the name.
 local function AddQuestLines(tooltip, quests)
     local rows = {}
     for _, quest in ipairs(quests) do
-        rows[#rows + 1] = { state = QuestState(quest.id), title = QuestTitle(quest) }
+        local state = QuestState(quest.id)
+        if quest.start and state == NOT_TAKEN then
+            state = IN_LOG
+        end
+        local title = QuestTitle(quest.id, quest.name)
+        if quest.start then
+            title = title .. " (" .. quest.start .. ")"
+        end
+        rows[#rows + 1] = { state = state, title = title }
     end
     table.sort(rows, function(a, b)
         if a.state ~= b.state then

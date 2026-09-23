@@ -17,6 +17,7 @@ QuestItems.lua
 Recipes.lua
 Weapons.lua
 Errors.lua
+Quests.lua
 MapPins.lua
 MapPins.xml
 Dump.lua

@@ -100,6 +100,10 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 `/sink dump trainer` prints the open trainer window's services and a line for the master table. The window lists only what your class can take, and its Available, Unavailable and Already Known boxes narrow that further, so the dump and the recording see one class's view; the built-in table is the full list. Like the other in-game recordings, masters recorded from the window are lost on logout until the beta's saved-variables bug is fixed.
 
+## Quest series
+
+Some quests come in chains that share a name, such as the five parts of Unending Torment. `ns.questSeries` at the top of `Quests.lua` lists each chain's quest IDs in order, and the objective tracker adds the step to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
+
 ## Ability errors
 
 Press an ability you cannot afford and the game tells you twice: red text at the top of the screen and your character's voice ("I don't have enough energy", "Not enough mana"). Spam the button and both repeat on every press. Sink hides those messages, text and voice, along with the "not ready yet" cooldown errors. This is on by default.
@@ -132,7 +136,7 @@ Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Eac
 
 Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class unless "Show all class trainers" is on.
 
-Dungeon entrances are drawn with the map's own blue portal (the `Dungeon` atlas) and their level range after the name, such as "Ruins of Lordaeron (11 - 24)". The tooltip lists the dungeon's quests: a red cross for one not in your log, a yellow waiting mark for one in it, a green check for one you have done, in that order and alphabetical within each. A dungeon entry has `dungeon = true`, `minLevel` and `maxLevel`, `atlas` and `quests`, a list of `{ id, name }` whose name stands in until the client has the quest cached. "Show dungeons" turns them off.
+Dungeon entrances are drawn with the map's own blue portal (the `Dungeon` atlas) and their level range after the name, such as "Ruins of Lordaeron (11 - 24)". The tooltip lists the dungeon's quests: a red cross for one not in your log, a yellow waiting mark for one in it, a green check for one you have done, in that order and alphabetical within each. A dungeon entry has `dungeon = true`, `minLevel` and `maxLevel`, `atlas` and `quests`, a list of `{ id, name }` whose name stands in until the client has the quest cached. A quest you get inside the dungeon, from a drop, adds `start`, how to get it: it shows as "Unending Torment (Kill "The Baron" inside)" and stays yellow until it is done, never red. "Show dungeons" turns them off.
 
 Those boxes, and "Show map icons", live on the Map Pins tab of the options window, `/sink config`, under their own headings.
 
@@ -191,6 +195,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
 | `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
 | `Weapons.lua` | Weapon skill lines, class proficiencies, the weapon master table, trainer window recording, the tooltip lines, `/sink weapons` |
+| `Quests.lua` | Quest series and the step added to their titles in the objective tracker |
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |

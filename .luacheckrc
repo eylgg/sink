@@ -32,6 +32,8 @@ read_globals = {
     "C_SkillInfo",
     "C_Timer",
     "C_TooltipInfo",
+    "CampaignQuestObjectiveTracker",
+    "QuestObjectiveTracker",
     "Enum",
     "EventRegistry",
     "MapCanvasDataProviderMixin",
