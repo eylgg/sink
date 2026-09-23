@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: Sink
+## Notes: The everything WoW: Forever addon.
+## Author: eyl
+## Version: 0.0.1
+## Category: UI Customization
+## IconTexture: Interface\Icons\Spell_Arcane_Blink
+## SavedVariables: SinkDB
+## AddonCompartmentFunc: Sink_OnAddonCompartmentClick
+
+# Load order matters: Core.lua defines the shared "ns" table the other files use,
+# and Options.lua dispatches /sink items, /sink recipes, /sink errors, /sink map and
+# /sink dump to the modules. MapPins.xml holds the map pin template that MapPins.lua
+# fills in; Dump.lua uses helpers from Recipes.lua and MapPins.lua.
+Core.lua
+QuestItems.lua
+Recipes.lua
+Errors.lua
+MapPins.lua
+MapPins.xml
+Dump.lua
+Options.lua

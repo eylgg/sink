@@ -1,0 +1,240 @@
+# Sink
+
+A starter addon for **World of Warcraft: Forever**, the Classic+ flavor that entered beta on 2026-09-17 and launches on 2026-11-04.
+It does five things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, and it puts icons with tooltips on the world map.
+
+## Install
+
+The quickest way is `Sink.zip` from the [releases page](../../releases): extract it and you get a `Sink` folder containing only the addon files. Put that folder at the path below.
+
+For a working checkout instead: Forever installs next to your other WoW flavors in a `_classic_beta_` folder, and this folder needs to end up at:
+
+```
+World of Warcraft/_classic_beta_/Interface/AddOns/Sink/
+```
+
+On macOS the game normally lives in `/Applications/World of Warcraft`. A symlink keeps the game pointed at this checkout while you edit it:
+
+```bash
+ln -s "$PWD" "/Applications/World of Warcraft/_classic_beta_/Interface/AddOns/Sink"
+```
+
+Then start the game (or `/reload` if it is already running), enable **Sink** in the AddOns list on the character screen, and type `/sink` in chat.
+
+The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.toc`. If you rename the addon, rename both, and also the `SinkDB` saved variable, the `Sink_OnAddonCompartmentClick` function, and the `/sink` slash command.
+
+## Commands
+
+| Command | Effect |
+| --- | --- |
+| `/sink` | Show whether centering is on and the current offsets |
+| `/sink on`, `/sink off`, `/sink toggle` | Turn player frame centering on or off. It is off by default, and off puts the frame back where your Edit Mode layout has it |
+| `/sink x <n>` | Horizontal offset from the center of the screen, -800 to 800. Negative moves left |
+| `/sink y <n>` | Height of the frame's bottom edge above the bottom of the screen, 0 to 800. Default 250, which matches Blizzard's default layout height |
+| `/sink reset` | Back to the default offsets |
+| `/sink center` | Re-apply the position right now |
+| `/sink config` | Open the options panel (also under Options > AddOns > Sink) |
+| `/sink items ...` | Quest item warnings, see below |
+| `/sink recipes ...` | Recipe vendor tooltips, see below |
+| `/sink errors ...` | Ability error spam, see below |
+| `/sink map ...` | Icons on the world map, see below |
+| `/sink dump ...` | Developer dumps of IDs and coordinates, see below |
+
+## Quest item warnings
+
+Some quest items stay in your bags after the quest that needed them is done. Sink keeps a list of "item X is safe to delete once quest Y is complete" rules and warns you in three ways, quiet to loud:
+
+1. A yellow "Safe to delete, quest complete" line on the item's tooltip once the quest is done, and a grey "Keep until ..." line before that.
+2. A chat line and a short on-screen notice when the item is spotted in your bags after the quest is complete.
+3. A popup with **Delete** and **Keep** buttons, once per item per session. Delete picks the item up and destroys it, the same as dragging it out of your bags.
+4. A red tint on the item's bag slot for as long as it is safe to delete, in both the separate and the combined bag windows.
+
+The bag check runs after a quest turn-in, on login, and whenever your bags change, so it also catches an item you loot late. Nothing is shown during combat; the check waits until combat ends.
+
+Built-in rules live at the top of `QuestItems.lua`:
+
+```lua
+ns.questItemRules = {
+    [286176] = 99134,                -- item 286176 is safe once quest 99134 is complete
+    -- [itemID] = { questA, questB }, -- or once every listed quest is complete
+}
+```
+
+| Command | Effect |
+| --- | --- |
+| `/sink items` | List every rule with quest and bag status |
+| `/sink items add <itemID> <questID>` | Add a rule for this character (saved in `SinkDB.questItems`) |
+| `/sink items remove <itemID>` | Remove a rule you added in game |
+| `/sink items scan` | Re-check the bags and show the popup again |
+| `/sink items on`, `/sink items off` | Turn the warnings on or off |
+
+Rules added in game are lost on logout until Blizzard fixes the saved-variables bug on the beta, so copy the ones you want to keep into `QuestItems.lua`. Quest names come from `C_QuestLog.GetTitleForQuestID`, which can be empty until the client has cached that quest; the addon asks for it and shows `quest #99134` in the meantime.
+
+## Recipe vendors
+
+Hover a vendor and its tooltip lists the recipes it sells, with a green check for the ones you already know and a red cross for the ones you do not. The recipe item's own tooltip gets a "sold by" line in return.
+
+"Known" is read from the recipe item's tooltip data, which carries the red "Already known" line once you have learned it. That works for every profession without opening a profession window. If the item is not in the client cache yet the line shows "(loading)", the data is requested, and the next hover has the answer.
+
+Built-in vendors live at the top of `Recipes.lua`:
+
+```lua
+ns.recipeVendors = {
+    [2118] = { name = "Abigail Shiel", location = "Brill, Tirisfal Glades", recipes = { 12226 } },
+    [3550] = { name = "Martine Tramblay", location = "Brill, Tirisfal Glades", recipes = { 6325 } },
+}
+```
+
+Opening any merchant window does two more things, whether or not that vendor is in the list. Recipes sold there that you do not know are pointed out in chat and on screen, once per vendor per session. And the vendor's recipes are remembered, so the list of purchasable recipes grows as you visit vendors without you typing anything.
+
+`/sink recipes missing` opens a small movable window with every listed recipe you still lack, grouped by vendor with its location. It refreshes when you learn a recipe or a merchant window updates, and Escape closes it.
+
+| Command | Effect |
+| --- | --- |
+| `/sink recipes` | List vendors and which of their recipes you know |
+| `/sink recipes add <itemID> [npcID]` | Add a recipe to a vendor. With no NPC ID, your current target is used |
+| `/sink recipes remove <itemID> [npcID]` | Remove a recipe you added in game |
+| `/sink recipes missing` | Window listing recipes you can buy but do not know, by vendor |
+| `/sink recipes on`, `/sink recipes off` | Turn the tooltip lines on or off |
+
+Wowhead's Forever database is the quickest place to find IDs (`wowhead.com/forever/npc=2118`, `wowhead.com/forever/item=12226`). In game, `/sink recipes add 12226` while targeting the vendor records the same thing without looking anything up. Like the quest item rules, vendors added in game are lost on logout until the beta's saved-variables bug is fixed.
+
+## Ability errors
+
+Press an ability you cannot afford and the game tells you twice: red text at the top of the screen and your character's voice ("I don't have enough energy", "Not enough mana"). Spam the button and both repeat on every press. Sink hides those messages, text and voice, along with the "not ready yet" cooldown errors. This is on by default.
+
+On Retail these messages never show at all: `UIErrorsFrame` keeps a `BLACK_LISTED_MESSAGE_TYPES` table with every "out of ..." and cooldown error in it, and a blacklisted type gets neither text nor sound. Forever replaces that table with a single entry (`Blizzard_UIErrorsFrame/Camelot/UIErrorsFrameOverrides.lua`) to bring the Classic messages and voices back. The only one it throttles is "Not enough mana", so energy and rage users get the worst of it.
+
+Sink uses Blizzard's own switch for that table, `UIErrorsFrame:SetMessageTypeEnabled(type, false)`, on each muted type. Turning the mute off puts every type back the way it was. Nothing else about the frame is touched, so other errors show and sound exactly as before.
+
+The muted types are listed at the top of `Errors.lua` by their `LE_GAME_ERR_*` name: every "Not enough ..." resource error and the two "not ready yet" cooldown errors. "Out of range" and "You are facing the wrong way" are not muted; they tell you something the action bar does not. Names the client does not know are skipped.
+
+| Command | Effect |
+| --- | --- |
+| `/sink errors` | Whether the mute is on and how many errors it hid this session |
+| `/sink errors on`, `/sink errors off`, `/sink errors toggle` | Turn the mute on or off. Also a checkbox under Options > AddOns > Sink |
+| `/sink errors list` | The messages that are muted |
+
+To silence every error voice line instead, including ones Sink leaves alone, untick **Error Speech** under Options > Sound. That is a game setting, keeps the red text, and needs no addon.
+
+## Map icons
+
+Icons on the world map with a tooltip on mouseover. The first two mark Martine Tramblay, the fishing supplies vendor in Brill, and Archibald, the weapon master in Undercity. Martine's tooltip also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. On by default.
+
+Forever runs the Retail map, which is built for this. `WorldMapFrame` holds a list of data providers; whenever the map opens or changes zone it asks each one to refresh, and the provider asks the map for pins from a named template (`SinkMapPinTemplate` in `MapPins.xml`, the one XML file, because the map's pin pools need a virtual template). A pin is an ordinary frame the map positions from normalized coordinates, and the map wires its mouse scripts to the pin's `OnMouseEnter` and `OnMouseLeave` methods, which is where the tooltip lives.
+
+Each icon is drawn round, inside a ring in Sink's identity colour (see below) with a dark outline. That is three textures in the template, each clipped to a circle by Blizzard's `CircleMask` atlas, the mask the party and totem frames use, so no artwork ships with the addon. Pixel snapping is off on the textures and masks, as on Blizzard's small round frames, which keeps the circle edges smooth at this size. The ring turns white under the mouse.
+
+Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID:
+
+```lua
+ns.mapPins = {
+    [1420] = { -- Tirisfal Glades
+        { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
+          icon = "Interface\\Icons\\Trade_Fishing" },
+    },
+    [1458] = { -- Undercity
+        { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
+          icon = "Interface\\Icons\\Ability_DualWield" },
+    },
+}
+```
+
+`note` is an extra tooltip line and `npc` ties the icon to a vendor in `Recipes.lua`. Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
+
+| Command | Effect |
+| --- | --- |
+| `/sink map` | List the icons by zone |
+| `/sink map add <name>` | Put an icon where you stand, saved per character (`SinkDB.mapPins`) |
+| `/sink map remove <name>` | Remove an icon you added in game |
+| `/sink map on`, `/sink map off` | Show or hide the icons |
+
+Like the other in-game additions, icons added with `/sink map add` are lost on logout until the beta's saved-variables bug is fixed, so paste the printed line into `MapPins.lua` to keep one.
+
+## Developer dumps
+
+`/sink dump ...` prints the IDs and coordinates the built-in tables are made of, in a form you can paste. These change nothing; they are for filling in `MapPins.lua`, `Recipes.lua` and `QuestItems.lua`.
+
+| Command | Effect |
+| --- | --- |
+| `/sink dump loc` | Zone, map ID and parent map, subzone, and your position both as percent and as the 0 to 1 values, then a map icon line to paste |
+| `/sink dump target` | Your target's name, NPC ID, GUID and tooltip lines, then a map icon line with the NPC ID, name and title filled in |
+
+The client only reports positions for the player and group members, never for an NPC, so `/sink dump target` uses your own position for the icon line; stand next to the NPC first. For a vendor that never moves that is exact. Wowhead's page source carries one-decimal coordinates for every spawn point (`g_mapperData`) and the same map ID, which is where the built-in entries came from.
+
+## Identity colour
+
+Everything Sink prints or draws uses one colour, `ns.accent` at the top of `Core.lua`: the `Sink:` chat prefix, the `Sink:` lines on tooltips, vendor names in the recipe list and its window title, and the ring around each map icon. Change it there and everything follows; `ns.Accent(text)` wraps a string in it for chat and tooltips. Colours that carry meaning are not tied to it: green on and red off, the yellow quest item warnings, the check and cross marks.
+
+The value is oklch(0.558 0.146 230), which in sRGB is 0, 0.505, 0.721 or `#0081B8`; the red channel lands just below zero, so the colour sits a hair outside sRGB and clamps.
+
+## How it works
+
+Player frame centering is off until you enable it with `/sink on` or the checkbox under Options > AddOns > Sink, so installing the addon moves nothing by itself. Once on, the choice is saved.
+
+Forever runs the Retail (Mainline) UI, so the player frame is an Edit Mode system frame. Edit Mode re-anchors it every time a layout is applied: at login, on a layout switch, when Edit Mode closes, on a UI scale change. It does that through a Lua wrapper on the frame, so `hooksecurefunc(PlayerFrame, "SetPoint", ...)` fires after every Blizzard reposition, and the addon immediately puts the frame back at the configured spot.
+
+Three rules keep this safe:
+
+- **Combat.** The player frame is protected, so nothing is moved while `InCombatLockdown()` is true. The move is retried on `PLAYER_REGEN_ENABLED`.
+- **Edit Mode.** While Edit Mode is open the addon stays out of the way so you can still drag the frame. When Edit Mode closes (`EventRegistry` event `EditMode.Exit`) the frame is re-centered.
+- **Re-entrancy.** The addon's own `SetPoint` call is skipped by the hook through an `applying` flag, so there is no loop.
+
+Offsets are stored in UIParent units and divided by the frame's scale before `SetPoint`, exactly as Edit Mode's own `ApplySystemAnchor` does, so the "Frame Size" setting in Edit Mode does not shift the frame.
+
+## Files
+
+| File | Purpose |
+| --- | --- |
+| `Sink_Camelot.toc` | Manifest. `_Camelot` is Forever's game-type suffix, so this addon only loads on Forever. Interface `16001` |
+| `Core.lua` | Saved variables, the positioning logic, event handling, the `SetPoint` hook |
+| `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
+| `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
+| `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
+| `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip, the data provider, the `/sink map` commands |
+| `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
+| `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
+| `Options.lua` | `/sink` commands, the options panel, the addon compartment click |
+| `.luacheckrc` | Globals list for `luacheck`, if you lint |
+| `scripts/package.sh` | Builds `dist/release/Sink.zip` from the files the TOC lists |
+| `.github/workflows/release.yml` | GitHub Actions: builds the zip and attaches it to a release named after the version on every `v*` tag |
+| `.gitattributes` | Keeps GitHub's automatic "Source code" archives to the addon files only |
+
+The Lua files share a private table through the `local ADDON_NAME, ns = ...` idiom; `Core.lua` fills it and the other files use it, which is why the TOC lists `Core.lua` first.
+
+## Releasing
+
+Users should only ever get the addon files, so two things keep the README, the lint config and the tooling out of downloads.
+
+**Tagged releases** go through GitHub Actions. Nothing needs to be switched on or configured; the workflow's own token is allowed to create releases. Tag the commit whose TOC carries the matching version, then push the tag:
+
+```bash
+git tag v0.0.1 && git push origin v0.0.1
+```
+
+The workflow in `.github/workflows/release.yml` checks that the tag matches `## Version` in the TOC, builds `Sink.zip` (a `Sink/` folder holding the TOC and the files it lists, nothing else), creates the release **Sink 0.0.1** for that tag with generated notes, and attaches the zip. Edit the notes on the web afterwards if you want.
+
+**GitHub's own "Source code" links** on tags and releases are built with `git archive`, which honours `.gitattributes`. The file marks everything except the addon files as `export-ignore`, so those archives are clean too. Their top-level folder is named after the repository and tag, `sink-0.0.1`, so anyone using one has to rename it to `Sink`; point people at `Sink.zip` instead.
+
+**Locally**, `scripts/package.sh` builds the same `dist/release/Sink.zip` from the committed tree, so you can hand someone a zip without tagging. It reads the file list from the TOC, so a new Lua file only needs to be added there.
+
+## Forever-specific notes (beta build 1.60.1.69893)
+
+- **Interface number** is `16001`. Check yours in game with `/dump select(4, GetBuildInfo())`.
+- **TOC suffix** `_Camelot` loads only on Forever. `_Mainline` also loads on Forever but would load on Midnight too. A plain `Sink.toc` with `## Interface: 16001` works as well.
+- **It is the Retail API.** Forever shares the vast majority of the 12.1.5 (Midnight) API, including Edit Mode, `C_*` namespaces and the Settings panel. The old Classic globals such as `GetSpellInfo`, `UnitAura` and `GetTalentInfo` do not exist. Port from Retail code, not Classic code. Note that `WOW_PROJECT_ID == WOW_PROJECT_MAINLINE` on Forever, so do not use that constant to tell the two apart; use the interface number.
+- **Beta bug: saved variables never load.** The client writes `SavedVariables` on logout but does not read them back at login, so your offsets reset each session for now. Nothing in the addon needs to change; it will persist once Blizzard fixes the client.
+- **Beta bug: Lua error cap.** After 100 errors in a session the client stops reporting any. If Sink seems silent, check that another addon is not flooding errors, then `/reload`.
+- **Unknown events throw.** `RegisterEvent` with a name the client does not know raises an error and aborts the rest of the file. `Core.lua` wraps the one uncertain registration in `pcall`; do the same for anything you add.
+- **Secure snippets are broken on the beta** (`loadstring_untainted` is missing). That breaks action-bar and click-cast addons, not this one. Avoid `SecureHandler*` templates until Blizzard fixes it.
+- **Midnight's combat restrictions apply.** Aura data, creature health and damage numbers are "secret" values in combat. Irrelevant to frame positioning, relevant to anything you add later.
+- No addon site has a Forever game flavor yet, so distribute as a zip or a git checkout.
+
+## Sources
+
+- [TOC format](https://warcraft.wiki.gg/wiki/TOC_format) on Warcraft Wiki: the `_Camelot` suffix, interface numbers, directives.
+- [forever-addon-kit](https://github.com/Thunderz96/forever-addon-kit): day-one measurements of the beta client, including the bugs above and a captured API baseline.
+- [AnyMove Forever](https://github.com/Pirson-s-Addons/AnyMoveForever): a working Forever addon that moves Edit Mode frames the same way.
+- [wow-ui-source, `forever` branch](https://github.com/Gethe/wow-ui-source/tree/forever): Blizzard's UI code for Forever. `Blizzard_EditMode/Shared/EditModeSystemTemplates.lua` has `ApplySystemAnchor` and `SetPointOverride`; `Blizzard_Settings_Shared/Blizzard_Settings.lua` has the Settings API used in `Options.lua`; `Blizzard_UIErrorsFrame/Mainline/UIErrorsFrame.lua` and its `Camelot/UIErrorsFrameOverrides.lua` are what `Errors.lua` works around; `Blizzard_MapCanvas/MapCanvas_DataProviderBase.lua` is the pin and data provider API `MapPins.lua` uses.
+- [World of Warcraft: Forever](https://warcraft.wiki.gg/wiki/World_of_Warcraft:_Forever) on Warcraft Wiki for release and beta dates.
+- [wago.tools UiMap](https://wago.tools/db2/UiMap?build=1.60.1.69893): the Forever build's map table, for the zone IDs `MapPins.lua` is keyed by.

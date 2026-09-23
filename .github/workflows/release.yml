@@ -1,0 +1,48 @@
+# Builds Sink.zip and attaches it to a GitHub release whenever a tag such as
+# v0.0.1 is pushed. The release is titled after the version: "Sink 0.0.1".
+# Nothing needs to be configured in the repository; the workflow's own token
+# is allowed to create releases by the permissions block below.
+#
+#   git tag v0.0.1 && git push origin v0.0.1
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@v4
+
+      - name: Check that the TOC version matches the tag
+        id: version
+        run: |
+          toc=$(sed -n 's/^## Version: *//p' Sink_Camelot.toc | tr -d '\r')
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$toc" != "$tag" ]; then
+            echo "Sink_Camelot.toc says version $toc but the tag is $GITHUB_REF_NAME." >&2
+            echo "Update '## Version:' in the TOC, commit, and move the tag." >&2
+            exit 1
+          fi
+          # Version without the leading v, for the release title.
+          echo "number=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Build Sink.zip from the files the TOC lists
+        run: bash scripts/package.sh
+
+      - name: Create the release and attach Sink.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/release/Sink.zip \
+            --verify-tag \
+            --title "Sink ${{ steps.version.outputs.number }}" \
+            --generate-notes
