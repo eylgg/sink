@@ -30,6 +30,7 @@ local _, ns = ...
 -- inside. The entrance is on uiMap map at x, y.
 ns.dungeons = {
     [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148 },
+    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 19, map = 1454, x = 0.5302, y = 0.4876 },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y; one
@@ -37,6 +38,7 @@ ns.dungeons = {
 ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020 },
     [250660] = { name = "The Baron", instance = 2999 },
+    [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782 },
 }
 
 -- Items you loot from the ground that start a quest, by item ID, with the
@@ -59,6 +61,11 @@ ns.quests = {
     [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
     [97291] = { name = "Unending Torment", faction = "Horde", start = { after = 97290 } },
     [97292] = { name = "Unending Torment", faction = "Horde", start = { after = 97291 } },
+    -- Hidden Enemies: part 2 is done in Ragefire Chasm; part 1 is from Thrall.
+    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
+    [5728] = { name = "Hidden Enemies", faction = "Horde", dungeon = 389, start = { after = 5727 } },
+    [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
+    [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
 }
 
 --------------------------------------------------------------------------------
@@ -171,7 +178,7 @@ local function ForMyFaction(quest)
     return faction == nil or faction == quest.faction
 end
 
--- The level a quest asks for: its own where known, else its dungeon's.
+-- The level a quest asks for: its own where known, else its dungeon's, else none.
 local function MinLevel(quest)
     local dungeon = quest.dungeon and ns.dungeons[quest.dungeon]
     return quest.minLevel or (dungeon and dungeon.minLevel) or 0
@@ -195,15 +202,35 @@ function ns.HasQuestToGive(npcID)
     return false
 end
 
+-- Where a quest's chain begins for you: the quest itself when an NPC gives
+-- it, else back along after to the first quest you have not done yet, whose
+-- giver starts you on the way. nil when that quest has no giver.
+local function ChainStart(questID)
+    local quest = ns.quests[questID]
+    local start = quest and quest.start or {}
+    if start.npc then
+        return questID
+    end
+    if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
+        return ChainStart(start.after)
+    end
+    return nil
+end
+
 -- Of these quests, the ones you can go and pick up from an NPC who has a
--- place on the map, alphabetical: { questID, title, npcID, npc }. These are
--- the quests whose givers have a "Dungeon Quest" pin.
+-- place on the map, alphabetical: { questID, title, npcID, npc }. For a
+-- follow-up that is the first undone quest of its chain, such as Hidden
+-- Enemies from Thrall for the Ragefire Chasm part. These are the quests
+-- whose givers have a "Dungeon Quest" pin.
 function ns.QuestsToFetch(questIDs)
-    local list = {}
-    for _, questID in ipairs(questIDs) do
-        local start = ns.quests[questID] and ns.quests[questID].start
-        local npc = start and start.npc and ns.npcs[start.npc]
-        if npc and npc.map and Available(questID) then
+    local list, seen = {}, {}
+    for _, dungeonQuestID in ipairs(questIDs) do
+        local questID = ChainStart(dungeonQuestID)
+        local start = questID and ns.quests[questID].start
+        local npc = start and ns.npcs[start.npc]
+        if npc and npc.map and not seen[questID] and Available(questID)
+            and QuestState(dungeonQuestID) == NOT_TAKEN then
+            seen[questID] = true
             list[#list + 1] = { questID = questID, title = QuestTitle(questID), npcID = start.npc, npc = npc }
         end
     end
