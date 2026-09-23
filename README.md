@@ -119,7 +119,7 @@ To silence every error voice line instead, including ones Sink leaves alone, unt
 
 ## Map icons
 
-Icons on the world map with a tooltip on mouseover. The built-in ones mark Martine Tramblay, the fishing supplies vendor in Brill, three people in Undercity: Archibald the weapon master, James Van Brunt the expert blacksmith and Brom Killian the mining trainer, and Hanashi, the weapon master in Orgrimmar. The tooltip says what the icon is for, "Fishing Supplies" or "Weapon Master", in Sink's colour; Martine's also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. Clicking an icon that marks an NPC targets them. On by default.
+Icons on the world map with a tooltip on mouseover. The built-in ones mark Martine Tramblay, the fishing supplies vendor in Brill, three people in Undercity: Archibald the weapon master, James Van Brunt the expert blacksmith and Brom Killian the mining trainer, and Hanashi and Sayoc, the two weapon masters in Orgrimmar. The tooltip says what the icon is for, "Fishing Supplies" or "Weapon Master", in Sink's colour; Martine's also lists the recipes she sells and whether you know them, the same lines the recipe module puts on her own tooltip. Clicking an icon that marks an NPC targets them. On by default.
 
 Forever runs the Retail map, which is built for this. `WorldMapFrame` holds a list of data providers; whenever the map opens or changes zone it asks each one to refresh, and the provider asks the map for pins from a named template (`SinkMapPinTemplate` in `MapPins.xml`, the one XML file, because the map's pin pools need a virtual template). A pin is an ordinary frame the map positions from normalized coordinates, and the map wires its mouse scripts to the pin's `OnMouseEnter` and `OnMouseLeave` methods, which is where the tooltip lives.
 
@@ -145,6 +145,8 @@ ns.mapPins = {
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
+          icon = "Interface\\Icons\\Ability_DualWield" },
+        { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
           icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }

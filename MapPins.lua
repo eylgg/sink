@@ -49,6 +49,8 @@ ns.mapPins = {
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
           icon = "Interface\\Icons\\Ability_DualWield" },
+        { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
+          icon = "Interface\\Icons\\Ability_DualWield" },
     },
 }
 
