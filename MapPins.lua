@@ -51,6 +51,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Ability_DualWield" },
         { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
           icon = "Interface\\Icons\\Ability_DualWield" },
+        { npc = 1383, name = "Snarl", note = "Expert Blacksmith", x = 0.7960, y = 0.2330,
+          icon = "Interface\\Icons\\Trade_BlackSmithing" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
