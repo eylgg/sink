@@ -66,6 +66,11 @@ ns.quests = {
     [5728] = { name = "Hidden Enemies", faction = "Horde", dungeon = 389, start = { after = 5727 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
+    [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", dungeon = 389 },
+    [5724] = { name = "Returning the Lost Satchel", faction = "Horde", start = { after = 5722 } },
+    [5761] = { name = "Slaying the Beast", faction = "Horde", dungeon = 389 },
+    [5725] = { name = "The Power to Destroy...", faction = "Horde", dungeon = 389 },
+    [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", dungeon = 389 },
 }
 
 --------------------------------------------------------------------------------
