@@ -23,7 +23,9 @@ local _, ns = ...
 
 -- Weapon skill lines, by the skill line IDs Forever's Skills panel tracks. The
 -- names are what the trainer window and the skill list call them; some go by
--- both the vanilla name and the later one, so both are matched.
+-- both the vanilla name and the later one, so both are matched. level is the
+-- character level the trainer asks for, where known; the trainer window
+-- records the others as you visit.
 ns.weaponSkills = {
     { id = 43,  names = { "One-Handed Swords", "Swords" } },
     { id = 55,  names = { "Two-Handed Swords" } },
@@ -34,7 +36,7 @@ ns.weaponSkills = {
     { id = 173, names = { "Daggers" } },
     { id = 162, names = { "Fist Weapons", "Unarmed" } }, -- Forever folds fist weapons into the unarmed line
     { id = 136, names = { "Staves" } },
-    { id = 229, names = { "Polearms" } },
+    { id = 229, names = { "Polearms" }, level = 20 },
     { id = 45,  names = { "Bows" } },
     { id = 46,  names = { "Guns" } },
     { id = 226, names = { "Crossbows" } },
@@ -103,6 +105,18 @@ end
 local function SkillName(skill)
     local info = Known(skill)
     return (info and info.name) or skill.names[1]
+end
+
+-- The level the skill needs: what a trainer window showed, else the table.
+local function SkillLevel(skill)
+    local seen = ns.db and ns.db.weaponLevels
+    return (seen and seen[skill.id]) or skill.level or 0
+end
+
+-- "Polearms (20)" when the skill needs a level, else just the name.
+local function NameWithLevel(skill)
+    local level = SkillLevel(skill)
+    return SkillName(skill) .. (level > 0 and (" (" .. level .. ")") or "")
 end
 
 -- Skill IDs the player's class can learn, as a set; nil when the class is not
@@ -232,7 +246,7 @@ local function AddMasterLines(tooltip, npcID)
         if Known(skill) then
             tooltip:AddLine(CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
         elseif ClassCanLearn(skill) then
-            tooltip:AddLine(CROSS .. " " .. name, ns.missing.r, ns.missing.g, ns.missing.b)
+            tooltip:AddLine(CROSS .. " " .. NameWithLevel(skill), ns.missing.r, ns.missing.g, ns.missing.b)
         else
             tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
         end
@@ -262,20 +276,31 @@ end
 -- The trainer window: remember what a master teaches
 --------------------------------------------------------------------------------
 
--- Weapon skills the open trainer window lists: { skill, name, type }, the type
--- being "available", "unavailable" or "used" as the window shows it. The
--- window's own filter boxes decide what is listed at all.
+-- Weapon skills the open trainer window lists: { skill, name, type, level },
+-- the type being "available", "unavailable" or "used" as the window shows it.
+-- The window only lists what your class can take, and its own filter boxes
+-- narrow that further.
 local function TrainerWeaponSkills()
     local rows = {}
     local count = GetNumTrainerServices and GetNumTrainerServices() or 0
     for index = 1, count do
-        local name, serviceType = GetTrainerServiceInfo(index)
+        local name, serviceType, _, reqLevel = GetTrainerServiceInfo(index)
         local skill = name and skillByName[name:lower()]
         if skill and serviceType ~= "header" then
-            rows[#rows + 1] = { skill = skill, name = name, type = serviceType }
+            rows[#rows + 1] = { skill = skill, name = name, type = serviceType, level = tonumber(reqLevel) or 0 }
         end
     end
     return rows
+end
+
+-- Save the level each listed skill needs.
+local function RememberLevels(rows)
+    ns.db.weaponLevels = ns.db.weaponLevels or {}
+    for _, row in ipairs(rows) do
+        if row.level > 0 then
+            ns.db.weaponLevels[row.skill.id] = row.level
+        end
+    end
 end
 
 -- Save what this master teaches so it shows in tooltips and lists.
@@ -314,6 +339,7 @@ local function OnTrainerShow()
         return -- a class or profession trainer
     end
 
+    RememberLevels(rows)
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
     if npcID then
         RememberMaster(npcID, UnitName and UnitName("npc") or nil, rows)
@@ -344,6 +370,10 @@ local function ListSkills()
                 local cities = CitiesTeaching(skill)
                 where = #cities > 0 and table.concat(cities, ", ") or "no weapon master on your side listed"
             end
+            local level = SkillLevel(skill)
+            if level > 0 then
+                where = level .. ", " .. where
+            end
             lines[#lines + 1] = ("  %s %s%s|r (%s)"):format(CROSS, ns.missing.hex, SkillName(skill), where)
         end
     end
@@ -370,7 +400,7 @@ local function ListMasters()
             if Known(skill) then
                 print(("    %s %s%s|r"):format(CHECK, ns.known.hex, name))
             elseif ClassCanLearn(skill) then
-                print(("    %s %s%s|r"):format(CROSS, ns.missing.hex, name))
+                print(("    %s %s%s|r"):format(CROSS, ns.missing.hex, NameWithLevel(skill)))
             else
                 print("    " .. ns.grey.hex .. name .. "|r")
             end

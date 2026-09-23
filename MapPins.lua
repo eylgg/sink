@@ -133,6 +133,11 @@ SinkMapPinMixin = CreateFromMixins(MapCanvasPinMixin or {})
 -- enter and leave to the pin so the tooltip still works, and lets right clicks
 -- through so the map still zooms out.
 function SinkMapPinMixin:OnLoad()
+    -- Pins are children of the zoomed canvas. With scaling limits set, the map
+    -- divides the pin's scale by the canvas scale on every zoom change; equal
+    -- start and end values keep it the same size on screen at any zoom.
+    self:SetScalingLimits(1, 1.0, 1.0)
+
     local button = CreateFrame("Button", nil, self, "SecureActionButtonTemplate")
     button:SetAllPoints(self)
     -- The secure handler runs the action once, on down or up per ActionButtonUseKeyDown.

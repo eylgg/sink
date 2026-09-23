@@ -114,7 +114,7 @@ local function DumpTrainer()
     end
     local name = UnitName and UnitName("npc") or "?"
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
-    ns.Print(("trainer %s%s, %d services as the window's filters show them"):format(
+    ns.Print(("trainer %s%s, %d services offered to this character (the window lists only what your class can take)"):format(
         name, npcID and (", NPC " .. npcID) or "", count))
     local ids = {}
     for index = 1, count do
@@ -128,7 +128,7 @@ local function DumpTrainer()
         end
     end
     if npcID and #ids > 0 then
-        print(("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua"):format(
+        print(("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view"):format(
             npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", ")))
     end
 end
