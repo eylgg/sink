@@ -83,6 +83,12 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Engraving" },
         { npc = 11066, name = "Jhag", note = "Journeyman Enchanter", x = 0.5347, y = 0.3855,
           icon = "Interface\\Icons\\Trade_Engraving" },
+        { npc = 11046, name = "Whuut", note = "Journeyman Alchemist", x = 0.5579, y = 0.3290,
+          icon = "Interface\\Icons\\Trade_Alchemy" },
+        { npc = 5811, name = "Kamari", note = "Journeyman Leatherworker", x = 0.6328, y = 0.4475,
+          icon = "Interface\\Icons\\Trade_LeatherWorking" },
+        { npc = 10266, name = "Ug'thok", note = "Journeyman Blacksmith", x = 0.8077, y = 0.2370,
+          icon = "Interface\\Icons\\Trade_BlackSmithing" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -119,6 +125,84 @@ end
 
 local function Coords(x, y)
     return ("%.1f, %.1f"):format(x * 100, y * 100)
+end
+
+-- A profession trainer's rank says how far they teach. A note that starts
+-- with one gets that cap: "Journeyman Blacksmith (150)". Other notes stay as
+-- they are.
+local RANK_CAPS = { Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300 }
+
+local function NoteText(pin)
+    local note = pin.note or pin.name
+    local cap = RANK_CAPS[note:match("^(%a+)") or ""]
+    return cap and (note .. " (" .. cap .. ")") or note
+end
+
+-- A city has several trainers per profession, one per rank. For each
+-- profession on a map only the one you need is drawn: the lowest rank whose
+-- cap is above your current maximum in that profession; the lowest rank of
+-- all if you do not have the profession; the highest if you have outgrown
+-- every one on the map. The word after the rank names the profession, and
+-- this maps it to the skill line that says how far you are.
+local PROFESSION_LINES = {
+    alchemist = 171, blacksmith = 164, cook = 185, enchanter = 333, engineer = 202, fisherman = 356,
+    herbalist = 182, leatherworker = 165, miner = 186, skinner = 393, tailor = 197,
+}
+
+-- The rank cap and profession word of a trainer pin, or nil for any other pin.
+local function TrainerRank(pin)
+    local rank, profession = (pin.note or ""):match("^(%a+)%s+(.+)$")
+    local cap = rank and RANK_CAPS[rank]
+    if not cap then
+        return nil
+    end
+    return cap, profession:lower()
+end
+
+-- Your current maximum in a profession, or nil if you do not have it.
+local function ProfessionMax(lineID)
+    if not (lineID and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+        return nil
+    end
+    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, lineID)
+    if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
+        return info.maxRank
+    end
+    return nil
+end
+
+local function ChooseTrainer(profession, group)
+    table.sort(group, function(a, b)
+        return a.cap < b.cap
+    end)
+    local max = ProfessionMax(PROFESSION_LINES[profession])
+    if not max then
+        return group[1].pin
+    end
+    for _, entry in ipairs(group) do
+        if entry.cap > max then
+            return entry.pin
+        end
+    end
+    return group[#group].pin
+end
+
+-- The pins to draw on a map: every plain pin, and one trainer per profession.
+local function PinsToShow(mapID)
+    local shown, groups = {}, {}
+    EachPin(mapID, function(pin)
+        local cap, profession = TrainerRank(pin)
+        if cap then
+            groups[profession] = groups[profession] or {}
+            table.insert(groups[profession], { pin = pin, cap = cap })
+        else
+            shown[#shown + 1] = pin
+        end
+    end)
+    for profession, group in pairs(groups) do
+        shown[#shown + 1] = ChooseTrainer(profession, group)
+    end
+    return shown
 end
 
 -- Map ID and position (0 to 1) of a unit on the player's current map, or nil.
@@ -249,7 +333,7 @@ function SinkMapPinMixin:OnMouseEnter()
         return
     end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText(pin.note or pin.name, ns.accent.r, ns.accent.g, ns.accent.b)
+    GameTooltip:SetText(NoteText(pin), ns.accent.r, ns.accent.g, ns.accent.b)
     if pin.npc and ns.AddRecipeVendorLines then
         ns.AddRecipeVendorLines(GameTooltip, pin.npc)
     end
@@ -280,9 +364,9 @@ function SinkMapDataProviderMixin:RefreshAllData()
         return
     end
     local map = self:GetMap()
-    EachPin(map:GetMapID(), function(pin)
+    for _, pin in ipairs(PinsToShow(map:GetMapID())) do
         map:AcquirePin(TEMPLATE, pin)
-    end)
+    end
 end
 
 -- Redraw our icons if the map is open; a closed map refreshes itself on show.
@@ -349,7 +433,7 @@ local function ListPins()
     for _, mapID in ipairs(mapIDs) do
         print(("  %s (%d)"):format(MapName(mapID), mapID))
         EachPin(mapID, function(pin)
-            print(("    %s at %s%s"):format(pin.name, Coords(pin.x, pin.y), pin.note and (", " .. pin.note) or ""))
+            print(("    %s at %s%s"):format(pin.name, Coords(pin.x, pin.y), pin.note and (", " .. NoteText(pin)) or ""))
         end)
     end
 end
@@ -423,11 +507,15 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+-- Which trainer to draw depends on your skills; redraw when they change.
+pcall(frame.RegisterEvent, frame, "SKILL_LINES_CHANGED")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
         refreshAfterCombat = false
+        Refresh()
+    elseif event == "SKILL_LINES_CHANGED" then
         Refresh()
     end
 end)
