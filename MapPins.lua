@@ -39,10 +39,12 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
 -- for one whose note is a title such as "High Priest". A dungeon has
 -- dungeon = true, minLevel and maxLevel (shown after the name as "11 - 24")
--- and quests, a list of { id, name } whose names stand in until the client
--- has the quest cached. A quest you get inside, from a drop, adds start, how
--- to get it; it shows as "Name (start)" and is yellow until it is done, never
--- red. atlas draws a map atlas instead of an icon texture.
+-- and quests, a list of { id, name, faction } whose names stand in until
+-- the client has the quest cached; faction is "Horde", "Alliance" or "Both"
+-- (the default), and only quests for your faction are listed. A quest you get
+-- inside, from a drop, adds start, how to get it; it shows as "Name (start)"
+-- and is yellow until it is done, never red. atlas draws a map atlas instead
+-- of an icon texture.
 -- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
@@ -60,9 +62,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Coin_01" },
         { name = "Ruins of Lordaeron", dungeon = true, minLevel = 11, maxLevel = 24, x = 0.7261, y = 0.1148,
           atlas = "Dungeon", quests = {
-              { id = 92401, name = "A Frightened Request" },
+              { id = 92421, name = "Light's Justice", faction = "Horde" },
+              { id = 95216, name = "The New Plague", faction = "Horde" },
               -- The Baron (NPC 250660) drops the head that starts the chain (Quests.lua).
-              { id = 97288, name = "Unending Torment", start = "Kill \"The Baron\" inside" },
+              { id = 97288, name = "Unending Torment", faction = "Horde", start = "Kill \"The Baron\" inside" },
           } },
     },
     [1454] = { -- Orgrimmar
@@ -488,22 +491,33 @@ local function QuestState(questID)
     return NOT_TAKEN
 end
 
--- One line per quest: red cross for one not in your log, yellow waiting mark
+-- Whether a quest is for the player's faction: "Horde", "Alliance" or "Both".
+local function ForMyFaction(quest)
+    if not quest.faction or quest.faction == "Both" then
+        return true
+    end
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    return faction == nil or faction == quest.faction
+end
+
+-- One line per quest for your faction: red cross for one not in your log, yellow waiting mark
 -- for one in it, green check for one done; in that order, each group
 -- alphabetical. A quest started inside the dungeon is yellow until done,
 -- with how to get it after the name.
 local function AddQuestLines(tooltip, quests)
     local rows = {}
     for _, quest in ipairs(quests) do
-        local state = QuestState(quest.id)
-        if quest.start and state == NOT_TAKEN then
-            state = IN_LOG
+        if ForMyFaction(quest) then
+            local state = QuestState(quest.id)
+            if quest.start and state == NOT_TAKEN then
+                state = IN_LOG
+            end
+            local title = QuestTitle(quest.id, quest.name)
+            if quest.start then
+                title = title .. " (" .. quest.start .. ")"
+            end
+            rows[#rows + 1] = { state = state, title = title }
         end
-        local title = QuestTitle(quest.id, quest.name)
-        if quest.start then
-            title = title .. " (" .. quest.start .. ")"
-        end
-        rows[#rows + 1] = { state = state, title = title }
     end
     table.sort(rows, function(a, b)
         if a.state ~= b.state then
