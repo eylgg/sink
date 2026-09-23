@@ -20,10 +20,11 @@
 -- own ping, so the ping marker shows where it stands. Both are protected
 -- actions an addon cannot perform itself, so each pin carries a secure action
 -- button as an overlay that runs a macro on a real click: clear the target,
--- "/targetexact <name>", then "/ping [@target,exists]", which pings only when
--- the NPC was found. Targeting by name finds the NPC when it is loaded around
--- you, so this is for "which one is the blacksmith" in town, not for locating
--- someone across the zone.
+-- "/targetexact <name>", "/ping [@target,exists]" so only a found NPC is
+-- pinged, and "/targetlasttarget [@target,noexists]" so a miss gives you your
+-- previous target back. Targeting by name finds the NPC when it is loaded
+-- around you, so this is for "which one is the blacksmith" in town, not for
+-- locating someone across the zone.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -62,6 +63,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Food_15" },
         { npc = 3373, name = "Arnok", note = "First Aid Trainer", x = 0.3418, y = 0.8458,
           icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice" },
+        { npc = 3404, name = "Jandi", note = "Herbalism Trainer", x = 0.5562, y = 0.3946,
+          icon = "Interface\\Icons\\Trade_Herbalism" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -194,9 +197,16 @@ function SinkMapPinMixin:SetClickTarget(name)
     end
     if name then
         button:SetAttribute("type", "macro")
-        -- No ping type means the contextual ping, the plain one. The exists
-        -- check keeps a failed target from pinging whatever was targeted before.
-        button:SetAttribute("macrotext", ("/cleartarget\n/targetexact %s\n/ping [@target,exists]"):format(name))
+        -- Clearing first makes the previous target the "last target". If the
+        -- NPC is not found, nothing is pinged and the last line puts the
+        -- previous target back; if it is found, that line is skipped. No ping
+        -- type means the contextual ping, the plain one.
+        button:SetAttribute("macrotext", table.concat({
+            "/cleartarget",
+            "/targetexact " .. name,
+            "/ping [@target,exists]",
+            "/targetlasttarget [@target,noexists]",
+        }, "\n"))
         button:Show()
     else
         button:SetAttribute("type", nil)
