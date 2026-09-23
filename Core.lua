@@ -3,7 +3,7 @@
 --
 -- Keeps PlayerFrame horizontally centered on screen in World of Warcraft: Forever.
 -- Off by default: nothing is moved until "/sink on" or the checkbox in the
--- options panel enables it, and that choice is saved.
+-- options window enables it, and that choice is saved.
 --
 -- Forever (interface 16001, game type "camelot") runs the Retail/Mainline UI, so
 -- PlayerFrame is an Edit Mode "system" frame. Edit Mode re-anchors it whenever a
@@ -45,6 +45,7 @@ ns.defaults = {
     mapIcons = true,           -- icons with tooltips on the world map
     mapPins = {},              -- icons added in game: [uiMapID] = { { name = ..., x = ..., y = ... }, ... }
     showAllTrainers = false,   -- every profession trainer, not just the ones for your professions
+    showAllClassTrainers = false, -- every class trainer, not just your class's
 
     -- Weapons.lua
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
@@ -212,9 +213,6 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         end
     elseif event == "PLAYER_LOGIN" then
         InstallHooks()
-        if ns.SetupOptions then
-            ns.SetupOptions()
-        end
         ns.Center()
     elseif event == "PLAYER_ENTERING_WORLD" then
         ns.Center()

@@ -33,7 +33,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | `/sink y <n>` | Height of the frame's bottom edge above the bottom of the screen, 0 to 800. Default 250, which matches Blizzard's default layout height |
 | `/sink reset` | Back to the default offsets |
 | `/sink center` | Re-apply the position right now |
-| `/sink config` | Open the options panel (also under Options > AddOns > Sink, with a Map Pins page beneath it) |
+| `/sink config` | Open the options window, which also opens by clicking Sink in the addon compartment |
 | `/sink items ...` | Quest item warnings, see below |
 | `/sink recipes ...` | Recipe vendor tooltips, see below |
 | `/sink weapons ...` | Weapon skills and weapon masters, see below |
@@ -113,7 +113,7 @@ The muted types are listed at the top of `Errors.lua` by their `LE_GAME_ERR_*` n
 | Command | Effect |
 | --- | --- |
 | `/sink errors` | Whether the mute is on and how many errors it hid this session |
-| `/sink errors on`, `/sink errors off`, `/sink errors toggle` | Turn the mute on or off. Also a checkbox under Options > AddOns > Sink |
+| `/sink errors on`, `/sink errors off`, `/sink errors toggle` | Turn the mute on or off. Also a checkbox in the options window |
 | `/sink errors list` | The messages that are muted |
 
 To silence every error voice line instead, including ones Sink leaves alone, untick **Error Speech** under Options > Sound. That is a game setting, keeps the red text, and needs no addon.
@@ -130,7 +130,7 @@ Each icon is drawn round, inside a one-pixel ring in Sink's identity colour (see
 
 Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Each one has `x` and `y`, an `icon` texture, a `note` that becomes the tooltip's text, a `name` shown when there is no note and used by the list and `/sink map remove`, and an `npc` ID that ties it to a vendor in `Recipes.lua` or a weapon master in `Weapons.lua`. A note that starts with a profession rank, Apprentice, Journeyman, Expert or Artisan, gets the skill cap that rank teaches to, such as "Journeyman Blacksmith (150)". A city has several trainers per profession, one per rank, and only the one you need is drawn: the lowest rank whose cap is above your current maximum in that profession, so at Blacksmithing 150 you see the Expert; the lowest rank of all if you do not have the profession; the highest if you have outgrown every one on the map. The word after the rank names the profession, and the map redraws when your skills change. `/sink map` still lists every pin.
 
-Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class. That box, and "Show map icons", live on a Map Pins page under Sink in the options panel, Options > AddOns > Sink > Map Pins, with the trainer setting under its own Profession Trainers heading.
+Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class unless "Show all class trainers" is on. Those boxes, and "Show map icons", live on the Map Pins tab of the options window, `/sink config`, under their own headings.
 
 Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
 
@@ -141,6 +141,7 @@ Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided b
 | `/sink map remove <name>` | Remove an icon you added in game |
 | `/sink map on`, `/sink map off` | Show or hide the icons |
 | `/sink map trainers all`, `/sink map trainers mine` | Every profession trainer, or only the ones for you (the default) |
+| `/sink map classes all`, `/sink map classes mine` | Every class trainer, or only your class's (the default) |
 
 Like the other in-game additions, icons added with `/sink map add` are lost on logout until the beta's saved-variables bug is fixed, so paste the printed line into `MapPins.lua` to keep one.
 
@@ -165,7 +166,7 @@ The value is oklch(0.558 0.146 230), which in sRGB is 0, 0.505, 0.721 or `#0081B
 
 ## How it works
 
-Player frame centering is off until you enable it with `/sink on` or the checkbox under Options > AddOns > Sink, so installing the addon moves nothing by itself. Once on, the choice is saved.
+Player frame centering is off until you enable it with `/sink on` or the checkbox in the options window, so installing the addon moves nothing by itself. Once on, the choice is saved.
 
 Forever runs the Retail (Mainline) UI, so the player frame is an Edit Mode system frame. Edit Mode re-anchors it every time a layout is applied: at login, on a layout switch, when Edit Mode closes, on a UI scale change. It does that through a Lua wrapper on the frame, so `hooksecurefunc(PlayerFrame, "SetPoint", ...)` fires after every Blizzard reposition, and the addon immediately puts the frame back at the configured spot.
 
@@ -190,7 +191,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
 | `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
-| `Options.lua` | `/sink` commands, the options panel, the addon compartment click |
+| `Options.lua` | `/sink` commands, the options window with its General and Map Pins tabs, the addon compartment click |
 | `.luacheckrc` | Globals list for `luacheck`, if you lint |
 | `scripts/package.sh` | Builds `dist/release/Sink.zip` from the files the TOC lists |
 | `scripts/check-globals.sh` | Flags globals a Lua file uses that are neither standard nor listed in `.luacheckrc`, for when luacheck is not installed; a missing function shows up here, not as a syntax error |
@@ -232,6 +233,6 @@ The workflow in `.github/workflows/release.yml` checks that the tag matches `## 
 - [TOC format](https://warcraft.wiki.gg/wiki/TOC_format) on Warcraft Wiki: the `_Camelot` suffix, interface numbers, directives.
 - [forever-addon-kit](https://github.com/Thunderz96/forever-addon-kit): day-one measurements of the beta client, including the bugs above and a captured API baseline.
 - [AnyMove Forever](https://github.com/Pirson-s-Addons/AnyMoveForever): a working Forever addon that moves Edit Mode frames the same way.
-- [wow-ui-source, `forever` branch](https://github.com/Gethe/wow-ui-source/tree/forever): Blizzard's UI code for Forever. `Blizzard_EditMode/Shared/EditModeSystemTemplates.lua` has `ApplySystemAnchor` and `SetPointOverride`; `Blizzard_Settings_Shared/Blizzard_Settings.lua` has the Settings API used in `Options.lua`; `Blizzard_UIErrorsFrame/Mainline/UIErrorsFrame.lua` and its `Camelot/UIErrorsFrameOverrides.lua` are what `Errors.lua` works around; `Blizzard_MapCanvas/MapCanvas_DataProviderBase.lua` is the pin and data provider API `MapPins.lua` uses.
+- [wow-ui-source, `forever` branch](https://github.com/Gethe/wow-ui-source/tree/forever): Blizzard's UI code for Forever. `Blizzard_EditMode/Shared/EditModeSystemTemplates.lua` has `ApplySystemAnchor` and `SetPointOverride`; `Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.xml` has the frame, tab and slider templates the options window in `Options.lua` is built from; `Blizzard_UIErrorsFrame/Mainline/UIErrorsFrame.lua` and its `Camelot/UIErrorsFrameOverrides.lua` are what `Errors.lua` works around; `Blizzard_MapCanvas/MapCanvas_DataProviderBase.lua` is the pin and data provider API `MapPins.lua` uses.
 - [World of Warcraft: Forever](https://warcraft.wiki.gg/wiki/World_of_Warcraft:_Forever) on Warcraft Wiki for release and beta dates.
 - [wago.tools UiMap](https://wago.tools/db2/UiMap?build=1.60.1.69893): the Forever build's map table, for the zone IDs `MapPins.lua` is keyed by.

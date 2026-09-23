@@ -1,11 +1,17 @@
 --------------------------------------------------------------------------------
 -- Sink / Options.lua
 --
--- Slash commands (/sink) and a panel under Options -> AddOns -> Sink.
--- Everything in this file is optional; Core.lua works without it.
+-- Slash commands (/sink) and the options window: a portrait frame with a
+-- General tab and a Map Pins tab, opened with "/sink config" or by clicking
+-- Sink in the addon compartment. Everything in this file is optional; Core.lua
+-- works without it.
+--
+-- One write path: Assign(key, value) stores the value, tells the module that
+-- owns it, and refreshes the window if it is open, so the slash commands and
+-- the window never disagree. Modules reach it as ns.SetOption.
 --------------------------------------------------------------------------------
 
-local ADDON_NAME, ns = ...
+local _, ns = ...
 
 local RANGE = {
     offsetX = { min = -800, max = 800 },
@@ -22,6 +28,8 @@ local function Clamp(value, range)
     return value
 end
 
+local RefreshWindow -- defined with the window below
+
 -- React to a value that is already stored in ns.db.
 local function OnChanged(key)
     if key == "enabled" then
@@ -30,35 +38,35 @@ local function OnChanged(key)
         else
             ns.RestoreEditModePosition()
         end
+    elseif key == "offsetX" or key == "offsetY" then
+        ns.Center()
     elseif key == "muteErrors" then
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
-    elseif key == "mapIcons" or key == "showAllTrainers" then
+    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" then
         if ns.RefreshMapPins then
             ns.RefreshMapPins()
         end
-    else
-        ns.Center()
+    elseif key == "questItemWarnings" then
+        if ns.RefreshBagOverlays then
+            ns.RefreshBagOverlays()
+        end
     end
+    RefreshWindow()
 end
 
--- Single write path. When the options panel exists the change goes through its
--- Settings object so the panel and the slash commands never disagree.
 local function Assign(key, value)
     if RANGE[key] then
         value = Clamp(value, RANGE[key])
     end
-    local setting = ns.settings and ns.settings[key]
-    if setting then
-        setting:SetValue(value) -- writes ns.db[key] and fires OnChanged through the callback
-    else
-        ns.db[key] = value
-        OnChanged(key)
-    end
+    ns.db[key] = value
+    OnChanged(key)
 end
--- Modules write their own settings through this so the panel's checkboxes follow.
+-- Modules write their own settings through this so the window follows.
 ns.SetOption = Assign
+
+local OpenOptions -- defined with the window below
 
 local function Status()
     local db = ns.db
@@ -74,21 +82,13 @@ local function Help()
     print(("  /sink y <n>           height above the bottom of the screen (%d to %d)"):format(RANGE.offsetY.min, RANGE.offsetY.max))
     print("  /sink reset           back to the defaults")
     print("  /sink center          re-apply the position now")
-    print("  /sink config          open the options panel")
+    print("  /sink config          open the options window")
     print("  /sink items           quest items that are safe to delete (/sink items help)")
     print("  /sink recipes         vendor recipes you know or not (/sink recipes help)")
     print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
     print("  /sink errors          hide \"not enough energy\" errors when spamming (/sink errors help)")
     print("  /sink map             icons with tooltips on the world map (/sink map help)")
     print("  /sink dump            developer dumps of IDs and coordinates (/sink dump help)")
-end
-
-local function OpenOptions()
-    if ns.settingsCategoryID and Settings and Settings.OpenToCategory then
-        Settings.OpenToCategory(ns.settingsCategoryID)
-    else
-        ns.Print("the options panel is not available; use the slash commands instead.")
-    end
 end
 
 SLASH_SINK1 = "/sink"
@@ -163,69 +163,218 @@ function Sink_OnAddonCompartmentClick()
 end
 
 --------------------------------------------------------------------------------
--- Options -> AddOns -> Sink
+-- The options window
+--
+-- Built from the pieces Blizzard's own panels use: ButtonFrameTemplate for the
+-- portrait frame with its inset, PanelTabButtonTemplate for the tabs along the
+-- bottom, UICheckButtonTemplate for checkboxes and MinimalSliderWithSteppers-
+-- Template for the sliders. Pages are described by the table below and built
+-- top to bottom; the controls read ns.db whenever the window refreshes.
 --------------------------------------------------------------------------------
 
-local function RegisterSlider(category, key, label, tooltip)
-    local range = RANGE[key]
-    local options = Settings.CreateSliderOptions(range.min, range.max, SLIDER_STEP)
-    if MinimalSliderWithSteppersMixin and MinimalSliderWithSteppersMixin.Label then
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
+local WINDOW_NAME = "SinkOptionsFrame"
+local window        -- created on first open
+local controls = {} -- key -> checkbox or slider, refreshed from ns.db
+local refreshing = false
+
+-- A checkbox is { key, label, tooltip }; a slider adds range; a header is
+-- { header = ... }.
+local PAGES = {
+    {
+        name = "General",
+        { header = "Player Frame" },
+        { key = "enabled", label = "Auto-center the player frame",
+          tooltip = "Keep the player frame horizontally centered, even after Edit Mode moves it." },
+        { key = "offsetX", label = "Horizontal offset", range = RANGE.offsetX,
+          tooltip = "Distance from the center of the screen. Negative moves the frame left." },
+        { key = "offsetY", label = "Height", range = RANGE.offsetY,
+          tooltip = "Distance from the bottom of the screen to the bottom edge of the frame." },
+        { header = "Errors" },
+        { key = "muteErrors", label = "Mute repeated ability errors",
+          tooltip = "Hide \"Not enough energy\" and \"not ready yet\" errors, both the red text and the voice line,"
+              .. " when you spam an ability." },
+        { header = "Tooltips and Warnings" },
+        { key = "questItemWarnings", label = "Quest item warnings",
+          tooltip = "Tooltip line, bag slot tint and popup for quest items that are safe to delete." },
+        { key = "recipeTooltips", label = "Recipe vendor tooltips",
+          tooltip = "Vendor tooltips list the recipes sold, with a check for the ones you know." },
+        { key = "weaponTooltips", label = "Weapon master tooltips",
+          tooltip = "Weapon master tooltips and map icons list the skills taught." },
+    },
+    {
+        name = "Map Pins",
+        { key = "mapIcons", label = "Show map icons",
+          tooltip = "Icons with tooltips on the world map for the vendors and trainers Sink knows about." },
+        { header = "Profession Trainers" },
+        { key = "showAllTrainers", label = "Show all profession trainers",
+          tooltip = "Off: trainers for your own professions, plus cooking, fishing and first aid, and every primary"
+              .. " profession until you have picked two. On: every profession trainer." },
+        { header = "Class Trainers" },
+        { key = "showAllClassTrainers", label = "Show all class trainers",
+          tooltip = "Off: class trainers for your class only. On: every class trainer." },
+    },
+}
+
+local function Tooltip(region, title, text)
+    region:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(title)
+        GameTooltip:AddLine(text, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    region:HookScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
+-- Each builder places its control at y (distance below the page's top) and
+-- returns the height it used.
+local function Header(page, item, y)
+    local text = page:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    text:SetPoint("TOPLEFT", 0, -y)
+    text:SetText(item.header)
+    text:SetTextColor(ns.accent.r, ns.accent.g, ns.accent.b)
+    return 24
+end
+
+local function Checkbox(page, item, y)
+    local box = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
+    box:SetPoint("TOPLEFT", -4, -y + 4)
+    box.Text:SetFontObject("GameFontHighlight")
+    box.Text:SetText(item.label)
+    box:SetScript("OnClick", function(self)
+        Assign(item.key, self:GetChecked() and true or false)
+    end)
+    Tooltip(box, item.label, item.tooltip)
+    controls[item.key] = box
+    return 28
+end
+
+local function Slider(page, item, y)
+    local label = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", 6, -y)
+    label:SetText(item.label)
+
+    local slider = CreateFrame("Frame", nil, page, "MinimalSliderWithSteppersTemplate")
+    slider:SetPoint("TOPLEFT", 6, -y - 18)
+    local range = item.range
+    local formatters = {
+        [MinimalSliderWithSteppersMixin.Label.Right] = function(value)
+            return ("%d"):format(value)
+        end,
+    }
+    slider:Init(ns.db[item.key] or range.min, range.min, range.max, (range.max - range.min) / SLIDER_STEP, formatters)
+    slider:RegisterCallback(MinimalSliderWithSteppersMixin.Event.OnValueChanged, function(_, value)
+        if not refreshing then
+            Assign(item.key, value)
+        end
+    end, page)
+    Tooltip(slider.Slider, item.label, item.tooltip)
+    controls[item.key] = slider
+    return 66
+end
+
+local function BuildPage(frame, definition)
+    local page = CreateFrame("Frame", nil, frame.Inset)
+    page:SetPoint("TOPLEFT", 14, -12)
+    page:SetPoint("BOTTOMRIGHT", -14, 12)
+    page:Hide()
+    local y = 0
+    for _, item in ipairs(definition) do
+        if item.header then
+            y = y + Header(page, item, y)
+        elseif item.range then
+            y = y + Slider(page, item, y)
+        else
+            y = y + Checkbox(page, item, y)
+        end
+    end
+    return page
+end
+
+function RefreshWindow()
+    if not window or not window:IsShown() then
+        return
+    end
+    refreshing = true
+    for key, control in pairs(controls) do
+        local value = ns.db[key]
+        if control.SetChecked then
+            control:SetChecked(value and true or false)
+        elseif control.SetValue then
+            control:SetValue(value or 0)
+        end
+    end
+    refreshing = false
+end
+
+local function ShowPage(index)
+    PanelTemplates_SetTab(window, index)
+    for i, page in ipairs(window.pages) do
+        page:SetShown(i == index)
+    end
+    RefreshWindow()
+end
+
+local function CreateWindow()
+    local frame = CreateFrame("Frame", WINDOW_NAME, UIParent, "ButtonFrameTemplate")
+    frame:SetSize(440, 430)
+    frame:SetPoint("CENTER")
+    frame:SetFrameStrata("HIGH")
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:SetClampedToScreen(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:Hide()
+
+    local title = (frame.TitleContainer and frame.TitleContainer.TitleText) or frame.TitleText
+    if title then
+        title:SetText("Sink")
+    end
+    if frame.SetPortraitToAsset then
+        frame:SetPortraitToAsset("Interface\\Icons\\INV_Enchant_EssenceMagicLarge")
+    end
+    if ButtonFrameTemplate_HideButtonBar then
+        ButtonFrameTemplate_HideButtonBar(frame)
+    end
+    if ButtonFrameTemplate_HideAttic then
+        ButtonFrameTemplate_HideAttic(frame)
+    end
+    if UISpecialFrames then
+        table.insert(UISpecialFrames, WINDOW_NAME) -- Escape closes it
     end
 
-    local setting = Settings.RegisterAddOnSetting(category, ADDON_NAME .. "_" .. key, key, ns.db,
-        Settings.VarType.Number, label, ns.defaults[key])
-    setting:SetValueChangedCallback(function(_, value)
-        ns.db[key] = value
-        OnChanged(key)
-    end)
-    Settings.CreateSlider(category, setting, options, tooltip)
-    return setting
-end
-
-local function RegisterCheckbox(category, key, label, tooltip)
-    local setting = Settings.RegisterAddOnSetting(category, ADDON_NAME .. "_" .. key, key, ns.db,
-        Settings.VarType.Boolean, label, ns.defaults[key])
-    setting:SetValueChangedCallback(function(_, value)
-        ns.db[key] = value
-        OnChanged(key)
-    end)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    return setting
-end
-
-local function CreateSettingsPanel()
-    local category = Settings.RegisterVerticalLayoutCategory("Sink")
-    ns.settingsCategoryID = category:GetID()
-    ns.settings = {}
-
-    ns.settings.enabled = RegisterCheckbox(category, "enabled", "Auto-center the player frame",
-        "Keep the player frame horizontally centered, even after Edit Mode moves it.")
-    ns.settings.offsetX = RegisterSlider(category, "offsetX", "Horizontal offset",
-        "Distance from the center of the screen. Negative moves the frame left.")
-    ns.settings.offsetY = RegisterSlider(category, "offsetY", "Height",
-        "Distance from the bottom of the screen to the bottom edge of the frame.")
-
-    ns.settings.muteErrors = RegisterCheckbox(category, "muteErrors", "Mute repeated ability errors",
-        "Hide \"Not enough energy\" and \"not ready yet\" errors, both the red text and the voice line, when you spam an ability.")
-
-    -- Map Pins: a page of its own under Sink in the list on the left.
-    local mapPins = Settings.RegisterVerticalLayoutSubcategory(category, "Map Pins")
-    ns.settings.mapIcons = RegisterCheckbox(mapPins, "mapIcons", "Show map icons",
-        "Icons with tooltips on the world map for the vendors and trainers Sink knows about.")
-    Settings.RegisterInitializer(mapPins, CreateSettingsListSectionHeaderInitializer("Profession Trainers"))
-    ns.settings.showAllTrainers = RegisterCheckbox(mapPins, "showAllTrainers", "Show all profession trainers",
-        "Off: trainers for your own professions, plus cooking, fishing and first aid, every primary profession"
-        .. " until you have picked two, and class trainers for your class. On: every trainer.")
-
-    Settings.RegisterAddOnCategory(category)
-end
-
--- Called from Core.lua on PLAYER_LOGIN, after the saved variables exist.
-function ns.SetupOptions()
-    local ok, err = pcall(CreateSettingsPanel)
-    if not ok then
-        ns.settings = nil
-        ns.Print("options panel could not be created (" .. tostring(err) .. "). Slash commands still work.")
+    frame.Tabs = frame.Tabs or {}
+    frame.pages = {}
+    for index, definition in ipairs(PAGES) do
+        local tab = CreateFrame("Button", "$parentTab" .. index, frame, "PanelTabButtonTemplate")
+        frame.Tabs[index] = tab
+        tab:SetID(index)
+        tab:SetText(definition.name)
+        if index == 1 then
+            tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 11, 2)
+        end
+        tab:SetScript("OnClick", function(self)
+            ShowPage(self:GetID())
+        end)
+        PanelTemplates_TabResize(tab, 0)
+        frame.pages[index] = BuildPage(frame, definition)
     end
+    PanelTemplates_SetNumTabs(frame, #PAGES)
+    return frame
+end
+
+function OpenOptions()
+    if not window then
+        local ok, result = pcall(CreateWindow)
+        if not ok then
+            ns.Print("the options window could not be created (" .. tostring(result) .. "). The slash commands still work.")
+            return
+        end
+        window = result
+    end
+    window:Show()
+    ShowPage(window.selectedTab or 1)
 end

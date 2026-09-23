@@ -101,6 +101,18 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Warlock" },
         { npc = 3324, name = "Grol'dar", note = "Warlock Trainer", x = 0.4798, y = 0.4593,
           icon = "Interface\\Icons\\ClassIcon_Warlock" },
+        { npc = 3354, name = "Sorek", note = "Warrior Trainer", x = 0.8039, y = 0.3237,
+          icon = "Interface\\Icons\\ClassIcon_Warrior" },
+        { npc = 3353, name = "Grezz Ragefist", note = "Warrior Trainer", x = 0.7979, y = 0.3142,
+          icon = "Interface\\Icons\\ClassIcon_Warrior" },
+        { npc = 3408, name = "Zel'mak", note = "Warrior Trainer", x = 0.8037, y = 0.2952,
+          icon = "Interface\\Icons\\ClassIcon_Warrior" },
+        { npc = 3403, name = "Sian'tsu", note = "Shaman Trainer", x = 0.3784, y = 0.3646,
+          icon = "Interface\\Icons\\ClassIcon_Shaman" },
+        { npc = 13417, name = "Sagorne Creststrider", note = "Shaman Trainer", x = 0.3867, y = 0.3593,
+          icon = "Interface\\Icons\\ClassIcon_Shaman" },
+        { npc = 3344, name = "Kardris Dreamseeker", note = "Shaman Trainer", x = 0.3881, y = 0.3636,
+          icon = "Interface\\Icons\\ClassIcon_Shaman" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -245,14 +257,16 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- The pins to draw on a map. Trainers are filtered first: with "show all"
--- off, a class trainer only for your class; secondary professions and your
--- own primary ones always; other primary ones only while you still have a
--- free slot. Then of a profession's ranked trainers only one is drawn.
--- Everything else is drawn as it is.
+-- The pins to draw on a map. Trainers are filtered first: a class trainer
+-- only for your class unless "show all class trainers" is on; with "show all
+-- profession trainers" off, secondary professions and your own primary ones
+-- always, other primary ones only while you still have a free slot. Then of a
+-- profession's ranked trainers only one is drawn. Everything else is drawn as
+-- it is.
 local function PinsToShow(mapID)
     local shown, groups = {}, {}
     local showAll = ns.db and ns.db.showAllTrainers
+    local showAllClasses = ns.db and ns.db.showAllClassTrainers
     local freeSlot = PrimaryCount() < 2
     local _, playerClass = UnitClass("player")
     EachPin(mapID, function(pin)
@@ -260,7 +274,7 @@ local function PinsToShow(mapID)
         if profession == nil then
             shown[#shown + 1] = pin
         elseif profession and profession.class then
-            if showAll or profession.class == playerClass then
+            if showAllClasses or profession.class == playerClass then
                 shown[#shown + 1] = pin
             end
         elseif showAll or not profession or not profession.primary or ProfessionMax(profession) or freeSlot then
@@ -472,9 +486,10 @@ local function MapHelp()
     print("  /sink map remove <name>       remove an icon you added")
     print("  /sink map on | off            show or hide the icons")
     print("  /sink map trainers all | mine every profession trainer, or only the ones for you")
+    print("  /sink map classes all | mine  every class trainer, or only your class's")
 end
 
--- Through the options panel when it exists, so its checkboxes follow.
+-- Through the options window when it exists, so its checkboxes follow.
 local function SetOption(key, value)
     if ns.SetOption then
         ns.SetOption(key, value)
@@ -588,6 +603,14 @@ function ns.MapCommand(arg)
         SetOption("showAllTrainers", mode == "all")
         ns.Print("profession trainers shown: " .. (mode == "all" and "all of them"
             or "yours, the secondary ones, and every primary one while you have a free slot") .. ".")
+    elseif sub == "classes" then
+        local mode = rest:lower()
+        if mode ~= "all" and mode ~= "mine" then
+            ns.Print("usage: /sink map classes all | mine")
+            return
+        end
+        SetOption("showAllClassTrainers", mode == "all")
+        ns.Print("class trainers shown: " .. (mode == "all" and "all of them" or "your class's only") .. ".")
     else
         MapHelp()
     end

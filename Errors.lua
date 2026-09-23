@@ -4,7 +4,7 @@
 -- Hides the errors that repeat on every press when you spam an ability: "Not
 -- enough energy", "Not enough mana", "Ability is not ready yet" and the like.
 -- Both the red text at the top of the screen and the voice line go. On by
--- default; "/sink errors off" or the checkbox in the options panel turns it off.
+-- default; "/sink errors off" or the checkbox in the options window turns it off.
 --
 -- Why this exists on Forever: the Mainline client never shows these message
 -- types at all, they sit in UIErrorsFrame's BLACK_LISTED_MESSAGE_TYPES table,
@@ -86,7 +86,7 @@ ns.ApplyErrorMute = Apply
 
 local function SetEnabled(value)
     if ns.SetOption then
-        ns.SetOption("muteErrors", value) -- through the options panel, so its checkbox follows
+        ns.SetOption("muteErrors", value) -- through the options window, so its checkbox follows
     else
         ns.db.muteErrors = value
         Apply()
