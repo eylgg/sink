@@ -89,6 +89,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_LeatherWorking" },
         { npc = 10266, name = "Ug'thok", note = "Journeyman Blacksmith", x = 0.8077, y = 0.2370,
           icon = "Interface\\Icons\\Trade_BlackSmithing" },
+        { npc = 3328, name = "Ormok", note = "Rogue Trainer", x = 0.4390, y = 0.5463,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 3401, name = "Shenthul", note = "Rogue Trainer", x = 0.4305, y = 0.5374,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -138,44 +142,90 @@ local function NoteText(pin)
     return cap and (note .. " (" .. cap .. ")") or note
 end
 
--- A city has several trainers per profession, one per rank. For each
--- profession on a map only the one you need is drawn: the lowest rank whose
--- cap is above your current maximum in that profession; the lowest rank of
--- all if you do not have the profession; the highest if you have outgrown
--- every one on the map. The word after the rank names the profession, and
--- this maps it to the skill line that says how far you are.
-local PROFESSION_LINES = {
-    alchemist = 171, blacksmith = 164, cook = 185, enchanter = 333, engineer = 202, fisherman = 356,
-    herbalist = 182, leatherworker = 165, miner = 186, skinner = 393, tailor = 197,
+-- Professions, by the words a trainer's note uses for them: "Expert
+-- Blacksmith", "Mining Trainer". line is the skill line that says how far you
+-- are. Primary professions are the ones you can have two of; the rest are
+-- secondary and open to everyone.
+local PROFESSIONS = {
+    { line = 171, primary = true,  words = { "alchemist", "alchemy" } },
+    { line = 164, primary = true,  words = { "blacksmith", "blacksmithing" } },
+    { line = 333, primary = true,  words = { "enchanter", "enchanting" } },
+    { line = 202, primary = true,  words = { "engineer", "engineering" } },
+    { line = 182, primary = true,  words = { "herbalist", "herbalism" } },
+    { line = 165, primary = true,  words = { "leatherworker", "leatherworking" } },
+    { line = 186, primary = true,  words = { "miner", "mining" } },
+    { line = 393, primary = true,  words = { "skinner", "skinning" } },
+    { line = 197, primary = true,  words = { "tailor", "tailoring" } },
+    { line = 185, primary = false, words = { "cook", "cooking" } },
+    { line = 129, primary = false, words = { "first aid" } },
+    { line = 356, primary = false, words = { "fisherman", "fishing" } },
+}
+local professionByWord = {}
+for _, profession in ipairs(PROFESSIONS) do
+    for _, word in ipairs(profession.words) do
+        professionByWord[word] = profession
+    end
+end
+
+-- A "<Class> Trainer" pin is for that class only.
+local CLASS_WORDS = {
+    warrior = "WARRIOR", paladin = "PALADIN", hunter = "HUNTER", rogue = "ROGUE", priest = "PRIEST",
+    shaman = "SHAMAN", mage = "MAGE", warlock = "WARLOCK", druid = "DRUID",
 }
 
--- The rank cap and profession word of a trainer pin, or nil for any other pin.
-local function TrainerRank(pin)
-    local rank, profession = (pin.note or ""):match("^(%a+)%s+(.+)$")
+-- For a trainer pin: its profession (a class trainer gives { class = ... },
+-- an unknown word gives false), the rank cap (nil for a plain "... Trainer"),
+-- and the word. Any other pin returns nil.
+local function TrainerInfo(pin)
+    local note = pin.note or ""
+    local rank, rest = note:match("^(%a+)%s+(.+)$")
     local cap = rank and RANK_CAPS[rank]
-    if not cap then
-        return nil
+    if cap then
+        local word = rest:lower()
+        return professionByWord[word] or false, cap, word
     end
-    return cap, profession:lower()
+    local word = note:match("^(.+)%s+Trainer$")
+    if word then
+        word = word:lower()
+        if CLASS_WORDS[word] then
+            return { class = CLASS_WORDS[word] }, nil, word
+        end
+        return professionByWord[word] or false, nil, word
+    end
+    return nil
 end
 
 -- Your current maximum in a profession, or nil if you do not have it.
-local function ProfessionMax(lineID)
-    if not (lineID and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+local function ProfessionMax(profession)
+    if not (profession and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
         return nil
     end
-    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, lineID)
+    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, profession.line)
     if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
         return info.maxRank
     end
     return nil
 end
 
+-- How many primary professions the character has taken.
+local function PrimaryCount()
+    local count = 0
+    for _, profession in ipairs(PROFESSIONS) do
+        if profession.primary and ProfessionMax(profession) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- Of a profession's ranked trainers on one map, the one you need: the lowest
+-- rank whose cap is above your current maximum; the lowest of all if you do
+-- not have the profession; the highest if you have outgrown every one here.
 local function ChooseTrainer(profession, group)
     table.sort(group, function(a, b)
         return a.cap < b.cap
     end)
-    local max = ProfessionMax(PROFESSION_LINES[profession])
+    local max = ProfessionMax(profession)
     if not max then
         return group[1].pin
     end
@@ -187,47 +237,39 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- The pins to draw on a map: every plain pin, and one trainer per profession.
+-- The pins to draw on a map. Trainers are filtered first: with "show all"
+-- off, a class trainer only for your class; secondary professions and your
+-- own primary ones always; other primary ones only while you still have a
+-- free slot. Then of a profession's ranked trainers only one is drawn.
+-- Everything else is drawn as it is.
 local function PinsToShow(mapID)
     local shown, groups = {}, {}
+    local showAll = ns.db and ns.db.showAllTrainers
+    local freeSlot = PrimaryCount() < 2
+    local _, playerClass = UnitClass("player")
     EachPin(mapID, function(pin)
-        local cap, profession = TrainerRank(pin)
-        if cap then
-            groups[profession] = groups[profession] or {}
-            table.insert(groups[profession], { pin = pin, cap = cap })
-        else
+        local profession, cap, word = TrainerInfo(pin)
+        if profession == nil then
             shown[#shown + 1] = pin
+        elseif profession and profession.class then
+            if showAll or profession.class == playerClass then
+                shown[#shown + 1] = pin
+            end
+        elseif showAll or not profession or not profession.primary or ProfessionMax(profession) or freeSlot then
+            if cap then
+                local key = profession and profession.line or word
+                groups[key] = groups[key] or { profession = profession }
+                table.insert(groups[key], { pin = pin, cap = cap })
+            else
+                shown[#shown + 1] = pin
+            end
         end
     end)
-    for profession, group in pairs(groups) do
-        shown[#shown + 1] = ChooseTrainer(profession, group)
+    for _, group in pairs(groups) do
+        shown[#shown + 1] = ChooseTrainer(group.profession, group)
     end
     return shown
 end
-
--- Map ID and position (0 to 1) of a unit on the player's current map, or nil.
--- The client only answers for the player and group members; an NPC target
--- comes back nil, so record an NPC by standing next to it.
-local function UnitMapPosition(unit)
-    if not C_Map.GetBestMapForUnit or not C_Map.GetPlayerMapPosition then
-        return nil
-    end
-    local mapID = C_Map.GetBestMapForUnit("player")
-    if not mapID then
-        return nil
-    end
-    local ok, pos = pcall(C_Map.GetPlayerMapPosition, mapID, unit)
-    local x, y
-    if ok and pos then
-        x, y = pos:GetXY()
-    end
-    if not x or not y then
-        return nil
-    end
-    return mapID, x, y
-end
-ns.UnitMapPosition = UnitMapPosition
-ns.MapName = MapName
 
 --------------------------------------------------------------------------------
 -- The pin: one icon, positioned by the map, with the tooltip
@@ -393,10 +435,21 @@ end
 
 local function MapHelp()
     ns.Print("map icon commands")
-    print("  /sink map                list the icons by zone")
-    print("  /sink map add <name>     put an icon where you stand (saved per character)")
-    print("  /sink map remove <name>  remove an icon you added")
-    print("  /sink map on | off       show or hide the icons")
+    print("  /sink map                     list the icons by zone")
+    print("  /sink map add <name>          put an icon where you stand (saved per character)")
+    print("  /sink map remove <name>       remove an icon you added")
+    print("  /sink map on | off            show or hide the icons")
+    print("  /sink map trainers all | mine every profession trainer, or only the ones for you")
+end
+
+-- Through the options panel when it exists, so its checkboxes follow.
+local function SetOption(key, value)
+    if ns.SetOption then
+        ns.SetOption(key, value)
+    else
+        ns.db[key] = value
+        Refresh()
+    end
 end
 
 -- The Lua for one icon, as it would sit in ns.mapPins. Dump.lua uses it too.
@@ -492,9 +545,17 @@ function ns.MapCommand(arg)
         end
         RemovePin(rest)
     elseif sub == "on" or sub == "off" then
-        ns.db.mapIcons = (sub == "on")
+        SetOption("mapIcons", sub == "on")
         ns.Print("map icons " .. (sub == "on" and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
-        Refresh()
+    elseif sub == "trainers" then
+        local mode = rest:lower()
+        if mode ~= "all" and mode ~= "mine" then
+            ns.Print("usage: /sink map trainers all | mine")
+            return
+        end
+        SetOption("showAllTrainers", mode == "all")
+        ns.Print("profession trainers shown: " .. (mode == "all" and "all of them"
+            or "yours, the secondary ones, and every primary one while you have a free slot") .. ".")
     else
         MapHelp()
     end

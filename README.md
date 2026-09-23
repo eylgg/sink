@@ -33,7 +33,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | `/sink y <n>` | Height of the frame's bottom edge above the bottom of the screen, 0 to 800. Default 250, which matches Blizzard's default layout height |
 | `/sink reset` | Back to the default offsets |
 | `/sink center` | Re-apply the position right now |
-| `/sink config` | Open the options panel (also under Options > AddOns > Sink) |
+| `/sink config` | Open the options panel (also under Options > AddOns > Sink, with a Map Pins page beneath it) |
 | `/sink items ...` | Quest item warnings, see below |
 | `/sink recipes ...` | Recipe vendor tooltips, see below |
 | `/sink weapons ...` | Weapon skills and weapon masters, see below |
@@ -130,6 +130,8 @@ Each icon is drawn round, inside a one-pixel ring in Sink's identity colour (see
 
 Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Each one has `x` and `y`, an `icon` texture, a `note` that becomes the tooltip's text, a `name` shown when there is no note and used by the list and `/sink map remove`, and an `npc` ID that ties it to a vendor in `Recipes.lua` or a weapon master in `Weapons.lua`. A note that starts with a profession rank, Apprentice, Journeyman, Expert or Artisan, gets the skill cap that rank teaches to, such as "Journeyman Blacksmith (150)". A city has several trainers per profession, one per rank, and only the one you need is drawn: the lowest rank whose cap is above your current maximum in that profession, so at Blacksmithing 150 you see the Expert; the lowest rank of all if you do not have the profession; the highest if you have outgrown every one on the map. The word after the rank names the profession, and the map redraws when your skills change. `/sink map` still lists every pin.
 
+Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class. That box, and "Show map icons", live on a Map Pins page under Sink in the options panel, Options > AddOns > Sink > Map Pins, with the trainer setting under its own Profession Trainers heading.
+
 Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
 
 | Command | Effect |
@@ -138,6 +140,7 @@ Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided b
 | `/sink map add <name>` | Put an icon where you stand, saved per character (`SinkDB.mapPins`) |
 | `/sink map remove <name>` | Remove an icon you added in game |
 | `/sink map on`, `/sink map off` | Show or hide the icons |
+| `/sink map trainers all`, `/sink map trainers mine` | Every profession trainer, or only the ones for you (the default) |
 
 Like the other in-game additions, icons added with `/sink map add` are lost on logout until the beta's saved-variables bug is fixed, so paste the printed line into `MapPins.lua` to keep one.
 

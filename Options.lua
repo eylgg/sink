@@ -34,6 +34,10 @@ local function OnChanged(key)
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
+    elseif key == "mapIcons" or key == "showAllTrainers" then
+        if ns.RefreshMapPins then
+            ns.RefreshMapPins()
+        end
     else
         ns.Center()
     end
@@ -204,6 +208,15 @@ local function CreateSettingsPanel()
 
     ns.settings.muteErrors = RegisterCheckbox(category, "muteErrors", "Mute repeated ability errors",
         "Hide \"Not enough energy\" and \"not ready yet\" errors, both the red text and the voice line, when you spam an ability.")
+
+    -- Map Pins: a page of its own under Sink in the list on the left.
+    local mapPins = Settings.RegisterVerticalLayoutSubcategory(category, "Map Pins")
+    ns.settings.mapIcons = RegisterCheckbox(mapPins, "mapIcons", "Show map icons",
+        "Icons with tooltips on the world map for the vendors and trainers Sink knows about.")
+    Settings.RegisterInitializer(mapPins, CreateSettingsListSectionHeaderInitializer("Profession Trainers"))
+    ns.settings.showAllTrainers = RegisterCheckbox(mapPins, "showAllTrainers", "Show all profession trainers",
+        "Off: trainers for your own professions, plus cooking, fishing and first aid, every primary profession"
+        .. " until you have picked two, and class trainers for your class. On: every trainer.")
 
     Settings.RegisterAddOnCategory(category)
 end

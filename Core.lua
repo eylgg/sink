@@ -44,6 +44,7 @@ ns.defaults = {
     -- MapPins.lua
     mapIcons = true,           -- icons with tooltips on the world map
     mapPins = {},              -- icons added in game: [uiMapID] = { { name = ..., x = ..., y = ... }, ... }
+    showAllTrainers = false,   -- every profession trainer, not just the ones for your professions
 
     -- Weapons.lua
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders

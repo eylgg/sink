@@ -42,6 +42,7 @@ read_globals = {
     -- functions
     "ClearCursor",
     "CreateFromMixins",
+    "CreateSettingsListSectionHeaderInitializer",
     "CursorHasItem",
     "DeleteCursorItem",
     "GetGameMessageInfo",
