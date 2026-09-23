@@ -67,6 +67,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Herbalism" },
         { npc = 3332, name = "Lumak", note = "Fishing Trainer", x = 0.6980, y = 0.2921,
           icon = "Interface\\Icons\\Trade_Fishing" },
+        { npc = 3347, name = "Yelmak", note = "Expert Alchemist", x = 0.5684, y = 0.3303,
+          icon = "Interface\\Icons\\Trade_Alchemy" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
