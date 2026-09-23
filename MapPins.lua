@@ -73,6 +73,12 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01" },
         { npc = 3365, name = "Karolek", note = "Expert Leatherworker", x = 0.6281, y = 0.4415,
           icon = "Interface\\Icons\\Trade_LeatherWorking" },
+        { npc = 11017, name = "Roxxik", note = "Artisan Engineer", x = 0.7617, y = 0.2518,
+          icon = "Interface\\Icons\\Trade_Engineering" },
+        { npc = 3412, name = "Nogg", note = "Expert Engineer", x = 0.7599, y = 0.2540,
+          icon = "Interface\\Icons\\Trade_Engineering" },
+        { npc = 2857, name = "Thund", note = "Journeyman Engineer", x = 0.7596, y = 0.2415,
+          icon = "Interface\\Icons\\Trade_Engineering" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
