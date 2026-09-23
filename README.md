@@ -100,9 +100,17 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 `/sink dump trainer` prints the open trainer window's services and a line for the master table. The window lists only what your class can take, and its Available, Unavailable and Already Known boxes narrow that further, so the dump and the recording see one class's view; the built-in table is the full list. Like the other in-game recordings, masters recorded from the window are lost on logout until the beta's saved-variables bug is fixed.
 
-## Quest series
+## Quests
 
-Some quests come in chains that share a name, such as the five parts of Unending Torment. `ns.questSeries` at the top of `Quests.lua` lists each chain's quest IDs in order, and the objective tracker adds the step to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
+`Quests.lua` keeps one record per dungeon, NPC and quest, linked by ID, so each fact is written once:
+
+- `ns.dungeons`, by instance ID: the Map table ID that `GetInstanceInfo()` returns inside, 2999 for Ruins of Lordaeron. Wowhead's "zone" ID for a dungeon (16611) is an area ID; its row in the AreaTable names the map as its continent. Each dungeon has a name, `minLevel`, `maxLevel`, and the entrance's `map`, `x` and `y`.
+- `ns.npcs`, by NPC ID: the name, and either `map`, `x`, `y` for one outside or `instance` for one inside a dungeon.
+- `ns.quests`, by quest ID: `name` (shown until the client has the quest cached), `faction` (`"Horde"`, `"Alliance"` or `"Both"`, the default), `minLevel` where known (else the dungeon's), `dungeon` (the instance ID the quest is for) and `start`, how you get it: `{ npc = id }` from an NPC, `{ drop = id }` from an item that NPC drops, `{ after = id }` once the quest before it is turned in.
+
+From these the map draws each dungeon's entrance with its quests and a "Dungeon Quest" pin on each NPC who gives one. A drop whose NPC is inside the quest's dungeon reads "Kill "The Baron" inside".
+
+Quests linked by `after` make a series, and the objective tracker adds the step to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
 
 ## Ability errors
 
@@ -136,7 +144,7 @@ Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Eac
 
 Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class unless "Show all class trainers" is on.
 
-Dungeon entrances are drawn with the map's own blue portal (the `Dungeon` atlas) and their level range after the name, such as "Ruins of Lordaeron (11 - 24)". The tooltip lists the dungeon's quests: a red cross for one not in your log, a yellow waiting mark for one in it, a green check for one you have done, in that order and alphabetical within each. A dungeon entry has `dungeon = true`, `minLevel` and `maxLevel`, `atlas` and `quests`, a list of `{ id, name }` whose name stands in until the client has the quest cached, and a `faction`: `"Horde"`, `"Alliance"` or `"Both"`, the default when it is left out. The tooltip lists only the quests for your faction. A quest you get inside the dungeon, from a drop, adds `start`, how to get it: it shows as "Unending Torment (Kill "The Baron" inside)" and stays yellow until it is done, never red. A quest giver for a dungeon quest, such as Deathguard Kristof in Tirisfal, gets a yellow "!" pin titled "Dungeon Quest" with the same quest lines; with `questGiver = true` the pin is drawn only while one of their quests for your faction is neither in your log nor done, and the map redraws when you accept, turn in or abandon a quest. "Show dungeons" turns them off.
+Dungeon entrances are drawn with the map's own blue portal (the `Dungeon` atlas) and their level range after the name, such as "Ruins of Lordaeron (11 - 24)". The tooltip lists the dungeon's quests for your faction: a red cross for one not in your log, a yellow waiting mark for one in it, a green check for one you have done, in that order and alphabetical within each. A quest that drops inside the dungeon shows how to get it, "Unending Torment (Kill "The Baron" inside)", and stays yellow until it is done, never red. An NPC who gives a dungeon quest, such as Deathguard Kristof in Tirisfal, gets a yellow "!" pin titled "Dungeon Quest" with the same lines, drawn only while they have a quest for you: for your faction, neither in your log nor done, and your level at least the quest's minimum. The map redraws when you level or accept, turn in or abandon a quest. "Show dungeons" turns the entrances off. None of these pins are listed in `MapPins.lua`; they are built from the records in `Quests.lua`, see Quests below.
 
 Those boxes, and "Show map icons", live on the Map Pins tab of the options window, `/sink config`, under their own headings.
 
@@ -195,7 +203,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
 | `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
 | `Weapons.lua` | Weapon skill lines, class proficiencies, the weapon master table, trainer window recording, the tooltip lines, `/sink weapons` |
-| `Quests.lua` | Quest series and the step added to their titles in the objective tracker |
+| `Quests.lua` | Dungeon, NPC and quest records, the quest tooltip lines, the series step in the objective tracker |
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |

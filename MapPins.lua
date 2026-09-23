@@ -37,32 +37,23 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- there is no note; npc ties the icon to a vendor in Recipes.lua or a weapon
 -- master in Weapons.lua so the tooltip also lists what they sell or teach. A
 -- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
--- for one whose note is a title such as "High Priest". A dungeon has
--- dungeon = true, minLevel and maxLevel (shown after the name as "11 - 24")
--- and quests, a list of { id, name, faction } whose names stand in until
--- the client has the quest cached; faction is "Horde", "Alliance" or "Both"
--- (the default), and only quests for your faction are listed. A quest you get
--- inside, from a drop, adds start, how to get it; it shows as "Name (start)"
--- and is yellow until it is done, never red. atlas draws a map atlas instead
--- of an icon texture. Any pin can carry quests; a quest giver lists the
--- quests they give the same way, and with questGiver = true is only drawn
--- while one of them is neither in your log nor done.
+-- for one whose note is a title such as "High Priest". atlas draws a map
+-- atlas instead of an icon texture.
+--
+-- Dungeon entrances and "Dungeon Quest" pins on quest givers are not listed
+-- here: they are built from the dungeon, NPC and quest records in Quests.lua.
 -- On the Forever build Durotar is map 1411, Tirisfal Glades 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1411] = { -- Durotar
         -- No npc, so clicking it does nothing: no target, no ping.
         { name = "Zeppelin to Undercity", x = 0.5082, y = 0.1386,
-          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
+          atlas = "poi-horde" },
     },
     [1420] = { -- Tirisfal Glades
         { name = "Zeppelin to Orgrimmar", x = 0.6070, y = 0.5878,
-          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
+          atlas = "poi-horde" },
         { name = "Zeppelin to Grom'gol Base Camp", x = 0.6189, y = 0.5911,
-          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
-        { npc = 251001, name = "Deathguard Kristof", note = "Dungeon Quest", questGiver = true,
-          x = 0.6524, y = 0.6020, atlas = "QuestNormal", quests = {
-              { id = 92422, name = "The Wrath of Rath'mael", faction = "Horde" }, -- Ruins of Lordaeron
-          } },
+          atlas = "poi-horde" },
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
           icon = "Interface\\Icons\\Trade_Fishing" },
     },
@@ -75,14 +66,6 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Mining" },
         { npc = 15683, name = "Auctioneer Naxxremis", note = "Auction House", x = 0.6440, y = 0.3580,
           icon = "Interface\\Icons\\INV_Misc_Coin_01" },
-        { name = "Ruins of Lordaeron", dungeon = true, minLevel = 11, maxLevel = 24, x = 0.7261, y = 0.1148,
-          atlas = "Dungeon", quests = {
-              { id = 92421, name = "Light's Justice", faction = "Horde" },
-              { id = 95216, name = "The New Plague", faction = "Horde" },
-              { id = 92422, name = "The Wrath of Rath'mael", faction = "Horde" }, -- from Deathguard Kristof, Tirisfal
-              -- The Baron (NPC 250660) drops the head that starts the chain (Quests.lua).
-              { id = 97288, name = "Unending Torment", faction = "Horde", start = "Kill \"The Baron\" inside" },
-          } },
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
@@ -183,9 +166,40 @@ local function CustomPins()
     return ns.db and ns.db.mapPins or nil
 end
 
--- Calls fn(pin) for every icon on mapID: built-in first, then those added in game.
+-- Pins built from Quests.lua, by map: each dungeon's entrance and each NPC
+-- who gives a quest. The records never change, so this is done once.
+local questPins
+local function QuestPins(mapID)
+    if not questPins then
+        questPins = {}
+        local function add(map, pin)
+            questPins[map] = questPins[map] or {}
+            table.insert(questPins[map], pin)
+        end
+        for instanceID, dungeon in pairs(ns.dungeons or {}) do
+            add(dungeon.map, { name = dungeon.name, dungeon = true, minLevel = dungeon.minLevel,
+                maxLevel = dungeon.maxLevel, x = dungeon.x, y = dungeon.y, atlas = "Dungeon",
+                questIDs = ns.QuestsForDungeon(instanceID) })
+        end
+        if ns.EachQuestGiver then
+            ns.EachQuestGiver(function(npcID, npc)
+                if npc.map then
+                    add(npc.map, { npc = npcID, name = npc.name, note = "Dungeon Quest", questGiver = true,
+                        x = npc.x, y = npc.y, atlas = "QuestNormal", questIDs = ns.QuestsFromGiver(npcID) })
+                end
+            end)
+        end
+    end
+    return questPins[mapID] or {}
+end
+
+-- Calls fn(pin) for every icon on mapID: built-in first, then the ones built
+-- from Quests.lua, then those added in game.
 local function EachPin(mapID, fn)
     for _, pin in ipairs(ns.mapPins[mapID] or {}) do
+        fn(pin)
+    end
+    for _, pin in ipairs(QuestPins(mapID)) do
         fn(pin)
     end
     local custom = CustomPins()
@@ -315,53 +329,8 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- A quest's title: the title the client has, else the name in the table,
--- and ask the server so the next hover has the real one.
-local function QuestTitle(questID, fallback)
-    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
-    if title and title ~= "" then
-        return title
-    end
-    if C_QuestLog.RequestLoadQuestByID then
-        C_QuestLog.RequestLoadQuestByID(questID)
-    end
-    return fallback or ("quest #" .. questID)
-end
-
-local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
-
-local function QuestState(questID)
-    if C_QuestLog.IsQuestFlaggedCompleted(questID) then
-        return DONE
-    end
-    if C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID) then
-        return IN_LOG
-    end
-    return NOT_TAKEN
-end
-
--- Whether a quest is for the player's faction: "Horde", "Alliance" or "Both".
-local function ForMyFaction(quest)
-    if not quest.faction or quest.faction == "Both" then
-        return true
-    end
-    local faction = UnitFactionGroup and UnitFactionGroup("player")
-    return faction == nil or faction == quest.faction
-end
-
--- Whether a quest giver still has something for you: a quest for your
--- faction that is neither in your log nor done.
-local function HasQuestToGive(pin)
-    for _, quest in ipairs(pin.quests or {}) do
-        if ForMyFaction(quest) and QuestState(quest.id) == NOT_TAKEN then
-            return true
-        end
-    end
-    return false
-end
-
 -- The pins to draw on a map. Dungeons only while "show dungeons" is on; a
--- quest giver only while one of their quests is still to be taken. Trainers
+-- quest giver only while they have a quest for you (Quests.lua). Trainers
 -- are filtered first: a class trainer only for your class unless "show all
 -- class trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
@@ -381,7 +350,7 @@ local function PinsToShow(mapID)
                 shown[#shown + 1] = pin
             end
         elseif pin.questGiver then
-            if HasQuestToGive(pin) then
+            if ns.HasQuestToGive(pin.npc) then
                 shown[#shown + 1] = pin
             end
         elseif profession == nil then
@@ -531,42 +500,6 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
     self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
 end
 
--- One line per quest for your faction: red cross for one not in your log, yellow waiting mark
--- for one in it, green check for one done; in that order, each group
--- alphabetical. A quest started inside the dungeon is yellow until done,
--- with how to get it after the name.
-local function AddQuestLines(tooltip, quests)
-    local rows = {}
-    for _, quest in ipairs(quests) do
-        if ForMyFaction(quest) then
-            local state = QuestState(quest.id)
-            if quest.start and state == NOT_TAKEN then
-                state = IN_LOG
-            end
-            local title = QuestTitle(quest.id, quest.name)
-            if quest.start then
-                title = title .. " (" .. quest.start .. ")"
-            end
-            rows[#rows + 1] = { state = state, title = title }
-        end
-    end
-    table.sort(rows, function(a, b)
-        if a.state ~= b.state then
-            return a.state < b.state
-        end
-        return a.title < b.title
-    end)
-    for _, row in ipairs(rows) do
-        if row.state == NOT_TAKEN then
-            tooltip:AddLine(ns.CROSS .. " " .. row.title, ns.missing.r, ns.missing.g, ns.missing.b)
-        elseif row.state == IN_LOG then
-            tooltip:AddLine(ns.WAIT .. " " .. row.title, ns.active.r, ns.active.g, ns.active.b)
-        else
-            tooltip:AddLine(ns.CHECK .. " " .. row.title, ns.known.r, ns.known.g, ns.known.b)
-        end
-    end
-end
-
 function SinkMapPinMixin:OnMouseEnter()
     TintRing(self, true)
     local pin = self.pin
@@ -581,8 +514,8 @@ function SinkMapPinMixin:OnMouseEnter()
     if pin.npc and ns.AddWeaponMasterLines then
         ns.AddWeaponMasterLines(GameTooltip, pin.npc)
     end
-    if pin.quests then
-        AddQuestLines(GameTooltip, pin.quests)
+    if pin.questIDs and ns.AddQuestLines then
+        ns.AddQuestLines(GameTooltip, pin.questIDs)
     end
     GameTooltip:Show()
 end
@@ -781,7 +714,9 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- Which trainer to draw depends on your skills; redraw when they change.
 pcall(frame.RegisterEvent, frame, "SKILL_LINES_CHANGED")
--- Quest givers disappear once you have their quests; redraw when that changes.
+-- Quest givers show while they have a quest for you, which depends on your
+-- quests and your level; redraw when either changes.
+pcall(frame.RegisterEvent, frame, "PLAYER_LEVEL_UP")
 pcall(frame.RegisterEvent, frame, "QUEST_ACCEPTED")
 pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
 pcall(frame.RegisterEvent, frame, "QUEST_REMOVED")
@@ -791,8 +726,8 @@ frame:SetScript("OnEvent", function(_, event)
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
         refreshAfterCombat = false
         Refresh()
-    elseif event == "SKILL_LINES_CHANGED" or event == "QUEST_ACCEPTED" or event == "QUEST_TURNED_IN"
-        or event == "QUEST_REMOVED" then
+    elseif event == "SKILL_LINES_CHANGED" or event == "PLAYER_LEVEL_UP" or event == "QUEST_ACCEPTED"
+        or event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
         Refresh()
     end
 end)

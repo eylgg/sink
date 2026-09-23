@@ -64,6 +64,7 @@ read_globals = {
     "UnitExists",
     "UnitFactionGroup",
     "UnitGUID",
+    "UnitLevel",
     "UnitName",
     "hooksecurefunc",
     "PanelTemplates_SetNumTabs",
