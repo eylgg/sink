@@ -69,6 +69,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Fishing" },
         { npc = 3347, name = "Yelmak", note = "Expert Alchemist", x = 0.5684, y = 0.3303,
           icon = "Interface\\Icons\\Trade_Alchemy" },
+        { npc = 7088, name = "Thuwd", note = "Skinning Trainer", x = 0.6335, y = 0.4541,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01" },
+        { npc = 3365, name = "Karolek", note = "Expert Leatherworker", x = 0.6281, y = 0.4415,
+          icon = "Interface\\Icons\\Trade_LeatherWorking" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
