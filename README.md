@@ -146,7 +146,7 @@ Like the other in-game additions, icons added with `/sink map add` are lost on l
 
 ## Developer dumps
 
-`/sink dump ...` prints the IDs and coordinates the built-in tables are made of, in a form you can paste. These change nothing; they are for filling in `MapPins.lua`, `Recipes.lua` and `QuestItems.lua`.
+`/sink dump ...` prints the IDs and coordinates the built-in tables are made of, in a form you can paste. These change nothing; they are for filling in `MapPins.lua`, `Recipes.lua` and `QuestItems.lua`. Chat text cannot be selected, so a dump that ends in a paste line also opens a small box with that line already selected: Cmd+C on a Mac or Ctrl+C on Windows copies it, and Enter or Escape closes the box.
 
 | Command | Effect |
 | --- | --- |

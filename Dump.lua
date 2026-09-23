@@ -9,6 +9,41 @@
 
 local _, ns = ...
 
+-- Chat text cannot be selected, so a line meant for pasting is also put in a
+-- box with the text already selected: Cmd+C on a Mac, Ctrl+C on Windows.
+local POPUP = "SINK_COPY_LINE"
+
+StaticPopupDialogs[POPUP] = {
+    text = "%s",
+    button1 = CLOSE or "Close",
+    hasEditBox = true,
+    editBoxWidth = 420,
+    OnShow = function(self, data)
+        local box = self.EditBox or self.editBox
+        if box then
+            box:SetText(data.text)
+            box:HighlightText()
+            box:SetFocus()
+        end
+    end,
+    EditBoxOnEnterPressed = function(self)
+        self:GetParent():Hide()
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+-- Prints the line and opens the copy box with it selected.
+local function PasteLine(caption, line)
+    print(line)
+    StaticPopup_Show(POPUP, caption, nil, { text = (line:gsub("^%s+", "")) })
+end
+
 local function DumpHelp()
     ns.Print("dump commands, for filling in the tables in the Lua files")
     print("  /sink dump loc      zone, map ID and your position, with a map icon line to paste")
@@ -71,7 +106,7 @@ local function DumpLocation()
         return
     end
     PrintLocation(mapID, x, y)
-    print(ns.MapPinLine(mapID, { name = "?", x = x, y = y }))
+    PasteLine("Map icon line for MapPins.lua", ns.MapPinLine(mapID, { name = "?", x = x, y = y }))
 end
 
 local function LineText(line)
@@ -139,7 +174,7 @@ local function DumpTarget()
         return
     end
     PrintLocation(mapID, x, y)
-    print(ns.MapPinLine(mapID, { npc = npcID, name = name, note = TitleFrom(lines), x = x, y = y }))
+    PasteLine("Map icon line for MapPins.lua", ns.MapPinLine(mapID, { npc = npcID, name = name, note = TitleFrom(lines), x = x, y = y }))
 end
 
 -- Every service the open trainer window lists, as its filter boxes show them,
@@ -166,8 +201,9 @@ local function DumpTrainer()
         end
     end
     if npcID and #ids > 0 then
-        print(("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view"):format(
-            npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", ")))
+        PasteLine("Weapon master line for Weapons.lua",
+            ("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view"):format(
+                npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", ")))
     end
 end
 

@@ -68,6 +68,7 @@ read_globals = {
     -- constants and global strings
     "BACKPACK_CONTAINER",
     "BLACK_LISTED_MESSAGE_TYPES",
+    "CLOSE",
     "DELETE",
     "ITEM_SPELL_KNOWN",
     "NUM_BAG_SLOTS",
