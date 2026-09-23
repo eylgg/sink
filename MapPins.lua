@@ -44,15 +44,25 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- (the default), and only quests for your faction are listed. A quest you get
 -- inside, from a drop, adds start, how to get it; it shows as "Name (start)"
 -- and is yellow until it is done, never red. atlas draws a map atlas instead
--- of an icon texture.
+-- of an icon texture. Any pin can carry quests; a quest giver lists the
+-- quests they give the same way, and with questGiver = true is only drawn
+-- while one of them is neither in your log nor done.
 -- On the Forever build Durotar is map 1411, Tirisfal Glades 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1411] = { -- Durotar
         -- No npc, so clicking it does nothing: no target, no ping.
         { name = "Zeppelin to Undercity", x = 0.5082, y = 0.1386,
-          icon = "Interface\\Icons\\INV_HordeZeppelinMount" },
+          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
     },
     [1420] = { -- Tirisfal Glades
+        { name = "Zeppelin to Orgrimmar", x = 0.6070, y = 0.5878,
+          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
+        { name = "Zeppelin to Grom'gol Base Camp", x = 0.6189, y = 0.5911,
+          icon = "Interface\\Icons\\Achievement_Dungeon_HordeAirship" },
+        { npc = 251001, name = "Deathguard Kristof", note = "Dungeon Quest", questGiver = true,
+          x = 0.6524, y = 0.6020, atlas = "QuestNormal", quests = {
+              { id = 92422, name = "The Wrath of Rath'mael", faction = "Horde" }, -- Ruins of Lordaeron
+          } },
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
           icon = "Interface\\Icons\\Trade_Fishing" },
     },
@@ -69,6 +79,7 @@ ns.mapPins = {
           atlas = "Dungeon", quests = {
               { id = 92421, name = "Light's Justice", faction = "Horde" },
               { id = 95216, name = "The New Plague", faction = "Horde" },
+              { id = 92422, name = "The Wrath of Rath'mael", faction = "Horde" }, -- from Deathguard Kristof, Tirisfal
               -- The Baron (NPC 250660) drops the head that starts the chain (Quests.lua).
               { id = 97288, name = "Unending Torment", faction = "Horde", start = "Kill \"The Baron\" inside" },
           } },
@@ -304,13 +315,58 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- The pins to draw on a map. Dungeons only while "show dungeons" is on.
--- Trainers are filtered first: a class trainer
--- only for your class unless "show all class trainers" is on; with "show all
--- profession trainers" off, secondary professions and your own primary ones
--- always, other primary ones only while you still have a free slot. Then of a
--- profession's ranked trainers only one is drawn. Everything else is drawn as
--- it is.
+-- A quest's title: the title the client has, else the name in the table,
+-- and ask the server so the next hover has the real one.
+local function QuestTitle(questID, fallback)
+    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+    if title and title ~= "" then
+        return title
+    end
+    if C_QuestLog.RequestLoadQuestByID then
+        C_QuestLog.RequestLoadQuestByID(questID)
+    end
+    return fallback or ("quest #" .. questID)
+end
+
+local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
+
+local function QuestState(questID)
+    if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+        return DONE
+    end
+    if C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID) then
+        return IN_LOG
+    end
+    return NOT_TAKEN
+end
+
+-- Whether a quest is for the player's faction: "Horde", "Alliance" or "Both".
+local function ForMyFaction(quest)
+    if not quest.faction or quest.faction == "Both" then
+        return true
+    end
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    return faction == nil or faction == quest.faction
+end
+
+-- Whether a quest giver still has something for you: a quest for your
+-- faction that is neither in your log nor done.
+local function HasQuestToGive(pin)
+    for _, quest in ipairs(pin.quests or {}) do
+        if ForMyFaction(quest) and QuestState(quest.id) == NOT_TAKEN then
+            return true
+        end
+    end
+    return false
+end
+
+-- The pins to draw on a map. Dungeons only while "show dungeons" is on; a
+-- quest giver only while one of their quests is still to be taken. Trainers
+-- are filtered first: a class trainer only for your class unless "show all
+-- class trainers" is on; with "show all profession trainers" off, secondary
+-- professions and your own primary ones always, other primary ones only while
+-- you still have a free slot. Then of a profession's ranked trainers only one
+-- is drawn. Everything else is drawn as it is.
 local function PinsToShow(mapID)
     local shown, groups = {}, {}
     local showAll = ns.db and ns.db.showAllTrainers
@@ -322,6 +378,10 @@ local function PinsToShow(mapID)
         local profession, cap, word = TrainerInfo(pin)
         if pin.dungeon then
             if showDungeons then
+                shown[#shown + 1] = pin
+            end
+        elseif pin.questGiver then
+            if HasQuestToGive(pin) then
                 shown[#shown + 1] = pin
             end
         elseif profession == nil then
@@ -469,40 +529,6 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
     self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
-end
-
--- A dungeon's quests: the title the client has, else the name in the table,
--- and ask the server so the next hover has the real one.
-local function QuestTitle(questID, fallback)
-    local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
-    if title and title ~= "" then
-        return title
-    end
-    if C_QuestLog.RequestLoadQuestByID then
-        C_QuestLog.RequestLoadQuestByID(questID)
-    end
-    return fallback or ("quest #" .. questID)
-end
-
-local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
-
-local function QuestState(questID)
-    if C_QuestLog.IsQuestFlaggedCompleted(questID) then
-        return DONE
-    end
-    if C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID) then
-        return IN_LOG
-    end
-    return NOT_TAKEN
-end
-
--- Whether a quest is for the player's faction: "Horde", "Alliance" or "Both".
-local function ForMyFaction(quest)
-    if not quest.faction or quest.faction == "Both" then
-        return true
-    end
-    local faction = UnitFactionGroup and UnitFactionGroup("player")
-    return faction == nil or faction == quest.faction
 end
 
 -- One line per quest for your faction: red cross for one not in your log, yellow waiting mark
@@ -755,13 +781,18 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- Which trainer to draw depends on your skills; redraw when they change.
 pcall(frame.RegisterEvent, frame, "SKILL_LINES_CHANGED")
+-- Quest givers disappear once you have their quests; redraw when that changes.
+pcall(frame.RegisterEvent, frame, "QUEST_ACCEPTED")
+pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
+pcall(frame.RegisterEvent, frame, "QUEST_REMOVED")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
         refreshAfterCombat = false
         Refresh()
-    elseif event == "SKILL_LINES_CHANGED" then
+    elseif event == "SKILL_LINES_CHANGED" or event == "QUEST_ACCEPTED" or event == "QUEST_TURNED_IN"
+        or event == "QUEST_REMOVED" then
         Refresh()
     end
 end)
