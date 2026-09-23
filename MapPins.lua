@@ -32,10 +32,12 @@ local _, ns = ...
 local TEMPLATE = "SinkMapPinTemplate"
 local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 
--- Built-in icons: uiMapID -> list of { x, y, name, icon, note, npc }. The
--- tooltip shows note ("Fishing Supplies") in Sink's colour, or name when there
--- is no note; npc ties the icon to a vendor in Recipes.lua or a weapon master
--- in Weapons.lua so the tooltip also lists what they sell or teach.
+-- Built-in icons: uiMapID -> list of { x, y, name, icon, note, npc, class }.
+-- The tooltip shows note ("Fishing Supplies") in Sink's colour, or name when
+-- there is no note; npc ties the icon to a vendor in Recipes.lua or a weapon
+-- master in Weapons.lua so the tooltip also lists what they sell or teach. A
+-- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
+-- for one whose note is a title such as "High Priest".
 -- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
@@ -113,6 +115,24 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Shaman" },
         { npc = 3344, name = "Kardris Dreamseeker", note = "Shaman Trainer", x = 0.3881, y = 0.3636,
           icon = "Interface\\Icons\\ClassIcon_Shaman" },
+        { npc = 6018, name = "Ur'kyo", note = "Priest Trainer", x = 0.3559, y = 0.8782,
+          icon = "Interface\\Icons\\ClassIcon_Priest" },
+        { npc = 6014, name = "X'yera", note = "Priest Trainer", x = 0.3600, y = 0.8773,
+          icon = "Interface\\Icons\\ClassIcon_Priest" },
+        { npc = 5994, name = "Zayus", note = "High Priest", class = "PRIEST", x = 0.3572, y = 0.8690,
+          icon = "Interface\\Icons\\ClassIcon_Priest" },
+        { npc = 5883, name = "Enyo", note = "Mage Trainer", x = 0.3879, y = 0.8567,
+          icon = "Interface\\Icons\\ClassIcon_Mage" },
+        { npc = 5882, name = "Pephredo", note = "Mage Trainer", x = 0.3836, y = 0.8556,
+          icon = "Interface\\Icons\\ClassIcon_Mage" },
+        { npc = 5885, name = "Deino", note = "Mage Trainer", x = 0.3845, y = 0.8613,
+          icon = "Interface\\Icons\\ClassIcon_Mage" },
+        { npc = 3407, name = "Sian'dur", note = "Hunter Trainer", x = 0.6796, y = 0.1779,
+          icon = "Interface\\Icons\\ClassIcon_Hunter" },
+        { npc = 3406, name = "Xor'juul", note = "Hunter Trainer", x = 0.6725, y = 0.2019,
+          icon = "Interface\\Icons\\ClassIcon_Hunter" },
+        { npc = 3352, name = "Ormak Grimshot", note = "Hunter Trainer", x = 0.6605, y = 0.1853,
+          icon = "Interface\\Icons\\ClassIcon_Hunter" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -197,6 +217,9 @@ local CLASS_WORDS = {
 -- an unknown word gives false), the rank cap (nil for a plain "... Trainer"),
 -- and the word. Any other pin returns nil.
 local function TrainerInfo(pin)
+    if pin.class then
+        return { class = pin.class }, nil, pin.class:lower()
+    end
     local note = pin.note or ""
     local rank, rest = note:match("^(%a+)%s+(.+)$")
     local cap = rank and RANK_CAPS[rank]
