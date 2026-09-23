@@ -53,6 +53,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Ability_DualWield" },
         { npc = 1383, name = "Snarl", note = "Expert Blacksmith", x = 0.7960, y = 0.2330,
           icon = "Interface\\Icons\\Trade_BlackSmithing" },
+        { npc = 3357, name = "Makaru", note = "Mining Trainer", x = 0.7312, y = 0.2609,
+          icon = "Interface\\Icons\\Trade_Mining" },
+        { npc = 3399, name = "Zamja", note = "Cooking Trainer", x = 0.5740, y = 0.5396,
+          icon = "Interface\\Icons\\INV_Misc_Food_15" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
