@@ -95,6 +95,12 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Rogue" },
         { npc = 3327, name = "Gest", note = "Rogue Trainer", x = 0.4269, y = 0.5148,
           icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 3325, name = "Mirket", note = "Warlock Trainer", x = 0.4862, y = 0.4696,
+          icon = "Interface\\Icons\\ClassIcon_Warlock" },
+        { npc = 3326, name = "Zevrost", note = "Warlock Trainer", x = 0.4847, y = 0.4542,
+          icon = "Interface\\Icons\\ClassIcon_Warlock" },
+        { npc = 3324, name = "Grol'dar", note = "Warlock Trainer", x = 0.4798, y = 0.4593,
+          icon = "Interface\\Icons\\ClassIcon_Warlock" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
