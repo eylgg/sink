@@ -45,8 +45,13 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- inside, from a drop, adds start, how to get it; it shows as "Name (start)"
 -- and is yellow until it is done, never red. atlas draws a map atlas instead
 -- of an icon texture.
--- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
+-- On the Forever build Durotar is map 1411, Tirisfal Glades 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
+    [1411] = { -- Durotar
+        -- No npc, so clicking it does nothing: no target, no ping.
+        { name = "Zeppelin to Undercity", x = 0.5082, y = 0.1386,
+          icon = "Interface\\Icons\\INV_HordeZeppelinMount" },
+    },
     [1420] = { -- Tirisfal Glades
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.658, y = 0.595,
           icon = "Interface\\Icons\\Trade_Fishing" },
