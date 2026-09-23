@@ -110,7 +110,7 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 From these the map draws each dungeon's entrance with its quests and a "Dungeon Quest" pin on each NPC who gives one. A drop whose NPC is inside the quest's dungeon reads "Kill "The Baron" inside", and an item on the ground inside it reads "Loot inside": "Crest of Lordaeron (Loot inside)". Both are yellow until done, never red.
 
-Quests linked by `after` make a series, and the objective tracker adds the step to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
+Quests linked by `after` make a series. The step follows the name on the map tooltips, "Hidden Enemies (2/4)" on Ragefire Chasm and "(1/4)" on Thrall, though not on the first quest of a series that starts inside a dungeon, where "(Kill "The Baron" inside)" says enough, and the objective tracker adds it to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
 
 ## Ability errors
 

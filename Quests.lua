@@ -262,7 +262,9 @@ end
 
 -- One line per quest for your faction: red cross for one not in your log,
 -- yellow waiting mark for one in it, green check for one done; in that
--- order, each group alphabetical. A quest that starts inside the dungeon,
+-- order, each group alphabetical. A quest in a series has its step after
+-- the name, "Hidden Enemies (2/4)", except the first of a series that starts
+-- inside the dungeon. A quest that starts inside the dungeon,
 -- from a drop or an item on the ground, is yellow until done, never red,
 -- with how to get it after the name.
 function ns.AddQuestLines(tooltip, questIDs)
@@ -273,6 +275,11 @@ function ns.AddQuestLines(tooltip, questIDs)
             local state = QuestState(questID)
             local title = QuestTitle(questID)
             local drop = DropText(quest)
+            -- A series that starts inside needs no "(1/5)": how to get it says enough.
+            local step = ns.QuestSeriesSuffix(questID)
+            if step and not (drop and stepByQuest[questID].step == 1) then
+                title = title .. " " .. step
+            end
             if drop then
                 title = title .. " (" .. drop .. ")"
                 if state == NOT_TAKEN then
