@@ -38,9 +38,9 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- master in Weapons.lua so the tooltip also lists what they sell or teach. A
 -- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
 -- for one whose note is a title such as "High Priest". A dungeon has
--- dungeon = true, levels ("11-24", shown after the name) and quests, a list of
--- { id, name } whose names stand in until the client has the quest cached;
--- atlas draws a map atlas instead of an icon texture.
+-- dungeon = true, minLevel and maxLevel (shown after the name as "11 - 24")
+-- and quests, a list of { id, name } whose names stand in until the client
+-- has the quest cached; atlas draws a map atlas instead of an icon texture.
 -- On the Forever build Tirisfal Glades is map 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1420] = { -- Tirisfal Glades
@@ -56,7 +56,7 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Mining" },
         { npc = 15683, name = "Auctioneer Naxxremis", note = "Auction House", x = 0.6440, y = 0.3580,
           icon = "Interface\\Icons\\INV_Misc_Coin_01" },
-        { name = "Ruins of Lordaeron", dungeon = true, levels = "11-24", x = 0.7261, y = 0.1148,
+        { name = "Ruins of Lordaeron", dungeon = true, minLevel = 11, maxLevel = 24, x = 0.7261, y = 0.1148,
           atlas = "Dungeon", quests = {
               { id = 92401, name = "A Frightened Request" },
           } },
@@ -187,8 +187,8 @@ local RANK_CAPS = { Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 3
 
 local function NoteText(pin)
     local note = pin.note or pin.name
-    if pin.levels then
-        return note .. " (" .. pin.levels .. ")"
+    if pin.minLevel and pin.maxLevel then
+        return ("%s (%d - %d)"):format(note, pin.minLevel, pin.maxLevel)
     end
     local cap = RANK_CAPS[note:match("^(%a+)") or ""]
     return cap and (note .. " (" .. cap .. ")") or note
