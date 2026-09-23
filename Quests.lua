@@ -61,8 +61,9 @@ ns.quests = {
     [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
     [97291] = { name = "Unending Torment", faction = "Horde", start = { after = 97290 } },
     [97292] = { name = "Unending Torment", faction = "Horde", start = { after = 97291 } },
-    -- Hidden Enemies: part 2 is done in Ragefire Chasm; part 1 is from Thrall.
-    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
+    -- Hidden Enemies: part 1 is from Thrall; part 3 is done in Ragefire Chasm.
+    [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
+    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726 } },
     [5728] = { name = "Hidden Enemies", faction = "Horde", dungeon = 389, start = { after = 5727 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
@@ -268,7 +269,7 @@ end
 -- One line per quest for your faction: red cross for one not in your log,
 -- yellow waiting mark for one in it, green check for one done; in that
 -- order, each group alphabetical. A quest in a series has its step after
--- the name, "Hidden Enemies (2/4)", except the first of a series that starts
+-- the name, "Hidden Enemies (3/5)", except the first of a series that starts
 -- inside the dungeon. A quest that starts inside the dungeon,
 -- from a drop or an item on the ground, is yellow until done, never red,
 -- with how to get it after the name.
