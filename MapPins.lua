@@ -190,13 +190,42 @@ local function CustomPins()
     return ns.db and ns.db.mapPins or nil
 end
 
+-- A position on a continent map, as "/sink dump loc" gives in a cave with no
+-- zone map, moved to the zone it lies in: the map asks which zone is at that
+-- point, and the point goes to world coordinates and back onto that zone.
+-- Any other position, or one the client cannot place, is returned as it is.
+local function ZonePosition(mapID, x, y)
+    local info = C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+    if not (info and Enum and Enum.UIMapType and info.mapType == Enum.UIMapType.Continent)
+        or not (C_Map.GetMapInfoAtPosition and C_Map.GetWorldPosFromMapPos and C_Map.GetMapPosFromWorldPos
+            and CreateVector2D) then
+        return mapID, x, y
+    end
+    local zone = C_Map.GetMapInfoAtPosition(mapID, x, y)
+    if not zone or zone.mapID == mapID then
+        return mapID, x, y
+    end
+    local continentID, world = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(x, y))
+    if not (continentID and world) then
+        return mapID, x, y
+    end
+    local _, pos = C_Map.GetMapPosFromWorldPos(continentID, world, zone.mapID)
+    if not pos then
+        return mapID, x, y
+    end
+    local zx, zy = pos:GetXY()
+    return zone.mapID, zx, zy
+end
+
 -- Pins built from Quests.lua, by map: each dungeon's entrance and each NPC
--- who gives a quest. The records never change, so this is done once.
+-- who gives a quest, on the zone they are in. The records never change, so
+-- this is done once, the first time the map opens.
 local questPins
 local function QuestPins(mapID)
     if not questPins then
         questPins = {}
         local function add(map, pin)
+            map, pin.x, pin.y = ZonePosition(map, pin.x, pin.y)
             questPins[map] = questPins[map] or {}
             table.insert(questPins[map], pin)
         end
@@ -564,7 +593,7 @@ local function ShowNPC(npcID, npc)
         return
     end
     GameTooltip:Hide() -- the dungeon's pin goes away with its map
-    map:SetMapID(npc.map)
+    map:SetMapID((ZonePosition(npc.map, npc.x, npc.y)))
     -- The new map's pins are drawn by now or on the next frame; look then.
     C_Timer.After(0, function()
         for pinFrame in map:EnumeratePinsByTemplate(TEMPLATE) do

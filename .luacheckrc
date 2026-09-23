@@ -46,6 +46,7 @@ read_globals = {
     "ButtonFrameTemplate_HideButtonBar",
     "ClearCursor",
     "CreateFromMixins",
+    "CreateVector2D",
     "CursorHasItem",
     "DeleteCursorItem",
     "GetGameMessageInfo",

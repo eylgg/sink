@@ -29,10 +29,13 @@
 local _, ns = ...
 
 -- Dungeons by instance ID, the Map table's ID that GetInstanceInfo() returns
--- inside. The entrance is on uiMap map at x, y.
+-- inside. The entrance is on uiMap map at x, y; a continent map, as a dump
+-- in a cave gives, is fine, the pin goes on the zone that point is in.
 ns.dungeons = {
     [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148 },
     [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 18, map = 1454, x = 0.5302, y = 0.4876 },
+    -- Recorded on the Kalimdor map (1414); MapPins.lua draws it on the zone it lies in, The Barrens.
+    [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1414, x = 0.5239, y = 0.5521 },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y; one
