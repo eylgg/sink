@@ -14,7 +14,9 @@
 --                  dungeon it reads "Loot inside"
 --   { after = id } offered once the quest before it is turned in
 -- Quests linked by after make a series, and the objective tracker adds the
--- step to the end of each one's title: "Unending Torment (2/5)".
+-- step to the end of each one's title: "Unending Torment (2/5)". The map
+-- tooltips add it too, except for a series whose parts all have their own
+-- names, where the name says enough.
 --
 -- The tracker is Blizzard's Retail one (Blizzard_ObjectiveTracker). Each
 -- quest is a block whose header QuestObjectiveTrackerMixin:UpdateSingle sets
@@ -80,7 +82,7 @@ ns.quests = {
 
 local questsByDungeon = {} -- instance ID -> { questID, ... }
 local questsByGiver = {}   -- npcID -> { questID, ... }
-local stepByQuest = {}     -- questID -> { step, count } for a quest in a series
+local stepByQuest = {}     -- questID -> { step, count, uniqueNames } for a quest in a series
 
 local function Append(index, key, value)
     index[key] = index[key] or {}
@@ -110,8 +112,16 @@ do
                 chain[#chain + 1] = questID
                 questID = nextQuest[questID]
             end
+            -- Whether every part has its own name (the Lost Satchel); the map
+            -- tooltips leave the step off those.
+            local names, unique = {}, true
+            for _, id in ipairs(chain) do
+                local name = ns.quests[id] and ns.quests[id].name or id
+                unique = unique and not names[name]
+                names[name] = true
+            end
             for step, id in ipairs(chain) do
-                stepByQuest[id] = { step = step, count = #chain }
+                stepByQuest[id] = { step = step, count = #chain, uniqueNames = unique }
             end
         end
     end
@@ -269,8 +279,9 @@ end
 -- One line per quest for your faction: red cross for one not in your log,
 -- yellow waiting mark for one in it, green check for one done; in that
 -- order, each group alphabetical. A quest in a series has its step after
--- the name, "Hidden Enemies (3/5)", except the first of a series that starts
--- inside the dungeon. A quest that starts inside the dungeon,
+-- the name, "Hidden Enemies (3/5)", except in a series whose parts all have
+-- their own names and on the first of a series that starts inside the
+-- dungeon. A quest that starts inside the dungeon,
 -- from a drop or an item on the ground, is yellow until done, never red,
 -- with how to get it after the name.
 function ns.AddQuestLines(tooltip, questIDs)
@@ -283,7 +294,8 @@ function ns.AddQuestLines(tooltip, questIDs)
             local drop = DropText(quest)
             -- A series that starts inside needs no "(1/5)": how to get it says enough.
             local step = ns.QuestSeriesSuffix(questID)
-            if step and not (drop and stepByQuest[questID].step == 1) then
+            local entry = stepByQuest[questID]
+            if step and not entry.uniqueNames and not (drop and entry.step == 1) then
                 title = title .. " " .. step
             end
             if drop then
