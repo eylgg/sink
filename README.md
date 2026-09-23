@@ -106,9 +106,9 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 - `ns.dungeons`, by instance ID: the Map table ID that `GetInstanceInfo()` returns inside, 2999 for Ruins of Lordaeron. Wowhead's "zone" ID for a dungeon (16611) is an area ID; its row in the AreaTable names the map as its continent. Each dungeon has a name, `minLevel`, `maxLevel`, and the entrance's `map`, `x` and `y`.
 - `ns.npcs`, by NPC ID: the name, and either `map`, `x`, `y` for one outside or `instance` for one inside a dungeon.
-- `ns.quests`, by quest ID: `name` (shown until the client has the quest cached), `faction` (`"Horde"`, `"Alliance"` or `"Both"`, the default), `minLevel` where known (else the dungeon's), `dungeon` (the instance ID the quest is for) and `start`, how you get it: `{ npc = id }` from an NPC, `{ drop = id }` from an item that NPC drops, `{ after = id }` once the quest before it is turned in.
+- `ns.quests`, by quest ID: `name` (shown until the client has the quest cached), `faction` (`"Horde"`, `"Alliance"` or `"Both"`, the default), `minLevel` where known (else the dungeon's), `dungeon` (the instance ID the quest is for) and `start`, how you get it: `{ npc = id }` from an NPC, `{ drop = id }` from an item that NPC drops, `{ item = id }` from an item you loot from the ground, recorded in `ns.questItems` with the `instance` it is found in, `{ after = id }` once the quest before it is turned in.
 
-From these the map draws each dungeon's entrance with its quests and a "Dungeon Quest" pin on each NPC who gives one. A drop whose NPC is inside the quest's dungeon reads "Kill "The Baron" inside".
+From these the map draws each dungeon's entrance with its quests and a "Dungeon Quest" pin on each NPC who gives one. A drop whose NPC is inside the quest's dungeon reads "Kill "The Baron" inside", and an item on the ground inside it reads "Loot inside": "Crest of Lordaeron (Loot inside)". Both are yellow until done, never red.
 
 Quests linked by `after` make a series, and the objective tracker adds the step to the end of the title: "Unending Torment (2/5)". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
 

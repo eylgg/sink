@@ -9,6 +9,9 @@
 --   { npc = id }   an NPC gives it; the NPC's record says where they stand
 --   { drop = id }  an NPC drops the item that starts it; when that NPC is in
 --                  the quest's dungeon it reads "Kill "The Baron" inside"
+--   { item = id }  an item you loot starts it, one lying on the ground rather
+--                  than dropped by an NPC; when the item is in the quest's
+--                  dungeon it reads "Loot inside"
 --   { after = id } offered once the quest before it is turned in
 -- Quests linked by after make a series, and the objective tracker adds the
 -- step to the end of each one's title: "Unending Torment (2/5)".
@@ -36,6 +39,12 @@ ns.npcs = {
     [250660] = { name = "The Baron", instance = 2999 },
 }
 
+-- Items you loot from the ground that start a quest, by item ID, with the
+-- instance ID of the dungeon they are found in.
+ns.questItems = {
+    [275521] = { name = "Crest of Lordaeron", instance = 2999 }, -- lies on the ground at random spots
+}
+
 -- Quests by ID. name stands in until the client has the quest cached;
 -- faction is "Horde", "Alliance" or "Both" (the default); minLevel is the
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
@@ -44,6 +53,7 @@ ns.quests = {
     [92421] = { name = "Light's Justice", faction = "Horde", dungeon = 2999 },
     [95216] = { name = "The New Plague", faction = "Horde", dungeon = 2999 },
     [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", dungeon = 2999, start = { npc = 251001 } },
+    [95204] = { name = "Crest of Lordaeron", faction = "Horde", dungeon = 2999, start = { item = 275521 } },
     [97288] = { name = "Unending Torment", faction = "Horde", dungeon = 2999, start = { drop = 250660 } },
     [97289] = { name = "Unending Torment", faction = "Horde", start = { after = 97288 } },
     [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
@@ -203,12 +213,18 @@ function ns.QuestsToFetch(questIDs)
     return list
 end
 
--- How to get a quest that drops inside its own dungeon: 'Kill "The Baron"
--- inside'. nil for any other quest.
+-- How to get a quest that starts inside its own dungeon: 'Kill "The Baron"
+-- inside' for a drop, "Loot inside" for an item on the ground. nil for any
+-- other quest.
 local function DropText(quest)
-    local dropper = quest.start and quest.start.drop and ns.npcs[quest.start.drop]
+    local start = quest.start or {}
+    local dropper = start.drop and ns.npcs[start.drop]
     if dropper and dropper.instance and dropper.instance == quest.dungeon then
         return ("Kill \"%s\" inside"):format(dropper.name)
+    end
+    local item = start.item and ns.questItems[start.item]
+    if item and item.instance and item.instance == quest.dungeon then
+        return "Loot inside"
     end
     return nil
 end
@@ -219,8 +235,9 @@ end
 
 -- One line per quest for your faction: red cross for one not in your log,
 -- yellow waiting mark for one in it, green check for one done; in that
--- order, each group alphabetical. A quest that drops inside the dungeon is
--- yellow until done, never red, with how to get it after the name.
+-- order, each group alphabetical. A quest that starts inside the dungeon,
+-- from a drop or an item on the ground, is yellow until done, never red,
+-- with how to get it after the name.
 function ns.AddQuestLines(tooltip, questIDs)
     local rows = {}
     for _, questID in ipairs(questIDs) do
