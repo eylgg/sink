@@ -16,11 +16,14 @@
 -- Coordinates are 0 to 1 across the zone map, Wowhead's numbers divided by
 -- 100, keyed by the zone's uiMapID from the client's UiMap table.
 --
--- Clicking an icon that marks an NPC targets it. Targeting is a protected
--- action an addon cannot perform itself, so each pin carries a secure action
--- button as an overlay that runs "/targetexact <name>" on a real click. That
--- finds the NPC when it is loaded around you, so it is for "which one is the
--- blacksmith" in town, not for locating someone across the zone.
+-- Clicking an icon that marks an NPC targets it and pings it with the game's
+-- own ping, so the ping marker shows where it stands. Both are protected
+-- actions an addon cannot perform itself, so each pin carries a secure action
+-- button as an overlay that runs a macro on a real click: clear the target,
+-- "/targetexact <name>", then "/ping [@target,exists]", which pings only when
+-- the NPC was found. Targeting by name finds the NPC when it is loaded around
+-- you, so this is for "which one is the blacksmith" in town, not for locating
+-- someone across the zone.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -57,6 +60,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Mining" },
         { npc = 3399, name = "Zamja", note = "Cooking Trainer", x = 0.5740, y = 0.5396,
           icon = "Interface\\Icons\\INV_Misc_Food_15" },
+        { npc = 3373, name = "Arnok", note = "First Aid Trainer", x = 0.3418, y = 0.8458,
+          icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -189,7 +194,9 @@ function SinkMapPinMixin:SetClickTarget(name)
     end
     if name then
         button:SetAttribute("type", "macro")
-        button:SetAttribute("macrotext", "/targetexact " .. name)
+        -- No ping type means the contextual ping, the plain one. The exists
+        -- check keeps a failed target from pinging whatever was targeted before.
+        button:SetAttribute("macrotext", ("/cleartarget\n/targetexact %s\n/ping [@target,exists]"):format(name))
         button:Show()
     else
         button:SetAttribute("type", nil)
