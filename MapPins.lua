@@ -66,6 +66,30 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Mining" },
         { npc = 15683, name = "Auctioneer Naxxremis", note = "Auction House", x = 0.6440, y = 0.3580,
           icon = "Interface\\Icons\\INV_Misc_Coin_01" },
+        { npc = 4591, name = "Mary Edras", note = "First Aid Trainer", x = 0.7316, y = 0.5514,
+          icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice" },
+        { npc = 223, name = "Dan Golthas", note = "Journeyman Leatherworker", x = 0.7093, y = 0.5840,
+          icon = "Interface\\Icons\\Trade_LeatherWorking" },
+        { npc = 4588, name = "Arthur Moore", note = "Expert Leatherworker", x = 0.7018, y = 0.5742,
+          icon = "Interface\\Icons\\Trade_LeatherWorking" },
+        { npc = 7087, name = "Killian Hagey", note = "Skinning Trainer", x = 0.7016, y = 0.5918,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01" },
+        { npc = 4586, name = "Graham Van Talen", note = "Journeyman Engineer", x = 0.7534, y = 0.7313,
+          icon = "Interface\\Icons\\Trade_Engineering" },
+        { npc = 11031, name = "Franklin Lloyd", note = "Expert Engineer", x = 0.7612, y = 0.7403,
+          icon = "Interface\\Icons\\Trade_Engineering" },
+        { npc = 4582, name = "Carolyn Ward", note = "Rogue Trainer", x = 0.8385, y = 0.7207,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 4584, name = "Gregory Charles", note = "Rogue Trainer", x = 0.8488, y = 0.7353,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 4583, name = "Miles Dexter", note = "Rogue Trainer", x = 0.8521, y = 0.7158,
+          icon = "Interface\\Icons\\ClassIcon_Rogue" },
+        { npc = 4609, name = "Doctor Marsh", note = "Expert Alchemist", x = 0.5093, y = 0.7455,
+          icon = "Interface\\Icons\\Trade_Alchemy" },
+        { npc = 11044, name = "Doctor Martin Felben", note = "Journeyman Alchemist", x = 0.4660, y = 0.7409,
+          icon = "Interface\\Icons\\Trade_Alchemy" },
+        { npc = 4611, name = "Doctor Herbert Halsey", note = "Artisan Alchemist", x = 0.4777, y = 0.7334,
+          icon = "Interface\\Icons\\Trade_Alchemy" },
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
@@ -273,7 +297,8 @@ local function TrainerInfo(pin)
     local rank, rest = note:match("^(%a+)%s+(.+)$")
     local cap = rank and RANK_CAPS[rank]
     if cap then
-        local word = rest:lower()
+        -- "Journeyman Alchemist Trainer", as some NPCs title themselves, is the same as "Journeyman Alchemist".
+        local word = rest:lower():gsub("%s+trainer$", "")
         return professionByWord[word] or false, cap, word
     end
     local word = note:match("^(.+)%s+Trainer$")
