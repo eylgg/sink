@@ -14,6 +14,44 @@ local function DumpHelp()
     print("  /sink dump loc      zone, map ID and your position, with a map icon line to paste")
     print("  /sink dump target   your target's name, NPC ID, GUID and tooltip lines, with a map icon line")
     print("  /sink dump trainer  the open trainer window's services, with a weapon master line to paste")
+    print("  /sink dump skills   every skill line the client lists, then each weapon skill's two signals")
+end
+
+-- What the client says this character knows: every skill line it lists, then
+-- each weapon skill with the two signs Sink reads, its skill line and its
+-- proficiency spell.
+local function DumpSkills()
+    if not (C_SkillInfo and C_SkillInfo.GetNumSkillLines and C_SkillInfo.GetSkillLineInfo) then
+        ns.Print("C_SkillInfo is not available on this client.")
+        return
+    end
+    ns.Print("skill lines the client lists (a collapsed header hides its lines)")
+    for index = 1, C_SkillInfo.GetNumSkillLines() do
+        local info = C_SkillInfo.GetSkillLineInfo(index)
+        if info and info.isHeader then
+            print(("  %s%s"):format(tostring(info.name), info.isCollapsed and " (collapsed)" or ""))
+        elseif info then
+            print(("    %s (line %d) %d/%d"):format(tostring(info.name), info.skillID or 0, info.rank or 0, info.maxRank or 0))
+        end
+    end
+    ns.Print("weapon skills as Sink reads them")
+    for _, skill in ipairs(ns.weaponSkills or {}) do
+        local line = "no line lookup"
+        if C_SkillInfo.GetSkillLineInfoByID then
+            local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, skill.id)
+            if ok and info and (info.maxRank or 0) > 0 then
+                line = ("line %d %d/%d"):format(skill.id, info.rank or 0, info.maxRank or 0)
+            else
+                line = ("line %d not listed"):format(skill.id)
+            end
+        end
+        local spell = "no spell"
+        if skill.spell then
+            local known = (IsPlayerSpell and IsPlayerSpell(skill.spell)) or (IsSpellKnown and IsSpellKnown(skill.spell))
+            spell = ("spell %d %s"):format(skill.spell, known and "known" or "not known")
+        end
+        print(("  %s: %s, %s"):format(skill.names[1], line, spell))
+    end
 end
 
 -- Zone name, map ID and its parent, subzone, and the position in both forms.
@@ -146,6 +184,8 @@ function ns.DumpCommand(arg)
         DumpTarget()
     elseif sub == "trainer" then
         DumpTrainer()
+    elseif sub == "skills" or sub == "skill" then
+        DumpSkills()
     else
         DumpHelp()
     end

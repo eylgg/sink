@@ -21,27 +21,34 @@
 
 local _, ns = ...
 
--- Weapon skill lines, by the skill line IDs Forever's Skills panel tracks. The
--- names are what the trainer window and the skill list call them; some go by
--- both the vanilla name and the later one, so both are matched. level is the
--- character level the trainer asks for, where known; the trainer window
+-- Weapon skills. id is the skill line Forever's Skills panel tracks; spell is
+-- the proficiency the trainer grants, a second sign that the skill is known.
+-- The names are what the trainer window and the skill list call them; some go
+-- by both the vanilla name and the later one, so both are matched. level is
+-- the character level the trainer asks for, where known; the trainer window
 -- records the others as you visit.
+--
+-- Fist weapons are the odd one. Weapon masters offer them, but on Forever
+-- the rank is kept under the Unarmed skill every character has, so the
+-- Skills page never lists them and the proficiency spell is the only sign a
+-- character has trained them. Line 473 is vanilla's; here it only serves as
+-- the table key.
 ns.weaponSkills = {
-    { id = 43,  names = { "One-Handed Swords", "Swords" } },
-    { id = 55,  names = { "Two-Handed Swords" } },
-    { id = 44,  names = { "One-Handed Axes", "Axes" } },
-    { id = 172, names = { "Two-Handed Axes" } },
-    { id = 54,  names = { "One-Handed Maces", "Maces" } },
-    { id = 160, names = { "Two-Handed Maces" } },
-    { id = 173, names = { "Daggers" } },
-    { id = 473, names = { "Fist Weapons" } }, -- Unarmed (line 162) is separate and nobody trains it
-    { id = 136, names = { "Staves" } },
-    { id = 229, names = { "Polearms" }, level = 20 },
-    { id = 45,  names = { "Bows" } },
-    { id = 46,  names = { "Guns" } },
-    { id = 226, names = { "Crossbows" } },
-    { id = 176, names = { "Thrown", "Thrown Weapons" } },
-    { id = 228, names = { "Wands" }, classTrainer = true }, -- class trainers teach wands, no weapon master does
+    { id = 43,  spell = 201,   names = { "One-Handed Swords", "Swords" } },
+    { id = 55,  spell = 202,   names = { "Two-Handed Swords" } },
+    { id = 44,  spell = 196,   names = { "One-Handed Axes", "Axes" } },
+    { id = 172, spell = 197,   names = { "Two-Handed Axes" } },
+    { id = 54,  spell = 198,   names = { "One-Handed Maces", "Maces" } },
+    { id = 160, spell = 199,   names = { "Two-Handed Maces" } },
+    { id = 173, spell = 1180,  names = { "Daggers" } },
+    { id = 473, spell = 15590, names = { "Fist Weapons" } },
+    { id = 136, spell = 227,   names = { "Staves" } },
+    { id = 229, spell = 200,   names = { "Polearms" }, level = 20 },
+    { id = 45,  spell = 264,   names = { "Bows" } },
+    { id = 46,  spell = 266,   names = { "Guns" } },
+    { id = 226, spell = 5011,  names = { "Crossbows" } },
+    { id = 176, spell = 2567,  names = { "Thrown", "Thrown Weapons" } },
+    { id = 228, spell = 5009,  names = { "Wands" }, classTrainer = true }, -- class trainers teach wands, no weapon master does
 }
 
 -- Which weapon skills each class can learn, by skill line ID: the vanilla
@@ -89,18 +96,29 @@ local function Enabled()
     return ns.db ~= nil and ns.db.weaponTooltips ~= false
 end
 
--- The skill line attributes (name, rank, maxRank) when the character knows
--- this skill, else nil. Looked up by ID first and, failing that, by name among
--- the lines the client lists, in case Forever numbers a line differently.
+-- Whether the character has the proficiency spell for a skill.
+local function HasProficiency(skill)
+    if not skill.spell then
+        return false
+    end
+    return (IsPlayerSpell and IsPlayerSpell(skill.spell)) or (IsSpellKnown and IsSpellKnown(skill.spell)) or false
+end
+
+-- A table with at least the skill's name when the character knows it, else
+-- nil. Three signals: the skill line by ID, the proficiency spell, and the
+-- skill line by name among the lines the client lists.
 local function Known(skill)
     if not C_SkillInfo then
-        return nil
+        return HasProficiency(skill) and { name = skill.names[1] } or nil
     end
     if C_SkillInfo.GetSkillLineInfoByID then
         local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, skill.id)
         if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
             return info
         end
+    end
+    if HasProficiency(skill) then
+        return { name = skill.names[1] }
     end
     if C_SkillInfo.GetNumSkillLines and C_SkillInfo.GetSkillLineInfo then
         for index = 1, C_SkillInfo.GetNumSkillLines() do
@@ -114,10 +132,11 @@ local function Known(skill)
     return nil
 end
 
--- The client's name for the skill when known, else the first listed one.
+-- The name shown everywhere: the one the trainer window uses, "One-Handed
+-- Axes". The Skills page calls some of them differently, "Axes"; both are
+-- matched, one is displayed.
 local function SkillName(skill)
-    local info = Known(skill)
-    return (info and info.name) or skill.names[1]
+    return skill.names[1]
 end
 
 -- The level the skill needs: what a trainer window showed, else the table.
@@ -257,7 +276,7 @@ local function SortedRows(skills)
             skill = skill,
             group = group,
             level = group == MISSING and SkillLevel(skill) or 0,
-            name = (info and info.name) or SkillName(skill),
+            name = SkillName(skill),
         }
     end
     table.sort(rows, function(a, b)
