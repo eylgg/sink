@@ -1,9 +1,9 @@
 # Keep GitHub's automatic "Source code" archives to the addon files only.
-# (Patterns here must use /** for directories; a trailing slash does nothing in
-# .gitattributes.)
+# (Name a directory itself, not dir/**: the latter drops its files but leaves
+# an empty directory entry in the archive. A trailing slash does nothing here.)
 .gitattributes export-ignore
 .gitignore export-ignore
 .luacheckrc export-ignore
 README.md export-ignore
-.github/** export-ignore
-scripts/** export-ignore
+.github export-ignore
+scripts export-ignore

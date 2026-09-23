@@ -5,7 +5,7 @@ It does five things: it can keep your player frame horizontally centered no matt
 
 ## Install
 
-The quickest way is `Sink.zip` from the [releases page](../../releases): extract it and you get a `Sink` folder containing only the addon files. Put that folder at the path below.
+The quickest way is `Sink.zip` from the [releases page](https://github.com/eylgg/sink/releases): extract it and you get a `Sink` folder containing only the addon files. Put that folder at the path below.
 
 For a working checkout instead: Forever installs next to your other WoW flavors in a `_classic_beta_` folder, and this folder needs to end up at:
 
