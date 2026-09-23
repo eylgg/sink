@@ -167,17 +167,40 @@ local function MinLevel(quest)
     return quest.minLevel or (dungeon and dungeon.minLevel) or 0
 end
 
--- Whether an NPC has a quest for you now: for your faction, neither in your
--- log nor done, and your level is high enough.
-function ns.HasQuestToGive(npcID)
+-- Whether a quest is there for you to pick up now: for your faction, neither
+-- in your log nor done, and your level is high enough.
+local function Available(questID)
+    local quest = ns.quests[questID]
     local level = UnitLevel and UnitLevel("player") or 0
+    return quest ~= nil and ForMyFaction(quest) and QuestState(questID) == NOT_TAKEN and level >= MinLevel(quest)
+end
+
+-- Whether an NPC has a quest for you now.
+function ns.HasQuestToGive(npcID)
     for _, questID in ipairs(ns.QuestsFromGiver(npcID)) do
-        local quest = ns.quests[questID]
-        if quest and ForMyFaction(quest) and QuestState(questID) == NOT_TAKEN and level >= MinLevel(quest) then
+        if Available(questID) then
             return true
         end
     end
     return false
+end
+
+-- Of these quests, the ones you can go and pick up from an NPC who has a
+-- place on the map, alphabetical: { questID, title, npcID, npc }. These are
+-- the quests whose givers have a "Dungeon Quest" pin.
+function ns.QuestsToFetch(questIDs)
+    local list = {}
+    for _, questID in ipairs(questIDs) do
+        local start = ns.quests[questID] and ns.quests[questID].start
+        local npc = start and start.npc and ns.npcs[start.npc]
+        if npc and npc.map and Available(questID) then
+            list[#list + 1] = { questID = questID, title = QuestTitle(questID), npcID = start.npc, npc = npc }
+        end
+    end
+    table.sort(list, function(a, b)
+        return a.title < b.title
+    end)
+    return list
 end
 
 -- How to get a quest that drops inside its own dungeon: 'Kill "The Baron"

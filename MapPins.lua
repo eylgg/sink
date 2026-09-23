@@ -500,6 +500,78 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
     self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
 end
 
+-- Left clicks go through to the map, which zooms in, unless the pin uses them:
+-- a dungeon with quests to fetch. Right clicks always go through, so the map
+-- still zooms out. The map calls this after OnAcquired, since pins are reused.
+function SinkMapPinMixin:CheckMouseButtonPassthrough(...)
+    local buttons = { "RightButton" }
+    if not (self.pin and self.pin.dungeon) then
+        buttons[#buttons + 1] = "LeftButton"
+    end
+    pcall(self.SetPassThroughButtons, self, unpack(buttons))
+end
+
+-- Make the pin for an NPC pulse for a few seconds so it stands out.
+local function Pulse(pinFrame)
+    if not pinFrame.PulseAnim then
+        local group = pinFrame:CreateAnimationGroup()
+        local grow = group:CreateAnimation("Scale")
+        grow:SetScale(1.6, 1.6)
+        grow:SetDuration(0.35)
+        grow:SetOrder(1)
+        local shrink = group:CreateAnimation("Scale")
+        shrink:SetScale(1 / 1.6, 1 / 1.6)
+        shrink:SetDuration(0.35)
+        shrink:SetOrder(2)
+        group:SetLooping("REPEAT")
+        pinFrame.PulseAnim = group
+    end
+    pinFrame.PulseAnim:Play()
+    C_Timer.After(3, function()
+        pinFrame.PulseAnim:Stop()
+    end)
+end
+
+-- Open the map where an NPC stands and make their pin pulse.
+local function ShowNPC(npcID, npc)
+    local map = provider and provider:GetMap()
+    if not map then
+        return
+    end
+    GameTooltip:Hide() -- the dungeon's pin goes away with its map
+    map:SetMapID(npc.map)
+    -- The new map's pins are drawn by now or on the next frame; look then.
+    C_Timer.After(0, function()
+        for pinFrame in map:EnumeratePinsByTemplate(TEMPLATE) do
+            if pinFrame.pin and pinFrame.pin.npc == npcID then
+                Pulse(pinFrame)
+            end
+        end
+    end)
+end
+
+-- Clicking a dungeon: with one quest to fetch, go to its giver; with more,
+-- a menu of them to choose from.
+function SinkMapPinMixin:OnMouseClickAction(button)
+    local pin = self.pin
+    if button ~= "LeftButton" or not (pin and pin.dungeon and pin.questIDs and ns.QuestsToFetch) then
+        return
+    end
+    local fetch = ns.QuestsToFetch(pin.questIDs)
+    if #fetch == 1 then
+        ShowNPC(fetch[1].npcID, fetch[1].npc)
+    elseif #fetch > 1 and MenuUtil and MenuUtil.CreateContextMenu then
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            root:CreateTitle(pin.name)
+            for _, entry in ipairs(fetch) do
+                root:CreateButton(("%s |cff808080(%s)|r"):format(entry.title, entry.npc.name), function()
+                    ShowNPC(entry.npcID, entry.npc)
+                end)
+            end
+        end)
+    end
+end
+
 function SinkMapPinMixin:OnMouseEnter()
     TintRing(self, true)
     local pin = self.pin
@@ -516,6 +588,13 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)
+    end
+    if pin.dungeon and ns.QuestsToFetch then
+        local count = #ns.QuestsToFetch(pin.questIDs or {})
+        if count > 0 then
+            GameTooltip:AddLine(count == 1 and "Click to show where to get it" or "Click to choose a quest to find",
+                ns.grey.r, ns.grey.g, ns.grey.b)
+        end
     end
     GameTooltip:Show()
 end
