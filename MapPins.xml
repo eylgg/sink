@@ -50,9 +50,11 @@
                         <MaskedTexture childKey="Ring"/>
                     </MaskedTextures>
                 </MaskTexture>
+            </Layer>
+            <Layer level="BORDER" textureSubLevel="1">
                 <!-- A dark disc under the icon, so an atlas with a transparent
                      background (the dungeon portal) sits on dark rather than on the ring. -->
-                <Texture parentKey="IconBackground" texelSnappingBias="0.0" snapToPixelGrid="false" textureSubLevel="1">
+                <Texture parentKey="IconBackground" texelSnappingBias="0.0" snapToPixelGrid="false">
                     <Size x="16" y="16"/>
                     <Anchors>
                         <Anchor point="CENTER"/>
