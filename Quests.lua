@@ -88,6 +88,7 @@ ns.quests = {
     [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43, start = { after = 1490 } },
     [962] = { name = "Serpentbloom", faction = "Horde", dungeon = 43 },
     [1491] = { name = "Smart Drinks", dungeon = 43 },
+    [959] = { name = "Trouble at the Docks", dungeon = 43 },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
     [6981] = { name = "The Glowing Shard", dungeon = 43, start = { drop = 3654, item = 10441 } },
 }
