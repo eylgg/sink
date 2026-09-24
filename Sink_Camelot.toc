@@ -2,7 +2,7 @@
 ## Title: Sink
 ## Notes: The everything WoW: Forever addon.
 ## Author: eyl
-## Version: 0.0.7
+## Version: 0.0.8
 ## Category: UI Customization
 ## IconTexture: Interface\Icons\INV_Enchant_EssenceMagicLarge
 ## SavedVariables: SinkDB
