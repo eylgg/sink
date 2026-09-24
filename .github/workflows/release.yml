@@ -1,7 +1,8 @@
 # Builds Sink.zip and attaches it to a GitHub release whenever a tag such as
 # v0.0.1 is pushed. The release is titled after the version: "Sink 0.0.1".
-# Nothing needs to be configured in the repository; the workflow's own token
-# is allowed to create releases by the permissions block below.
+# The GitHub release needs no setup; the workflow's own token is allowed to
+# create releases by the permissions block below. The CurseForge and Wago
+# uploads at the end need project IDs in the TOC and API tokens as secrets.
 #
 #   git tag v0.0.1 && git push origin v0.0.1
 name: Release
@@ -20,6 +21,9 @@ jobs:
     steps:
       - name: Check out the tagged commit
         uses: actions/checkout@v7
+        with:
+          # The packager builds its changelog from the history since the last tag.
+          fetch-depth: 0
 
       - name: Check that the TOC version matches the tag
         id: version
@@ -46,3 +50,14 @@ jobs:
             --verify-tag \
             --title "Sink ${{ steps.version.outputs.number }}" \
             --generate-notes
+
+      # Uploads to CurseForge and Wago using the project IDs in the TOC
+      # (## X-Curse-Project-ID, ## X-Wago-ID) and the CF_API_KEY and
+      # WAGO_API_TOKEN repository secrets. A site whose ID or secret is missing
+      # is skipped. GITHUB_OAUTH is left unset so the packager does not make a
+      # second GitHub release.
+      - name: Upload to CurseForge and Wago
+        uses: BigWigsMods/packager@v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}

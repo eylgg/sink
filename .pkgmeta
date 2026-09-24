@@ -1,0 +1,11 @@
+# Read by BigWigsMods/packager, which the release workflow uses to upload to
+# CurseForge and Wago. Dotfiles are always left out; these are left out too so
+# the uploaded zip holds the same files as scripts/package.sh's Sink.zip.
+package-as: Sink
+
+enable-nolib-creation: no
+
+ignore:
+  - README.md
+  - dist
+  - scripts
