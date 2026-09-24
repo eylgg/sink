@@ -55,6 +55,12 @@ ns.defaults = {
 
     -- Trainers.lua
     classSkills = {},          -- class trainer services recorded from the window: [class][name:level] = { ... }
+
+    -- Splits.lua
+    splits = false,            -- record level times and show the splits window
+    splitsShown = 5,           -- finished levels the splits window lists under the current one
+    splitRuns = {},            -- /played when each level was reached: ["Name-Realm"] = { reached = { [level] = seconds } }
+    -- splitsPoint: where the splits window was dragged to, { point, relativePoint, x, y }
 }
 
 -- Sink's identity colour, used for everything it prints or draws: the chat

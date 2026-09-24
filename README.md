@@ -1,7 +1,7 @@
 # Sink
 
 A starter addon for **World of Warcraft: Forever**, the Classic+ flavor that entered beta on 2026-09-17 and launches on 2026-11-04.
-It does six things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, it puts icons with tooltips on the world map, and it tracks which weapon skills your class can still learn and who teaches them.
+It does seven things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, it puts icons with tooltips on the world map, it tracks which weapon skills your class can still learn and who teaches them, and it can time each level like speedrun splits.
 
 ## Install
 
@@ -39,6 +39,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | `/sink weapons ...` | Weapon skills and weapon masters, see below |
 | `/sink errors ...` | Ability error spam, see below |
 | `/sink map ...` | Icons on the world map, see below |
+| `/sink splits` | Turn leveling splits on or off, the same switch as on the Splits tab, see below |
 | `/sink dump ...` | Developer dumps of IDs and coordinates, see below |
 
 ## Quest item warnings
@@ -167,6 +168,16 @@ Pins are for one faction or both: a pin's `faction` (`"Horde"`, `"Alliance"` or 
 
 Like the other in-game additions, icons added with `/sink map add` are lost on logout until the beta's saved-variables bug is fixed, so paste the printed line into `MapPins.lua` to keep one.
 
+## Level splits
+
+Off by default. The **Splits** tab of the options window has the switch, a slider for how many levels the splits window shows (1 to 10, default 5), and a list of every level this character has recorded: how long it took and the `/played` time it was reached at. The current level is highlighted and its time keeps counting.
+
+While splits are on, a small window shows the current level's time ticking and the times of the last few levels under it. Drag it wherever you like. `/sink splits` flips the same switch. That window and the tab are all there is: no chat lines of its own, no tooltips.
+
+The time is `/played`, so time logged out never counts. The server's answer to `/played` includes the time on the current level, so the start of your level is exact after every login. Sink asks when splits are switched on, at login and just after each level up. For those requests the chat frames stop listening to that one answer until it arrives, so nothing is printed; a `/played` you type yourself prints as usual. With splits off, Sink asks nothing.
+
+Levels are kept per character in `SinkDB.splitRuns`. A level's time needs both its start and the next level's, so levels before splits were switched on stay blank. Until the beta's saved-variables bug is fixed they last one session.
+
 ## Developer dumps
 
 `/sink dump ...` prints the IDs and coordinates the built-in tables are made of, in a form you can paste. These change nothing; they are for filling in `MapPins.lua`, `Recipes.lua` and `QuestItems.lua`. Chat text cannot be selected, so a dump that ends in a paste line also opens a small box with that line already selected: Cmd+C on a Mac or Ctrl+C on Windows copies it, and Enter or Escape closes the box.
@@ -216,8 +227,9 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
+| `Splits.lua` | Leveling splits: the silent `/played` requests, the splits window, the list on the Splits tab |
 | `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
-| `Options.lua` | `/sink` commands, the options window with its General and Map Pins tabs, the addon compartment click |
+| `Options.lua` | `/sink` commands, the options window with its General, Map Pins and Splits tabs, the addon compartment click |
 | `.luacheckrc` | Globals list for `luacheck`, if you lint |
 | `scripts/package.sh` | Builds `dist/release/Sink.zip` from the files the TOC lists |
 | `scripts/check-globals.sh` | Flags globals a Lua file uses that are neither standard nor listed in `.luacheckrc`, for when luacheck is not installed; a missing function shows up here, not as a syntax error |

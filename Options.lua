@@ -16,8 +16,9 @@ local _, ns = ...
 local RANGE = {
     offsetX = { min = -800, max = 800 },
     offsetY = { min = 0, max = 800 },
+    splitsShown = { min = 1, max = 10, step = 1 },
 }
-local SLIDER_STEP = 5
+local SLIDER_STEP = 5 -- the step of a range that does not give its own
 
 local function Clamp(value, range)
     if value < range.min then
@@ -48,6 +49,10 @@ local function OnChanged(key)
         if ns.RefreshMapPins then
             ns.RefreshMapPins()
         end
+    elseif key == "splits" or key == "splitsShown" then
+        if ns.ApplySplits then
+            ns.ApplySplits()
+        end
     elseif key == "questItemWarnings" then
         if ns.RefreshBagOverlays then
             ns.RefreshBagOverlays()
@@ -58,7 +63,7 @@ end
 
 local function Assign(key, value)
     if RANGE[key] then
-        value = Clamp(value, RANGE[key])
+        value = Clamp(math.floor(value + 0.5), RANGE[key])
     end
     ns.db[key] = value
     OnChanged(key)
@@ -88,6 +93,7 @@ local function Help()
     print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
     print("  /sink errors          hide \"not enough energy\" errors when spamming (/sink errors help)")
     print("  /sink map             icons with tooltips on the world map (/sink map help)")
+    print("  /sink splits          turn leveling splits on or off (the Splits tab lists them)")
     print("  /sink dump            developer dumps of IDs and coordinates (/sink dump help)")
 end
 
@@ -148,6 +154,9 @@ SlashCmdList.SINK = function(msg)
         if ns.MapCommand then
             ns.MapCommand(arg)
         end
+    elseif command == "splits" or command == "split" then
+        Assign("splits", not ns.db.splits)
+        ns.Print("splits " .. (ns.db.splits and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
     elseif command == "dump" then
         if ns.DumpCommand then
             ns.DumpCommand(arg)
@@ -178,7 +187,8 @@ local controls = {} -- key -> checkbox or slider, refreshed from ns.db
 local refreshing = false
 
 -- A checkbox is { key, label, tooltip }; a slider adds range; a header is
--- { header = ... }.
+-- { header = ... }; { build = fn } lets a module draw its own part of the
+-- page: fn(page, y) returns the height it used.
 local PAGES = {
     {
         name = "General",
@@ -218,6 +228,19 @@ local PAGES = {
         { key = "showDungeons", label = "Show dungeons",
           tooltip = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
               .. " in your log or not taken." },
+    },
+    {
+        name = "Splits",
+        icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+        { key = "splits", label = "Enable splits",
+          tooltip = "Record how long each level takes this character, in /played time, and show the"
+              .. " last few levels in a small window you can drag anywhere." },
+        { key = "splitsShown", label = "Levels in the window", range = RANGE.splitsShown,
+          tooltip = "How many finished levels the splits window lists under the current one." },
+        { header = "This Character" },
+        { build = function(page, y)
+            return ns.BuildSplitsList and ns.BuildSplitsList(page, y) or 0
+        end },
     },
 }
 
@@ -269,7 +292,8 @@ local function Slider(page, item, y)
             return ("%d"):format(value)
         end,
     }
-    slider:Init(ns.db[item.key] or range.min, range.min, range.max, (range.max - range.min) / SLIDER_STEP, formatters)
+    slider:Init(ns.db[item.key] or range.min, range.min, range.max, (range.max - range.min) / (range.step or SLIDER_STEP),
+        formatters)
     slider:RegisterCallback(MinimalSliderWithSteppersMixin.Event.OnValueChanged, function(_, value)
         if not refreshing then
             Assign(item.key, value)
@@ -289,6 +313,8 @@ local function BuildPage(frame, definition)
     for _, item in ipairs(definition) do
         if item.header then
             y = y + Header(page, item, y)
+        elseif item.build then
+            y = y + item.build(page, y)
         elseif item.range then
             y = y + Slider(page, item, y)
         else
@@ -312,6 +338,9 @@ function RefreshWindow()
         end
     end
     refreshing = false
+    if ns.RefreshSplitsList then
+        ns.RefreshSplitsList()
+    end
 end
 
 local function ShowPage(index)
