@@ -1,7 +1,7 @@
 # Sink
 
 A starter addon for **World of Warcraft: Forever**, the Classic+ flavor that entered beta on 2026-09-17 and launches on 2026-11-04.
-It does seven things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, it puts icons with tooltips on the world map, it tracks which weapon skills your class can still learn and who teaches them, and it can time each level like speedrun splits.
+It does eight things: it can keep your player frame horizontally centered no matter what Edit Mode does (off by default, `/sink on` enables it), it warns about quest items that are safe to delete, it shows on vendor tooltips which of their recipes you still need to buy, it hides the "Not enough energy" text and voice that repeat on every press when you spam an ability, it puts icons with tooltips on the world map, it tracks which weapon skills your class can still learn and who teaches them, it can time each level like speedrun splits, and it has a window like the objective tracker that lists the dungeons with quests left for you.
 
 ## Install
 
@@ -40,6 +40,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | `/sink errors ...` | Ability error spam, see below |
 | `/sink map ...` | Icons on the world map, see below |
 | `/sink splits` | Turn leveling splits on or off, the same switch as on the Splits tab, see below |
+| `/sink tracker` | Show or hide the Sink tracker, the same switch as on the Tracker tab, see below |
 | `/sink dump ...` | Developer dumps of IDs and coordinates, see below |
 
 ## Quest item warnings
@@ -147,7 +148,7 @@ Targeting and pinging are protected actions an addon cannot perform itself, so e
 
 Each icon is drawn round, inside a one-pixel ring in Sink's identity colour (see below) with a one-pixel dark outline. That is three textures in the template, each clipped to a circle by Blizzard's `CircleMask` atlas, the mask the party and totem frames use, so no artwork ships with the addon. Pixel snapping is off on the textures and masks, as on Blizzard's small round frames, which keeps the circle edges smooth at this size. The ring turns white under the mouse.
 
-Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Each one has `x` and `y`, an `icon` texture, a `note` that becomes the tooltip's text, a `name` shown when there is no note and used by the list and `/sink map remove`, an `npc` ID that ties it to a vendor in `Recipes.lua` or a weapon master in `Weapons.lua`, and for a class trainer whose note is a title rather than "<Class> Trainer", such as "High Priest", a `class` field naming the class. A note that starts with a profession rank, Apprentice, Journeyman, Expert or Artisan, gets the skill cap that rank teaches to, such as "Journeyman Blacksmith (150)". A city has several trainers per profession, one per rank, and only the one you need is drawn: the lowest rank whose cap is above your current maximum in that profession, so at Blacksmithing 150 you see the Expert; the lowest rank of all if you do not have the profession; the highest if you have outgrown every one on the map. The word after the rank names the profession, and the map redraws when your skills change. `/sink map` still lists every pin.
+Built-in icons live at the top of `MapPins.lua`, keyed by the zone's map ID. Each one has `x` and `y`, an `icon` texture, a `note` that becomes the tooltip's text, a `name` shown when there is no note and used by the list and `/sink map remove`, an `npc` ID that ties it to a vendor in `Recipes.lua` or a weapon master in `Weapons.lua`, and for a class trainer whose note is a title rather than "<Class> Trainer", such as "High Priest", a `class` field naming the class. A note of "Portal Trainer", "Demon Trainer" or "Pet Trainer" makes a class specialty trainer: drawn for that class like its class trainer, without the class skill lines, and kept as a group of its own. A note that starts with a profession rank, Apprentice, Journeyman, Expert or Artisan, gets the skill cap that rank teaches to, such as "Journeyman Blacksmith (150)". A city has several trainers per profession, one per rank, and only the one you need is drawn: the lowest rank whose cap is above your current maximum in that profession, so at Blacksmithing 150 you see the Expert; the lowest rank of all if you do not have the profession; the highest if you have outgrown every one on the map. The word after the rank names the profession, and the map redraws when your skills change. `/sink map` still lists every pin.
 
 Which professions' trainers are drawn at all depends on you, unless "Show all profession trainers" is on: the secondary professions, cooking, fishing and first aid, always; your own primary professions always; and the other primary professions only while you still have a free slot, so once you have picked two, only their trainers remain. A class trainer is drawn only for its class unless "Show all class trainers" is on.
 
@@ -177,6 +178,14 @@ While splits are on, a small window shows the current level's time ticking and t
 The time is `/played`, so time logged out never counts. The server's answer to `/played` includes the time on the current level, so the start of your level is exact after every login. Sink asks when splits are switched on, at login and just after each level up. For those requests the chat frames stop listening to that one answer until it arrives, so nothing is printed; a `/played` you type yourself prints as usual. With splits off, Sink asks nothing.
 
 Levels are kept per character in `SinkDB.splitRuns`. A level's time needs both its start and the next level's, so levels before splits were switched on stay blank. Until the beta's saved-variables bug is fixed they last one session.
+
+## Tracker
+
+On by default. The **Tracker** tab of the options window, or `/sink tracker`, turns it off. It is a window made to look like Blizzard's objective tracker, with the same header art, fonts and spacing, titled **Sink** and the version. Drag its title to move it. The button on the title folds the whole window; the Dungeons header, or its button, folds that section. Both are remembered.
+
+The **Dungeons** section lists every dungeon your level lets you enter (at least the dungeon's minimum level) that still has quests for you, lowest level first. Under each one are its quests for your faction that you have not done and your level allows, marked as on the map tooltips: a red cross for one you have not picked up, a yellow waiting mark for one in your log or one that starts inside the dungeon. Once every quest of a dungeon is done, it drops off the list; with nothing to list, the section is hidden. It updates as your quest log changes and when you level.
+
+It is a separate window rather than a section inside Blizzard's tracker, because addon code in Blizzard's tracker layout can taint its secure quest item buttons in combat.
 
 ## Developer dumps
 
@@ -228,6 +237,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
 | `Splits.lua` | Leveling splits: the silent `/played` requests, the splits window, the list on the Splits tab |
+| `Tracker.lua` | The Sink tracker window and its Dungeons section |
 | `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
 | `Options.lua` | `/sink` commands, the options window with its General, Map Pins and Splits tabs, the addon compartment click |
 | `.luacheckrc` | Globals list for `luacheck`, if you lint |

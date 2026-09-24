@@ -280,6 +280,88 @@ ns.mapPins = {
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
+        { npc = 3028, name = "Kah Mistrunner", note = "Fishing Trainer", x = 0.5612, y = 0.4643,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+        { npc = 3033, name = "Turak Runetotem", note = "Druid Trainer", x = 0.7646, y = 0.2724,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 3034, name = "Sheal Runetotem", note = "Druid Trainer", x = 0.7714, y = 0.2702,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 3036, name = "Kym Wildmane", note = "Druid Trainer", x = 0.7715, y = 0.2981,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 3026, name = "Aska Mistrunner", note = "Cooking Trainer", x = 0.5072, y = 0.5311,
+          icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
+        { npc = 11047, name = "Kray", note = "Journeyman Alchemist", x = 0.4669, y = 0.3445,
+          icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 3009, name = "Bena Winterhoof", note = "Expert Alchemist", x = 0.4662, y = 0.3318,
+          icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 3013, name = "Komin Winterhoof", note = "Herbalism Trainer", x = 0.4996, y = 0.4039,
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 8722, name = "Auctioneer Gullem", x = 0.3889, y = 0.5021,
+          icon = "Interface\\Icons\\INV_Misc_Coin_01", verified = true },
+        { npc = 3001, name = "Brek Stonehoof", note = "Mining Trainer", x = 0.3438, y = 0.5786,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 2996, name = "Torn", note = "Banker", x = 0.4762, y = 0.5859,
+          icon = "Interface\\Icons\\INV_Misc_Bag_10", verified = true },
+        { npc = 8356, name = "Chesmu", note = "Banker", x = 0.4713, y = 0.5790,
+          icon = "Interface\\Icons\\INV_Misc_Bag_10", verified = true },
+        { npc = 8357, name = "Atepa", note = "Banker", x = 0.4721, y = 0.5930,
+          icon = "Interface\\Icons\\INV_Misc_Bag_10", verified = true },
+        { npc = 10278, name = "Thrag Stonehoof", note = "Journeyman Blacksmith", x = 0.3943, y = 0.5667,
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 2998, name = "Karn Stonehoof", note = "Expert Blacksmith", x = 0.3937, y = 0.5509,
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 11071, name = "Mot Dawnstrider", note = "Journeyman Enchanter", x = 0.4462, y = 0.3849,
+          icon = "Interface\\Icons\\Trade_Engraving", verified = true },
+        { npc = 3011, name = "Teg Dawnstrider", note = "Expert Enchanter", x = 0.4491, y = 0.3750,
+          icon = "Interface\\Icons\\Trade_Engraving", verified = true },
+        { npc = 2798, name = "Pand Stonebinder", note = "First Aid Trainer", x = 0.2969, y = 0.2119,
+          icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice", verified = true },
+        { npc = 3031, name = "Tigor Skychaser", note = "Shaman Trainer", x = 0.2364, y = 0.1882,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        { npc = 3032, name = "Beram Skychaser", note = "Shaman Trainer", x = 0.2199, y = 0.1881,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        { npc = 3030, name = "Siln Skychaser", note = "Shaman Trainer", x = 0.2282, y = 0.2111,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        { npc = 7089, name = "Mooranta", note = "Skinning Trainer", x = 0.4444, y = 0.4315,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 11084, name = "Tarn", note = "Expert Leatherworker", x = 0.4234, y = 0.4261,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        { npc = 3007, name = "Una", note = "Artisan Leatherworker", x = 0.4150, y = 0.4257,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        { npc = 3008, name = "Mak", note = "Journeyman Leatherworker", x = 0.4205, y = 0.4344,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        { npc = 11051, name = "Vhan", note = "Journeyman Tailor", x = 0.4425, y = 0.4434,
+          icon = "Interface\\Icons\\Trade_Tailoring", verified = true },
+        { npc = 3004, name = "Tepa", note = "Expert Tailor", x = 0.4453, y = 0.4535,
+          icon = "Interface\\Icons\\Trade_Tailoring", verified = true },
+        { npc = 3043, name = "Ker Ragetotem", note = "Warrior Trainer", x = 0.5758, y = 0.8550,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 3041, name = "Torm Ragetotem", note = "Warrior Trainer", x = 0.5726, y = 0.8734,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 3042, name = "Sark Ragetotem", note = "Warrior Trainer", x = 0.5701, y = 0.8949,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 3039, name = "Holt Thunderhorn", note = "Hunter Trainer", x = 0.5730, y = 0.8975,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3038, name = "Kary Thunderhorn", note = "Hunter Trainer", x = 0.5848, y = 0.8833,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3040, name = "Urek Thunderhorn", note = "Hunter Trainer", x = 0.5912, y = 0.8686,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3045, name = "Malakai Cross", note = "Priest Trainer", x = 0.2455, y = 0.2256,
+          icon = "Interface\\Icons\\ClassIcon_Priest", verified = true },
+        { npc = 3047, name = "Archmage Shymm", note = "Mage Trainer", x = 0.2275, y = 0.1452,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 5957, name = "Birgitte Cranston", note = "Portal Trainer", x = 0.2250, y = 0.1691,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 3049, name = "Thurston Xane", note = "Mage Trainer", x = 0.2518, y = 0.2096,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 3046, name = "Father Cobb", note = "Priest Trainer", x = 0.2564, y = 0.2069,
+          icon = "Interface\\Icons\\ClassIcon_Priest", verified = true },
+        { npc = 3044, name = "Miles Welsh", note = "Priest Trainer", x = 0.2533, y = 0.1526,
+          icon = "Interface\\Icons\\ClassIcon_Priest", verified = true },
+        { npc = 3048, name = "Ursyn Ghull", note = "Mage Trainer", x = 0.2570, y = 0.1420,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 246344, name = "Alodan the Hopeful", note = "Paladin Trainer", x = 0.2520, y = 0.1439,
+          icon = "Interface\\Icons\\ClassIcon_Paladin", verified = true },
     },
 }
 
@@ -466,14 +548,28 @@ local CLASS_WORDS = {
     shaman = "SHAMAN", mage = "MAGE", warlock = "WARLOCK", druid = "DRUID",
 }
 
--- For a trainer pin: its profession (a class trainer gives { class = ... },
--- an unknown word gives false), the rank cap (nil for a plain "... Trainer"),
--- and the word. Any other pin returns nil.
+-- Class specialties, by the trainer's title: trainers that serve one class
+-- but are not its class trainer. They are drawn for that class like the class
+-- trainer is, get no class skill lines, and stay a group of their own.
+local CLASS_SPECIALTIES = {
+    ["portal trainer"] = "MAGE",
+    ["demon trainer"] = "WARLOCK",
+    ["pet trainer"] = "HUNTER",
+}
+
+-- For a trainer pin: its profession (a class trainer gives { class = ... }, a
+-- class specialty { class = ..., specialty = true }, an unknown word false),
+-- the rank cap (nil for a plain "... Trainer"), and the word. Any other pin
+-- returns nil.
 local function TrainerInfo(pin)
     if pin.class then
         return { class = pin.class }, nil, pin.class:lower()
     end
     local note = pin.note or ""
+    local specialtyClass = CLASS_SPECIALTIES[note:lower()]
+    if specialtyClass then
+        return { class = specialtyClass, specialty = true }, nil, note:lower()
+    end
     local rank, rest = note:match("^(%a+)%s+(.+)$")
     local cap = rank and RANK_CAPS[rank]
     if cap then
@@ -505,7 +601,7 @@ function ns.ClassTrainerClass(npcID)
         for _, pins in pairs(ns.mapPins) do
             for _, pin in ipairs(pins) do
                 local profession = pin.npc and TrainerInfo(pin)
-                if profession and profession.class then
+                if profession and profession.class and not profession.specialty then
                     trainerClassByNPC[pin.npc] = profession.class
                 end
             end
@@ -827,7 +923,7 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.npc and ns.AddClassSkillLines then
         local profession = TrainerInfo(pin)
-        if profession and profession.class then
+        if profession and profession.class and not profession.specialty then
             ns.AddClassSkillLines(GameTooltip, profession.class)
         end
     end

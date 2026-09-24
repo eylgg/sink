@@ -2,7 +2,7 @@
 -- Sink / Options.lua
 --
 -- Slash commands (/sink) and the options window: a portrait frame with a
--- General tab and a Map Pins tab, opened with "/sink" or by clicking
+-- General tab and one per module, opened with "/sink" or by clicking
 -- Sink in the addon compartment. Everything in this file is optional; Core.lua
 -- works without it.
 --
@@ -53,6 +53,10 @@ local function OnChanged(key)
         if ns.ApplySplits then
             ns.ApplySplits()
         end
+    elseif key == "tracker" then
+        if ns.ApplyTracker then
+            ns.ApplyTracker()
+        end
     elseif key == "questItemWarnings" then
         if ns.RefreshBagOverlays then
             ns.RefreshBagOverlays()
@@ -94,6 +98,7 @@ local function Help()
     print("  /sink errors          hide \"not enough energy\" errors when spamming (/sink errors help)")
     print("  /sink map             icons with tooltips on the world map (/sink map help)")
     print("  /sink splits          turn leveling splits on or off (the Splits tab lists them)")
+    print("  /sink tracker         show or hide the Sink tracker")
     print("  /sink dump            developer dumps of IDs and coordinates (/sink dump help)")
 end
 
@@ -157,6 +162,9 @@ SlashCmdList.SINK = function(msg)
     elseif command == "splits" or command == "split" then
         Assign("splits", not ns.db.splits)
         ns.Print("splits " .. (ns.db.splits and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
+    elseif command == "tracker" then
+        Assign("tracker", not ns.db.tracker)
+        ns.Print("tracker " .. (ns.db.tracker and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
     elseif command == "dump" then
         if ns.DumpCommand then
             ns.DumpCommand(arg)
@@ -241,6 +249,13 @@ local PAGES = {
         { build = function(page, y)
             return ns.BuildSplitsList and ns.BuildSplitsList(page, y) or 0
         end },
+    },
+    {
+        name = "Tracker",
+        icon = "Interface\\Icons\\INV_Scroll_03",
+        { key = "tracker", label = "Enable tracker",
+          tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
+              .. " Its Dungeons section lists every dungeon your level lets you enter that still has quests for you." },
     },
 }
 

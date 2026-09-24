@@ -61,6 +61,12 @@ ns.defaults = {
     splitsShown = 5,           -- finished levels the splits window lists under the current one
     splitRuns = {},            -- /played when each level was reached: ["Name-Realm"] = { reached = { [level] = seconds } }
     -- splitsPoint: where the splits window was dragged to, { point, relativePoint, x, y }
+
+    -- Tracker.lua
+    tracker = true,            -- show the Sink tracker window
+    trackerCollapsed = false,  -- the whole tracker folded to its title
+    trackerDungeonsCollapsed = false, -- the Dungeons section folded to its header
+    -- trackerPoint: where the tracker was dragged to, { point, relativePoint, x, y }
 }
 
 -- Sink's identity colour, used for everything it prints or draws: the chat

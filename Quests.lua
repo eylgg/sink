@@ -453,17 +453,17 @@ local function DropText(quest)
 end
 
 --------------------------------------------------------------------------------
--- Tooltip lines
+-- Quest lines, for the map tooltips and the Sink tracker
 --------------------------------------------------------------------------------
 
--- One line per quest for your faction: red cross for one not in your log,
--- yellow waiting mark for one in it, green check for one done; in that
--- order, each group alphabetical. A quest in a series has its step after
--- the name, "Hidden Enemies (3/5)", except on the first quest of a series
--- whose parts all have their own names or that starts inside the dungeon. A quest that starts inside the dungeon, from an NPC, a drop or an
--- item on the ground, is yellow until done, never red, with how to get it
--- after the name.
-function ns.AddQuestLines(tooltip, questIDs)
+-- One row per quest for your faction, { state, title }, sorted: not taken,
+-- then in your log, then done, each group alphabetical. A quest in a series
+-- has its step after the name, "Hidden Enemies (3/5)", except on the first
+-- quest of a series whose parts all have their own names or that starts
+-- inside the dungeon. A quest that starts inside the dungeon, from an NPC, a
+-- drop or an item on the ground, counts as in your log until done, never not
+-- taken, with how to get it after the name.
+local function QuestRows(questIDs)
     local rows = {}
     for _, questID in ipairs(questIDs) do
         local quest = ns.quests[questID]
@@ -485,7 +485,7 @@ function ns.AddQuestLines(tooltip, questIDs)
                     state = IN_LOG
                 end
             end
-            rows[#rows + 1] = { state = state, title = title }
+            rows[#rows + 1] = { state = state, title = title, questID = questID }
         end
     end
     table.sort(rows, function(a, b)
@@ -494,15 +494,53 @@ function ns.AddQuestLines(tooltip, questIDs)
         end
         return a.title < b.title
     end)
-    for _, row in ipairs(rows) do
-        if row.state == NOT_TAKEN then
-            tooltip:AddLine(ns.CROSS .. " " .. row.title, ns.missing.r, ns.missing.g, ns.missing.b)
-        elseif row.state == IN_LOG then
-            tooltip:AddLine(ns.WAIT .. " " .. row.title, ns.active.r, ns.active.g, ns.active.b)
-        else
-            tooltip:AddLine(ns.CHECK .. " " .. row.title, ns.known.r, ns.known.g, ns.known.b)
+    return rows
+end
+
+-- A row as text with its mark, and its colour: red cross for not taken,
+-- yellow waiting mark for in your log, green check for done.
+function ns.QuestRowText(row)
+    if row.state == NOT_TAKEN then
+        return ns.CROSS .. " " .. row.title, ns.missing
+    elseif row.state == IN_LOG then
+        return ns.WAIT .. " " .. row.title, ns.active
+    end
+    return ns.CHECK .. " " .. row.title, ns.known
+end
+
+function ns.AddQuestLines(tooltip, questIDs)
+    for _, row in ipairs(QuestRows(questIDs)) do
+        local text, color = ns.QuestRowText(row)
+        tooltip:AddLine(text, color.r, color.g, color.b)
+    end
+end
+
+-- The dungeons you can enter, your level at least theirs, that still have
+-- quests for you, sorted by level: { instanceID, dungeon, rows }. rows are
+-- the quests not done, leaving out any your level is still too low for.
+function ns.DungeonsToDo()
+    local level = UnitLevel and UnitLevel("player") or 0
+    local list = {}
+    for instanceID, dungeon in pairs(ns.dungeons) do
+        if level >= (dungeon.minLevel or 0) then
+            local rows = {}
+            for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
+                if row.state ~= DONE and level >= MinLevel(ns.quests[row.questID]) then
+                    rows[#rows + 1] = row
+                end
+            end
+            if #rows > 0 then
+                list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows }
+            end
         end
     end
+    table.sort(list, function(a, b)
+        if a.dungeon.minLevel ~= b.dungeon.minLevel then
+            return (a.dungeon.minLevel or 0) < (b.dungeon.minLevel or 0)
+        end
+        return a.dungeon.name < b.dungeon.name
+    end)
+    return list
 end
 
 --------------------------------------------------------------------------------

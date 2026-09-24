@@ -12,7 +12,8 @@
 
 # Load order matters: Core.lua defines the shared "ns" table the other files use,
 # and Options.lua dispatches /sink items, /sink recipes, /sink weapons, /sink errors,
-# /sink map and /sink dump to the modules; /sink splits flips the Splits.lua switch. MapPins.xml holds the map pin template that
+# /sink map and /sink dump to the modules; /sink splits and /sink tracker flip the Splits.lua and
+# Tracker.lua switches. Tracker.lua lists dungeons from Quests.lua. MapPins.xml holds the map pin template that
 # MapPins.lua fills in; Dump.lua uses helpers from Recipes.lua, Weapons.lua and MapPins.lua.
 Core.lua
 QuestItems.lua
@@ -22,6 +23,7 @@ Trainers.lua
 Errors.lua
 Quests.lua
 Splits.lua
+Tracker.lua
 MapPins.lua
 MapPins.xml
 Dump.lua
