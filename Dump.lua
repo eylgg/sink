@@ -44,6 +44,62 @@ local function PasteLine(caption, line)
     StaticPopup_Show(POPUP, caption, nil, { text = (line:gsub("^%s+", "")) })
 end
 
+-- A dump of many lines goes in a window instead: a scrolling box with all of
+-- it selected, built from Blizzard's InputScrollFrameTemplate. Escape or the
+-- close button hides it.
+local COPY_WINDOW = "SinkCopyFrame"
+local copyWindow
+
+local function CopyWindow(title, lines)
+    if not copyWindow then
+        local frame = CreateFrame("Frame", COPY_WINDOW, UIParent, "ButtonFrameTemplate")
+        frame:SetSize(560, 380)
+        frame:SetPoint("CENTER")
+        frame:SetFrameStrata("DIALOG")
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:SetClampedToScreen(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetScript("OnDragStart", frame.StartMoving)
+        frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+        if ButtonFrameTemplate_HidePortrait then
+            ButtonFrameTemplate_HidePortrait(frame)
+        end
+        if ButtonFrameTemplate_HideButtonBar then
+            ButtonFrameTemplate_HideButtonBar(frame)
+        end
+        if ButtonFrameTemplate_HideAttic then
+            ButtonFrameTemplate_HideAttic(frame)
+        end
+        if UISpecialFrames then
+            table.insert(UISpecialFrames, COPY_WINDOW) -- Escape closes it
+        end
+        local scroll = CreateFrame("ScrollFrame", nil, frame.Inset, "InputScrollFrameTemplate")
+        scroll:SetPoint("TOPLEFT", 10, -10)
+        scroll:SetPoint("BOTTOMRIGHT", -28, 10)
+        if scroll.CharCount then
+            scroll.CharCount:Hide()
+        end
+        local box = scroll.EditBox
+        box:SetFontObject("ChatFontNormal")
+        box:SetWidth(500)
+        box:SetScript("OnEscapePressed", function()
+            frame:Hide()
+        end)
+        frame.Box = box
+        copyWindow = frame
+    end
+    local titleText = (copyWindow.TitleContainer and copyWindow.TitleContainer.TitleText) or copyWindow.TitleText
+    if titleText then
+        titleText:SetText(title .. ": Cmd+C or Ctrl+C to copy")
+    end
+    copyWindow:Show()
+    copyWindow.Box:SetText(table.concat(lines, "\n"))
+    copyWindow.Box:SetCursorPosition(0)
+    copyWindow.Box:HighlightText()
+    copyWindow.Box:SetFocus()
+end
+
 local function DumpHelp()
     ns.Print("dump commands, for filling in the tables in the Lua files")
     print("  /sink dump loc      zone, map ID and your position, with a map icon line to paste")
@@ -75,6 +131,10 @@ local function DumpNPCs(onlyUnverified)
     for npcID, npc in pairs(ns.npcs or {}) do
         if npc.map then
             add(npcID, npc.name, npc.map, npc.x, npc.y, npc.verified == true, "Quests.lua")
+        elseif npc.instance and not (onlyUnverified and npc.verified) then
+            local dungeon = ns.dungeons and ns.dungeons[npc.instance]
+            rows[#rows + 1] = { npcID = npcID, name = npc.name, zone = dungeon and dungeon.name or "a dungeon",
+                inside = true, verified = npc.verified == true, source = "Quests.lua" }
         end
     end
     for _, dungeon in pairs(ns.dungeons or {}) do
@@ -92,8 +152,9 @@ local function DumpNPCs(onlyUnverified)
     end
     ns.Print(("%d position%s%s"):format(#rows, #rows == 1 and "" or "s", onlyUnverified and " not verified in game" or ""))
     for _, row in ipairs(rows) do
-        print(("  %s%s, %s %.1f, %.1f, %s%s"):format(row.name, row.npcID and (" (" .. row.npcID .. ")") or "", row.zone,
-            row.x * 100, row.y * 100, row.source, row.verified and "" or (" " .. ns.missing.hex .. "unverified|r")))
+        local where = row.inside and ("inside " .. row.zone) or ("%s %.1f, %.1f"):format(row.zone, row.x * 100, row.y * 100)
+        print(("  %s%s, %s, %s%s"):format(row.name, row.npcID and (" (" .. row.npcID .. ")") or "", where,
+            row.source, row.verified and "" or (" " .. ns.missing.hex .. "unverified|r")))
     end
     if onlyUnverified then
         print("  To fix one, target the NPC and use /sink dump target, or stand at the place and use /sink dump loc.")
@@ -240,26 +301,31 @@ local function DumpTrainer()
         ns.Print("no trainer window is open, or its filters hide everything.")
         return
     end
-    local name = UnitName and UnitName("npc") or "?"
+    local name = UnitName and ns.Readable(UnitName("npc")) or "?"
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
-    ns.Print(("trainer %s%s, %d services offered to this character (the window lists only what your class can take)"):format(
-        name, npcID and (", NPC " .. npcID) or "", count))
+    -- Printed to chat and, all of it, into the copy window.
+    local lines = {}
+    lines[#lines + 1] = ("trainer %s%s, %d services offered to this character (the window lists only what your class can take)")
+        :format(name, npcID and (", NPC " .. npcID) or "", count)
+    ns.Print(lines[1])
     local ids = {}
     for index = 1, count do
         local service, serviceType, _, reqLevel, _, category = GetTrainerServiceInfo(index)
         local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
-        print(("  %d. %s | %s | level %s | %s | %s"):format(index, tostring(service), tostring(serviceType),
-            tostring(reqLevel), tostring(category), tostring(skillLine)))
+        lines[#lines + 1] = ("  %d. %s | %s | level %s | %s | %s"):format(index, tostring(service), tostring(serviceType),
+            tostring(reqLevel), tostring(category), tostring(skillLine))
+        print(lines[#lines])
         local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
         if id then
             ids[#ids + 1] = tostring(id)
         end
     end
     if npcID and #ids > 0 then
-        PasteLine("Weapon master line for Weapons.lua",
-            ("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view"):format(
-                npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", ")))
+        lines[#lines + 1] = ("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view")
+            :format(npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", "))
+        print(lines[#lines])
     end
+    CopyWindow("Trainer dump", lines)
 end
 
 function ns.DumpCommand(arg)

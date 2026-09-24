@@ -54,6 +54,26 @@ ns.mapPins = {
           atlas = "poi-horde", verified = true },
         { name = "Zeppelin to Stranglethorn", x = 0.5058, y = 0.1261,
           atlas = "poi-horde", verified = true },
+        { npc = 3707, name = "Ken'jai", note = "Priest Trainer", x = 0.4236, y = 0.6882,
+          icon = "Interface\\Icons\\ClassIcon_Priest", verified = true },
+        { npc = 3157, name = "Shikrik", note = "Shaman Trainer", x = 0.4239, y = 0.6900,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        { npc = 5884, name = "Mai'ah", note = "Mage Trainer", x = 0.4251, y = 0.6904,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 3154, name = "Jen'shan", note = "Hunter Trainer", x = 0.4284, y = 0.6933,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3153, name = "Frang", note = "Warrior Trainer", x = 0.4289, y = 0.6944,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 267329, name = "Zor'la", note = "Junior Herbalism Trainer", x = 0.4266, y = 0.6739,
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 3155, name = "Rwag", note = "Rogue Trainer", x = 0.4128, y = 0.6800,
+          icon = "Interface\\Icons\\ClassIcon_Rogue", verified = true },
+        { npc = 267327, name = "Kagil", note = "Junior Skinning Trainer", x = 0.4079, y = 0.6786,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 267328, name = "Norzsh", note = "Junior Mining Trainer", x = 0.4053, y = 0.6814,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 3156, name = "Nartok", note = "Warlock Trainer", x = 0.4065, y = 0.6852,
+          icon = "Interface\\Icons\\ClassIcon_Warlock", verified = true },
     },
     [1420] = { -- Tirisfal Glades
         { name = "Zeppelin to Orgrimmar", x = 0.6070, y = 0.5878,
@@ -263,7 +283,8 @@ local function QuestPins(mapID)
         if ns.EachQuestGiver then
             ns.EachQuestGiver(function(npcID, npc)
                 if npc.map then
-                    add(npc.map, { npc = npcID, name = npc.name, note = "Dungeon Quest", questGiver = true,
+                    local note = ns.GivesDungeonQuest(npcID) and "Dungeon Quest" or "Quest"
+                    add(npc.map, { npc = npcID, name = npc.name, note = note, questGiver = true,
                         x = npc.x, y = npc.y, atlas = "QuestNormal", questIDs = ns.QuestsFromGiver(npcID) })
                 end
             end)
@@ -273,6 +294,14 @@ local function QuestPins(mapID)
                 if npc.map then
                     add(npc.map, { npc = npcID, name = npc.name, note = "Quest Objective", questObjective = true,
                         x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = ns.QuestsWithObjective(npcID) })
+                end
+            end)
+        end
+        if ns.EachFinishNPC then
+            ns.EachFinishNPC(function(npcID, npc)
+                if npc.map then
+                    add(npc.map, { npc = npcID, name = npc.name, note = "Turn In", questFinish = true,
+                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = ns.QuestsFinishedAt(npcID) })
                 end
             end)
         end
@@ -307,40 +336,48 @@ end
 -- A profession trainer's rank says how far they teach. A note that starts
 -- with one gets that cap: "Journeyman Blacksmith (150)". Other notes stay as
 -- they are.
-local RANK_CAPS = { Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300 }
+-- Junior is Forever's, on the Razor Hill trainers, and teaches as far as Apprentice.
+local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300 }
 
-local function NoteText(pin)
-    local note = pin.note or pin.name
-    if pin.minLevel and pin.maxLevel then
-        return ("%s (%d - %d)"):format(note, pin.minLevel, pin.maxLevel)
-    end
-    local cap = RANK_CAPS[note:match("^(%a+)") or ""]
-    return cap and (note .. " (" .. cap .. ")") or note
-end
 
 -- Professions, by the words a trainer's note uses for them: "Expert
--- Blacksmith", "Mining Trainer", or just "Fisherman". line is the skill line that says how far you
--- are. Primary professions are the ones you can have two of; the rest are
--- secondary and open to everyone.
+-- Blacksmith", "Mining Trainer", or just "Fisherman". line is the skill line
+-- that says how far you are; name is how the pin shows a bare "Fisherman":
+-- "Fishing Trainer". Primary professions are the ones you can have two of;
+-- the rest are secondary and open to everyone.
 local PROFESSIONS = {
-    { line = 171, primary = true,  words = { "alchemist", "alchemy" } },
-    { line = 164, primary = true,  words = { "blacksmith", "blacksmithing" } },
-    { line = 333, primary = true,  words = { "enchanter", "enchanting" } },
-    { line = 202, primary = true,  words = { "engineer", "engineering" } },
-    { line = 182, primary = true,  words = { "herbalist", "herbalism" } },
-    { line = 165, primary = true,  words = { "leatherworker", "leatherworking" } },
-    { line = 186, primary = true,  words = { "miner", "mining" } },
-    { line = 393, primary = true,  words = { "skinner", "skinning" } },
-    { line = 197, primary = true,  words = { "tailor", "tailoring" } },
-    { line = 185, primary = false, words = { "cook", "cooking" } },
-    { line = 129, primary = false, words = { "first aid" } },
-    { line = 356, primary = false, words = { "fisherman", "fishing" } },
+    { line = 171, name = "Alchemy", primary = true,  words = { "alchemist", "alchemy" } },
+    { line = 164, name = "Blacksmithing", primary = true,  words = { "blacksmith", "blacksmithing" } },
+    { line = 333, name = "Enchanting", primary = true,  words = { "enchanter", "enchanting" } },
+    { line = 202, name = "Engineering", primary = true,  words = { "engineer", "engineering" } },
+    { line = 182, name = "Herbalism", primary = true,  words = { "herbalist", "herbalism" } },
+    { line = 165, name = "Leatherworking", primary = true,  words = { "leatherworker", "leatherworking" } },
+    { line = 186, name = "Mining", primary = true,  words = { "miner", "mining" } },
+    { line = 393, name = "Skinning", primary = true,  words = { "skinner", "skinning" } },
+    { line = 197, name = "Tailoring", primary = true,  words = { "tailor", "tailoring" } },
+    { line = 185, name = "Cooking", primary = false, words = { "cook", "cooking" } },
+    { line = 129, name = "First Aid", primary = false, words = { "first aid" } },
+    { line = 356, name = "Fishing", primary = false, words = { "fisherman", "fishing" } },
 }
 local professionByWord = {}
 for _, profession in ipairs(PROFESSIONS) do
     for _, word in ipairs(profession.words) do
         professionByWord[word] = profession
     end
+end
+
+local function NoteText(pin)
+    local note = pin.note or pin.name
+    -- A title that is just the profession's word ("Fisherman") reads as "Fishing Trainer".
+    local profession = pin.note and professionByWord[pin.note:lower()]
+    if profession then
+        return profession.name .. " Trainer"
+    end
+    if pin.minLevel and pin.maxLevel then
+        return ("%s (%d - %d)"):format(note, pin.minLevel, pin.maxLevel)
+    end
+    local cap = RANK_CAPS[note:match("^(%a+)") or ""]
+    return cap and (note .. " (" .. cap .. ")") or note
 end
 
 -- A "<Class> Trainer" pin is for that class only.
@@ -422,8 +459,9 @@ local function ChooseTrainer(profession, group)
 end
 
 -- The pins to draw on a map. Dungeons only while "show dungeons" is on; a
--- quest giver only while they have a quest for you, and a quest objective
--- NPC only while you still need to go there (Quests.lua). Trainers
+-- quest giver only while they have a quest for you, a quest objective NPC
+-- only while you still need to go there, and a turn-in NPC only while a
+-- quest for them is ready (Quests.lua). Trainers
 -- are filtered first: a class trainer only for your class unless "show all
 -- class trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
@@ -448,6 +486,10 @@ local function PinsToShow(mapID)
             end
         elseif pin.questObjective then
             if ns.IsObjectiveOpen(pin.npc) then
+                shown[#shown + 1] = pin
+            end
+        elseif pin.questFinish then
+            if ns.HasQuestToTurnIn(pin.npc) then
                 shown[#shown + 1] = pin
             end
         elseif profession == nil then
@@ -887,19 +929,24 @@ end
 --------------------------------------------------------------------------------
 
 -- QUEST_LOG_UPDATE fires often, and a redraw closes the tooltip under the
--- mouse, so it only redraws when an objective NPC's pin comes or goes.
-local objectivesSeen = {}
+-- mouse, so it only redraws when an objective or turn-in pin comes or goes.
+local objectivesSeen, finishesSeen = {}, {}
 local function ObjectivesChanged()
     local changed = false
-    if ns.EachObjectiveNPC then
-        ns.EachObjectiveNPC(function(npcID)
-            local open = ns.IsObjectiveOpen(npcID)
-            if objectivesSeen[npcID] ~= open then
-                objectivesSeen[npcID] = open
+    local function check(each, test, seen)
+        if not each then
+            return
+        end
+        each(function(npcID)
+            local now = test(npcID)
+            if seen[npcID] ~= now then
+                seen[npcID] = now
                 changed = true
             end
         end)
     end
+    check(ns.EachObjectiveNPC, ns.IsObjectiveOpen, objectivesSeen)
+    check(ns.EachFinishNPC, ns.HasQuestToTurnIn, finishesSeen)
     return changed
 end
 

@@ -19,7 +19,9 @@
 --                  1/5 and, once it is turned in, 2/5)
 -- A quest's objective = { npc = id } is an NPC you go to while the quest is
 -- in your log, such as Neeru Fireblade for Hidden Enemies 2/5; that NPC gets
--- a "Quest Objective" pin until the objective is done.
+-- a "Quest Objective" pin until the objective is done. finish = { npc = id }
+-- is who takes the quest in; they get a "Turn In" pin once it is ready to
+-- hand in.
 --
 -- Quests linked by after make a series, and the objective tracker adds the
 -- step to the end of each one's title: "Unending Torment (2/5)". The map
@@ -55,11 +57,28 @@ ns.dungeons = {
 -- one inside a dungeon has its instance ID.
 ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020, verified = true },
-    [250660] = { name = "The Baron", instance = 2999 },
+    [250660] = { name = "The Baron", instance = 2999, verified = true },
     [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782, verified = true },
     [3216] = { name = "Neeru Fireblade", map = 1454, x = 0.4948, y = 0.5059, verified = true },
-    [5767] = { name = "Nalpak", instance = 43 },
-    [3654] = { name = "Mutanus the Devourer", instance = 43 },
+    -- From Wowhead's Forever database, not yet checked in game ("/sink dump npc unverified").
+    [266484] = { name = "Morbin Lightbane", map = 1458, x = 0.574, y = 0.888 },
+    [11835] = { name = "Theodore Griffs", map = 1458, x = 0.462, y = 0.704 },
+    [2055] = { name = "Master Apothecary Faranell", map = 1458, x = 0.484, y = 0.694 },
+    [271613] = { name = "Unfinished Abomination", map = 1458, x = 0.460, y = 0.622 },
+    [2425] = { name = "Varimathras", map = 1458, x = 0.562, y = 0.924 },
+    [7825] = { name = "Oran Snakewrithe", map = 1458, x = 0.734, y = 0.324 },
+    [11833] = { name = "Rahauro", map = 1456, x = 0.694, y = 0.288 },
+    [5769] = { name = "Arch Druid Hamuul Runetotem", map = 1456, x = 0.784, y = 0.284 },
+    [5770] = { name = "Nara Wildmane", map = 1456, x = 0.752, y = 0.304 },
+    [3419] = { name = "Apothecary Zamah", map = 1456, x = 0.224, y = 0.198 },
+    [3448] = { name = "Tonga Runetotem", map = 1413, x = 0.522, y = 0.318 },
+    [3446] = { name = "Mebok Mizzyrix", map = 1413, x = 0.624, y = 0.376 },
+    [3665] = { name = "Crane Operator Bigglefuzz", map = 1413, x = 0.630, y = 0.374 },
+    [8418] = { name = "Falla Sagewind", map = 1413, x = 0.482, y = 0.328 },
+    [11834] = { name = "Maur Grimtotem", instance = 389 }, -- Wowhead has no position; his body lies inside
+    [5768] = { name = "Ebru", instance = 43 }, -- beside Nalpak in the cave
+    [5767] = { name = "Nalpak", instance = 43, verified = true },
+    [3654] = { name = "Mutanus the Devourer", instance = 43, verified = true },
 }
 
 -- Items you loot from the ground that start a quest, by item ID, with the
@@ -73,38 +92,64 @@ ns.questItems = {
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
 -- is the instance ID of the dungeon the quest is for; start is how you get it.
 ns.quests = {
-    [92421] = { name = "Light's Justice", faction = "Horde", minLevel = 15, dungeon = 2999 },
-    [95216] = { name = "The New Plague", faction = "Horde", minLevel = 16, dungeon = 2999 },
-    [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", minLevel = 15, dungeon = 2999, start = { npc = 251001 } },
-    [95204] = { name = "Crest of Lordaeron", faction = "Horde", minLevel = 16, dungeon = 2999, start = { item = 275521 } },
-    [97288] = { name = "Unending Torment", faction = "Horde", minLevel = 16, dungeon = 2999, start = { drop = 250660 } },
-    [97289] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97288 } },
-    [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
-    [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97290 } },
-    [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97291 } },
-    -- Hidden Enemies: Thrall gives parts 1 to 3; part 2 sends you to Neeru
--- Fireblade; part 3 is done in Ragefire Chasm.
-    [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
-    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726, npc = 4949 },
-               objective = { npc = 3216 } },
-    [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727, npc = 4949 } },
-    [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
-    [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
-    [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", minLevel = 9, dungeon = 389 },
-    [5724] = { name = "Returning the Lost Satchel", faction = "Horde", minLevel = 9, start = { after = 5722 } },
-    [5761] = { name = "Slaying the Beast", faction = "Horde", minLevel = 9, dungeon = 389 },
-    [5725] = { name = "The Power to Destroy...", faction = "Horde", minLevel = 9, dungeon = 389 },
-    [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", minLevel = 9, dungeon = 389 },
-    [1487] = { name = "Deviate Eradication", minLevel = 15, dungeon = 43 },
-    [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43, start = { npc = 5767 } },
-    [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 10 },
-    [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10, start = { after = 1489 } },
-    [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43, start = { after = 1490 } },
-    [962] = { name = "Serpentbloom", faction = "Horde", minLevel = 14, dungeon = 43 },
-    [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43 },
-    [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43 },
+    [92421] = { name = "Light's Justice", faction = "Horde", minLevel = 15, dungeon = 2999,
+        start = { npc = 266484 }, finish = { npc = 266484 } },
+    [95216] = { name = "The New Plague", faction = "Horde", minLevel = 16, dungeon = 2999,
+        start = { npc = 11835 }, finish = { npc = 11835 } },
+    [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", minLevel = 15, dungeon = 2999,
+        start = { npc = 251001 }, finish = { npc = 251001 } },
+    [95204] = { name = "Crest of Lordaeron", faction = "Horde", minLevel = 16, dungeon = 2999,
+        start = { item = 275521 }, finish = { npc = 7825 } },
+    [97288] = { name = "Unending Torment", faction = "Horde", minLevel = 16, dungeon = 2999,
+        start = { drop = 250660 }, finish = { npc = 2055 } },
+    [97289] = { name = "Unending Torment", faction = "Horde", minLevel = 16,
+        start = { after = 97288, npc = 2055 }, finish = { npc = 271613 } },
+    [97290] = { name = "Unending Torment", faction = "Horde",
+        start = { after = 97289, npc = 271613 }, finish = { npc = 2055 } },
+    [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 16,
+        start = { after = 97290, npc = 2055 }, finish = { npc = 2055 } },
+    [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16,
+        start = { after = 97291, npc = 2055 }, finish = { npc = 2055 } },
+    -- Hidden Enemies: Thrall gives parts 1 to 3; part 2 sends you to Neeru Fireblade; part 3 is done in Ragefire Chasm.
+    [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9,
+        start = { npc = 4949 }, finish = { npc = 4949 } },
+    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9,
+        start = { after = 5726, npc = 4949 }, objective = { npc = 3216 }, finish = { npc = 4949 } },
+    [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389,
+        start = { after = 5727, npc = 4949 }, finish = { npc = 4949 } },
+    [5729] = { name = "Hidden Enemies", faction = "Horde",
+        start = { after = 5728, npc = 4949 }, finish = { npc = 3216 } },
+    [5730] = { name = "Hidden Enemies", faction = "Horde",
+        start = { after = 5729, npc = 3216 }, finish = { npc = 4949 } },
+    [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", minLevel = 9, dungeon = 389,
+        start = { npc = 11833 }, finish = { npc = 11834 } },
+    [5724] = { name = "Returning the Lost Satchel", faction = "Horde", minLevel = 9,
+        start = { after = 5722, npc = 11834 }, finish = { npc = 11833 } },
+    [5761] = { name = "Slaying the Beast", faction = "Horde", minLevel = 9, dungeon = 389,
+        start = { npc = 3216 }, finish = { npc = 3216 } },
+    [5725] = { name = "The Power to Destroy...", faction = "Horde", minLevel = 9, dungeon = 389,
+        start = { npc = 2425 }, finish = { npc = 2425 } },
+    [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", minLevel = 9, dungeon = 389,
+        start = { npc = 11833 }, finish = { npc = 11833 } },
+    [1487] = { name = "Deviate Eradication", minLevel = 15, dungeon = 43,
+        start = { npc = 5768 }, finish = { npc = 5768 } },
+    [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43,
+        start = { npc = 5767 }, finish = { npc = 5767 } },
+    [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 10,
+        start = { npc = 3448 }, finish = { npc = 5769 } },
+    [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10,
+        start = { after = 1489, npc = 5769 }, finish = { npc = 5770 } },
+    [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43,
+        start = { after = 1490, npc = 5770 }, finish = { npc = 5770 } },
+    [962] = { name = "Serpentbloom", faction = "Horde", minLevel = 14, dungeon = 43,
+        start = { npc = 3419 }, finish = { npc = 3419 } },
+    [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43,
+        start = { npc = 3446 }, finish = { npc = 3446 } },
+    [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43,
+        start = { npc = 3665 }, finish = { npc = 3665 } },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
-    [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43, start = { drop = 3654, item = 10441 } },
+    [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43,
+        start = { drop = 3654, item = 10441 }, finish = { npc = 8418 } },
 }
 
 --------------------------------------------------------------------------------
@@ -114,6 +159,7 @@ ns.quests = {
 local questsByDungeon = {} -- instance ID -> { questID, ... }
 local questsByGiver = {}   -- npcID -> { questID, ... }
 local questsByObjective = {} -- npcID -> { questID, ... } for NPCs a quest sends you to
+local questsByFinish = {}  -- npcID -> { questID, ... } for NPCs who take a quest in
 local stepByQuest = {}     -- questID -> { step, count, uniqueNames } for a quest in a series
 
 local function Append(index, key, value)
@@ -133,6 +179,9 @@ do
         end
         if quest.objective and quest.objective.npc then
             Append(questsByObjective, quest.objective.npc, questID)
+        end
+        if quest.finish and quest.finish.npc then
+            Append(questsByFinish, quest.finish.npc, questID)
         end
         if start.after then
             nextQuest[start.after] = questID
@@ -160,7 +209,7 @@ do
             end
         end
     end
-    for _, index in ipairs({ questsByDungeon, questsByGiver, questsByObjective }) do
+    for _, index in ipairs({ questsByDungeon, questsByGiver, questsByObjective, questsByFinish }) do
         for _, list in pairs(index) do
             table.sort(list)
         end
@@ -185,14 +234,38 @@ function ns.QuestsWithObjective(npcID)
     return questsByObjective[npcID] or {}
 end
 
--- Calls fn(npcID, npc) for every NPC a quest sends you to.
-function ns.EachObjectiveNPC(fn)
-    for npcID in pairs(questsByObjective) do
+function ns.QuestsFinishedAt(npcID)
+    return questsByFinish[npcID] or {}
+end
+
+local function EachNPCIn(index, fn)
+    for npcID in pairs(index) do
         local npc = ns.npcs[npcID]
         if npc then
             fn(npcID, npc)
         end
     end
+end
+
+-- Calls fn(npcID, npc) for every NPC a quest sends you to.
+function ns.EachObjectiveNPC(fn)
+    EachNPCIn(questsByObjective, fn)
+end
+
+-- Calls fn(npcID, npc) for every NPC who takes a quest in.
+function ns.EachFinishNPC(fn)
+    EachNPCIn(questsByFinish, fn)
+end
+
+-- Whether any quest an NPC gives is for a dungeon: their pin says "Dungeon
+-- Quest" then, "Quest" otherwise.
+function ns.GivesDungeonQuest(npcID)
+    for _, questID in ipairs(ns.QuestsFromGiver(npcID)) do
+        if ns.quests[questID].dungeon then
+            return true
+        end
+    end
+    return false
 end
 
 -- Calls fn(npcID, npc) for every NPC who gives a quest.
@@ -303,6 +376,27 @@ local function ObjectiveOpen(questID)
         return not C_QuestLog.IsComplete(questID)
     end
     return true
+end
+
+-- Whether a quest in your log is ready to hand in: its objectives are
+-- complete, or it has none, as a talk-to quest.
+local function ReadyToTurnIn(questID)
+    local quest = ns.quests[questID]
+    if not (quest and ForMyFaction(quest)) or QuestState(questID) ~= IN_LOG then
+        return false
+    end
+    local count = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(questID) or 0
+    return count == 0 or (C_QuestLog.IsComplete ~= nil and C_QuestLog.IsComplete(questID))
+end
+
+-- Whether an NPC takes in a quest you can hand in now.
+function ns.HasQuestToTurnIn(npcID)
+    for _, questID in ipairs(ns.QuestsFinishedAt(npcID)) do
+        if ReadyToTurnIn(questID) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Whether an NPC is the objective of a quest you are on now.

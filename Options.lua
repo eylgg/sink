@@ -2,7 +2,7 @@
 -- Sink / Options.lua
 --
 -- Slash commands (/sink) and the options window: a portrait frame with a
--- General tab and a Map Pins tab, opened with "/sink config" or by clicking
+-- General tab and a Map Pins tab, opened with "/sink" or by clicking
 -- Sink in the addon compartment. Everything in this file is optional; Core.lua
 -- works without it.
 --
@@ -76,13 +76,13 @@ end
 
 local function Help()
     ns.Print("commands")
-    print("  /sink                 status")
+    print("  /sink                 open the options window (also /sink config)")
+    print("  /sink status          whether centering is on, and the offsets")
     print("  /sink on | off | toggle")
     print(("  /sink x <n>           horizontal offset from screen center (%d to %d)"):format(RANGE.offsetX.min, RANGE.offsetX.max))
     print(("  /sink y <n>           height above the bottom of the screen (%d to %d)"):format(RANGE.offsetY.min, RANGE.offsetY.max))
     print("  /sink reset           back to the defaults")
     print("  /sink center          re-apply the position now")
-    print("  /sink config          open the options window")
     print("  /sink items           quest items that are safe to delete (/sink items help)")
     print("  /sink recipes         vendor recipes you know or not (/sink recipes help)")
     print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
@@ -100,7 +100,9 @@ SlashCmdList.SINK = function(msg)
     local command, arg = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
     command = command:lower()
 
-    if command == "" or command == "status" then
+    if command == "" or command == "config" or command == "options" then
+        OpenOptions()
+    elseif command == "status" then
         Status()
     elseif command == "on" then
         Assign("enabled", true)
@@ -150,8 +152,6 @@ SlashCmdList.SINK = function(msg)
         if ns.DumpCommand then
             ns.DumpCommand(arg)
         end
-    elseif command == "config" or command == "options" then
-        OpenOptions()
     else
         Help()
     end
@@ -166,8 +166,8 @@ end
 -- The options window
 --
 -- Built from the pieces Blizzard's own panels use: ButtonFrameTemplate for the
--- portrait frame with its inset, PanelTabButtonTemplate for the tabs along the
--- bottom, UICheckButtonTemplate for checkboxes and MinimalSliderWithSteppers-
+-- portrait frame with its inset, LargeSideTabButtonTemplate for the icon tabs
+-- down the right edge (as on the professions window), UICheckButtonTemplate for checkboxes and MinimalSliderWithSteppers-
 -- Template for the sliders. Pages are described by the table below and built
 -- top to bottom; the controls read ns.db whenever the window refreshes.
 --------------------------------------------------------------------------------
@@ -182,6 +182,7 @@ local refreshing = false
 local PAGES = {
     {
         name = "General",
+        icon = "Interface\\Icons\\INV_Misc_Gear_02",
         { header = "Player Frame" },
         { key = "enabled", label = "Auto-center the player frame",
           tooltip = "Keep the player frame horizontally centered, even after Edit Mode moves it." },
@@ -203,6 +204,7 @@ local PAGES = {
     },
     {
         name = "Map Pins",
+        icon = "Interface\\Icons\\INV_Misc_Map_01",
         { key = "mapIcons", label = "Show map icons",
           tooltip = "Icons with tooltips on the world map for the vendors and trainers Sink knows about." },
         { header = "Profession Trainers" },
@@ -280,7 +282,7 @@ end
 
 local function BuildPage(frame, definition)
     local page = CreateFrame("Frame", nil, frame.Inset)
-    page:SetPoint("TOPLEFT", 14, -12)
+    page:SetPoint("TOPLEFT", 14, -40) -- clear of the portrait, which hangs over the inset's corner
     page:SetPoint("BOTTOMRIGHT", -14, 12)
     page:Hide()
     local y = 0
@@ -313,16 +315,21 @@ function RefreshWindow()
 end
 
 local function ShowPage(index)
-    PanelTemplates_SetTab(window, index)
+    window.selectedTab = index
     for i, page in ipairs(window.pages) do
         page:SetShown(i == index)
+        window.Tabs[i]:SetChecked(i == index)
+    end
+    local title = (window.TitleContainer and window.TitleContainer.TitleText) or window.TitleText
+    if title then
+        title:SetText("Sink: " .. PAGES[index].name)
     end
     RefreshWindow()
 end
 
 local function CreateWindow()
     local frame = CreateFrame("Frame", WINDOW_NAME, UIParent, "ButtonFrameTemplate")
-    frame:SetSize(440, 430)
+    frame:SetSize(440, 458)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
     frame:SetMovable(true)
@@ -350,23 +357,30 @@ local function CreateWindow()
         table.insert(UISpecialFrames, WINDOW_NAME) -- Escape closes it
     end
 
-    frame.Tabs = frame.Tabs or {}
+    -- Icon tabs down the outside of the right edge, as on the professions
+    -- window: Blizzard's LargeSideTabButtonTemplate, name in the tooltip.
+    frame.Tabs = {}
     frame.pages = {}
     for index, definition in ipairs(PAGES) do
-        local tab = CreateFrame("Button", "$parentTab" .. index, frame, "PanelTabButtonTemplate")
+        local tab = CreateFrame("Frame", nil, frame, "LargeSideTabButtonTemplate")
         frame.Tabs[index] = tab
-        tab:SetID(index)
-        tab:SetText(definition.name)
-        if index == 1 then
-            tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 11, 2)
+        tab.tooltipText = definition.name
+        tab.Icon:SetTexture(definition.icon)
+        if tab.SetFillToInterior then
+            tab:SetFillToInterior(true)
         end
-        tab:SetScript("OnClick", function(self)
-            ShowPage(self:GetID())
+        if index == 1 then
+            tab:SetPoint("TOPLEFT", frame, "TOPRIGHT", 0, -60)
+        else
+            tab:SetPoint("TOPLEFT", frame.Tabs[index - 1], "BOTTOMLEFT", 0, -2)
+        end
+        tab:SetCustomOnMouseUpHandler(function(_, button, upInside)
+            if button == "LeftButton" and upInside then
+                ShowPage(index)
+            end
         end)
-        PanelTemplates_TabResize(tab, 0)
         frame.pages[index] = BuildPage(frame, definition)
     end
-    PanelTemplates_SetNumTabs(frame, #PAGES)
     return frame
 end
 

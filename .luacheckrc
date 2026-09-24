@@ -44,6 +44,7 @@ read_globals = {
     -- functions
     "ButtonFrameTemplate_HideAttic",
     "ButtonFrameTemplate_HideButtonBar",
+    "ButtonFrameTemplate_HidePortrait",
     "ClearCursor",
     "CreateFromMixins",
     "CreateVector2D",
