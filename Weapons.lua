@@ -407,6 +407,29 @@ local function OnTrainerShow()
     end
 end
 
+-- Where to learn a skill: "class trainer", or the cities with a master on
+-- your side who teaches it.
+local function WhereToLearn(skill)
+    if skill.classTrainer then
+        return "class trainer"
+    end
+    local cities = CitiesTeaching(skill)
+    return #cities > 0 and table.concat(cities, ", ") or "no weapon master on your side listed"
+end
+
+-- The weapon skills your class can learn and your level allows now, by
+-- level then name: { name, where }. The Sink tracker shows them.
+function ns.WeaponSkillsToLearn()
+    local level = UnitLevel and UnitLevel("player") or 0
+    local list = {}
+    for _, row in ipairs(SortedRows(ns.weaponSkills)) do
+        if row.group == MISSING and SkillLevel(row.skill) <= level then
+            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill) }
+        end
+    end
+    return list
+end
+
 --------------------------------------------------------------------------------
 -- /sink weapons ...
 --------------------------------------------------------------------------------
@@ -426,13 +449,7 @@ local function ListSkills()
     for _, row in ipairs(SortedRows(ns.weaponSkills)) do
         local skill = row.skill
         if row.group == MISSING then
-            local where
-            if skill.classTrainer then
-                where = "class trainer"
-            else
-                local cities = CitiesTeaching(skill)
-                where = #cities > 0 and table.concat(cities, ", ") or "no weapon master on your side listed"
-            end
+            local where = WhereToLearn(skill)
             local level = SkillLevel(skill)
             if level > 0 then
                 where = level .. ", " .. where

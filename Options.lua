@@ -255,7 +255,8 @@ local PAGES = {
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
           tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
-              .. " Its Dungeons section lists every dungeon your level lets you enter that still has quests for you." },
+              .. " It lists the dungeons your level lets you enter that still have quests for you, and the class"
+              .. " and weapon skills you can learn now." },
     },
 }
 

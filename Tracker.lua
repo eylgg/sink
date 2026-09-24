@@ -5,11 +5,15 @@
 -- the version. On by default: the Tracker tab of the options window or
 -- "/sink tracker" turns it off. Drag its title to move it.
 --
--- It has one section so far, Dungeons: every dungeon your level lets you
--- enter that still has quests for you (Quests.lua, ns.DungeonsToDo), each
--- quest with the same marks as the map tooltips. The title's button folds
--- the whole window, and the Dungeons header, or its button, folds that
--- section; both are saved.
+-- Its sections, each folded by clicking its header or its button, and hidden
+-- while it has nothing to list:
+--   Dungeons       every dungeon your level lets you enter that still has
+--                  quests for you (Quests.lua), each quest with the same
+--                  marks as the map tooltips
+--   Class Skills   what your class trainer can teach you now (Trainers.lua)
+--   Weapon Skills  what a weapon master can teach you now, and in which
+--                  city (Weapons.lua)
+-- The title's button folds the whole window. What is folded is saved.
 --
 -- It is its own frame, not a module in Blizzard's tracker: Blizzard's holds
 -- secure quest item buttons and lays itself out in combat, and addon code in
@@ -71,6 +75,43 @@ local function SavePosition(frame)
     ns.db.trackerPoint = { point, relativePoint, x, y }
 end
 
+local SECTIONS -- the section definitions, below with what fills them
+
+local function Folded(key)
+    return ns.db.trackerFolded ~= nil and ns.db.trackerFolded[key] == true
+end
+
+-- A section: Blizzard's secondary header art with the section's name and a
+-- fold button, and below it the lines, made as they are needed.
+local function CreateSection(frame, definition)
+    local section = CreateFrame("Frame", nil, frame)
+    section:SetSize(WIDTH, MODULE_HEADER_HEIGHT)
+    section.definition = definition
+    local header = CreateFrame("Button", nil, section)
+    header:SetPoint("TOPLEFT")
+    header:SetSize(WIDTH, 26)
+    local background = header:CreateTexture(nil, "BACKGROUND")
+    background:SetAtlas("ui-questtracker-secondary-objective-header", true)
+    background:SetPoint("CENTER")
+    local text = header:CreateFontString(nil, "ARTWORK", Font("ObjectiveTrackerHeaderFont", "GameFontNormalMed2"))
+    text:SetPoint("LEFT", 7, 0)
+    text:SetJustifyH("LEFT")
+    text:SetText(definition.title)
+    local function Toggle()
+        ns.db.trackerFolded = ns.db.trackerFolded or {}
+        ns.db.trackerFolded[definition.key] = not Folded(definition.key)
+        ns.RefreshTracker()
+    end
+    header:SetScript("OnClick", Toggle)
+    header.MinimizeButton = AtlasButton(header, 16, 16, "ui-questtrackerbutton-yellow-highlight")
+    header.MinimizeButton:SetPoint("RIGHT", 1, 0)
+    header.MinimizeButton:SetScript("OnClick", Toggle)
+    section.Header = header
+    section.lines = {} -- font strings, reused on every refresh
+    section:Hide()
+    return section
+end
+
 local function CreateTracker()
     local frame = CreateFrame("Frame", "SinkTrackerFrame", UIParent)
     frame:SetSize(WIDTH, HEADER_HEIGHT)
@@ -112,45 +153,23 @@ local function CreateTracker()
     end)
     frame.Header = header
 
-    -- The Dungeons section: the secondary header art, its fold button, and
-    -- below it one block per dungeon.
-    local module = CreateFrame("Frame", nil, frame)
-    module:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -MODULE_SPACING)
-    module:SetSize(WIDTH, MODULE_HEADER_HEIGHT)
-    local moduleHeader = CreateFrame("Button", nil, module)
-    moduleHeader:SetPoint("TOPLEFT")
-    moduleHeader:SetSize(WIDTH, 26)
-    local moduleBackground = moduleHeader:CreateTexture(nil, "BACKGROUND")
-    moduleBackground:SetAtlas("ui-questtracker-secondary-objective-header", true)
-    moduleBackground:SetPoint("CENTER")
-    local moduleText = moduleHeader:CreateFontString(nil, "ARTWORK", Font("ObjectiveTrackerHeaderFont", "GameFontNormalMed2"))
-    moduleText:SetPoint("LEFT", 7, 0)
-    moduleText:SetJustifyH("LEFT")
-    moduleText:SetText("Dungeons")
-    local function ToggleModule()
-        ns.db.trackerDungeonsCollapsed = not ns.db.trackerDungeonsCollapsed
-        ns.RefreshTracker()
+    frame.sections = {}
+    for index, definition in ipairs(SECTIONS) do
+        frame.sections[index] = CreateSection(frame, definition)
     end
-    moduleHeader:SetScript("OnClick", ToggleModule)
-    moduleHeader.MinimizeButton = AtlasButton(moduleHeader, 16, 16, "ui-questtrackerbutton-yellow-highlight")
-    moduleHeader.MinimizeButton:SetPoint("RIGHT", 1, 0)
-    moduleHeader.MinimizeButton:SetScript("OnClick", ToggleModule)
-    module.Header = moduleHeader
-    module.lines = {} -- font strings, reused on every refresh
-    frame.Dungeons = module
 
     frame:Hide()
     return frame
 end
 
--- The nth font string of the section, made the first time it is needed.
-local function Line(module, n)
-    local line = module.lines[n]
+-- The nth font string of a section, made the first time it is needed.
+local function Line(section, n)
+    local line = section.lines[n]
     if not line then
-        line = module:CreateFontString(nil, "ARTWORK", Font("ObjectiveTrackerLineFont", "GameFontHighlight"))
+        line = section:CreateFontString(nil, "ARTWORK", Font("ObjectiveTrackerLineFont", "GameFontHighlight"))
         line:SetJustifyH("LEFT")
         line:SetWordWrap(true)
-        module.lines[n] = line
+        section.lines[n] = line
     end
     return line
 end
@@ -159,47 +178,75 @@ end
 -- Filling it in
 --------------------------------------------------------------------------------
 
--- Lays out the dungeon blocks under the section header and returns the
--- section's height. Each block is the dungeon's name and level range, then
--- one line per quest, indented as Blizzard indents a block's lines.
-local function FillDungeons(module, dungeons)
-    local collapsed = ns.db.trackerDungeonsCollapsed
-    SetButtonAtlas(module.Header.MinimizeButton,
-        collapsed and "ui-questtrackerbutton-secondary-expand" or "ui-questtrackerbutton-secondary-collapse")
-    local used = 0
-    local y = MODULE_HEADER_HEIGHT
-    if not collapsed then
-        for _, entry in ipairs(dungeons) do
-            y = y + BLOCK_GAP
-            local dungeon = entry.dungeon
-            used = used + 1
-            local title = Line(module, used)
-            title:ClearAllPoints()
-            title:SetPoint("TOPLEFT", BLOCK_X, -y)
-            title:SetWidth(WIDTH - BLOCK_X)
-            title:SetText(("%s %s(%d-%d)|r"):format(dungeon.name, ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0))
-            title:SetTextColor(TITLE_COLOR.r, TITLE_COLOR.g, TITLE_COLOR.b)
-            title:Show()
-            y = y + title:GetStringHeight()
-            for _, row in ipairs(entry.rows) do
-                y = y + LINE_SPACING
-                used = used + 1
-                local line = Line(module, used)
-                local text, color = ns.QuestRowText(row)
-                line:ClearAllPoints()
-                line:SetPoint("TOPLEFT", BLOCK_X, -y)
-                line:SetWidth(WIDTH - BLOCK_X)
-                line:SetText(text)
-                line:SetTextColor(color.r, color.g, color.b)
-                line:Show()
-                y = y + line:GetStringHeight()
-            end
+-- What each section lists, as lines: { text, color, block }. A line with
+-- block starts a new block, set apart as Blizzard sets apart its quests; the
+-- lines after it sit under it.
+
+-- A block per dungeon: its name and level range, then its quests.
+local function DungeonLines()
+    local lines = {}
+    for _, entry in ipairs(ns.DungeonsToDo and ns.DungeonsToDo() or {}) do
+        local dungeon = entry.dungeon
+        lines[#lines + 1] = { block = true, color = TITLE_COLOR,
+            text = ("%s %s(%d-%d)|r"):format(dungeon.name, ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0) }
+        for _, row in ipairs(entry.rows) do
+            local text, color = ns.QuestRowText(row)
+            lines[#lines + 1] = { text = text, color = color }
         end
     end
-    for n = used + 1, #module.lines do
-        module.lines[n]:Hide()
+    return lines
+end
+
+-- One block of the class skills you can learn now.
+local function ClassSkillLines()
+    local lines = {}
+    for i, name in ipairs(ns.ClassSkillsToLearn and ns.ClassSkillsToLearn() or {}) do
+        lines[#lines + 1] = { block = i == 1, text = ns.CROSS .. " " .. name, color = ns.missing }
     end
-    module:SetHeight(y)
+    return lines
+end
+
+-- One block of the weapon skills you can learn now, each with where.
+local function WeaponSkillLines()
+    local lines = {}
+    for i, skill in ipairs(ns.WeaponSkillsToLearn and ns.WeaponSkillsToLearn() or {}) do
+        lines[#lines + 1] = { block = i == 1, color = ns.missing,
+            text = ("%s %s %s(%s)|r"):format(ns.CROSS, skill.name, ns.grey.hex, skill.where) }
+    end
+    return lines
+end
+
+SECTIONS = {
+    { key = "dungeons", title = "Dungeons", lines = DungeonLines },
+    { key = "classSkills", title = "Class Skills", lines = ClassSkillLines },
+    { key = "weaponSkills", title = "Weapon Skills", lines = WeaponSkillLines },
+}
+
+-- Lays out a section's lines under its header and returns its height.
+local function FillSection(section, lines)
+    local folded = Folded(section.definition.key)
+    SetButtonAtlas(section.Header.MinimizeButton,
+        folded and "ui-questtrackerbutton-secondary-expand" or "ui-questtrackerbutton-secondary-collapse")
+    local y = MODULE_HEADER_HEIGHT
+    local used = 0
+    if not folded then
+        for n, entry in ipairs(lines) do
+            y = y + (entry.block and BLOCK_GAP or LINE_SPACING)
+            local line = Line(section, n)
+            line:ClearAllPoints()
+            line:SetPoint("TOPLEFT", BLOCK_X, -y)
+            line:SetWidth(WIDTH - BLOCK_X)
+            line:SetText(entry.text)
+            line:SetTextColor(entry.color.r, entry.color.g, entry.color.b)
+            line:Show()
+            y = y + line:GetStringHeight()
+            used = n
+        end
+    end
+    for n = used + 1, #section.lines do
+        section.lines[n]:Hide()
+    end
+    section:SetHeight(y)
     return y
 end
 
@@ -211,15 +258,21 @@ local function Refresh()
     local collapsed = ns.db.trackerCollapsed
     SetButtonAtlas(tracker.Header.MinimizeButton,
         collapsed and "ui-questtrackerbutton-expand-all" or "ui-questtrackerbutton-collapse-all")
+    -- Each shown section below the last; like Blizzard's, one with nothing
+    -- in it is not shown at all.
     local height = HEADER_HEIGHT
-    -- Like Blizzard's, a section with nothing in it is not shown at all.
-    local dungeons = ns.DungeonsToDo and ns.DungeonsToDo() or {}
-    local module = tracker.Dungeons
-    if collapsed or #dungeons == 0 then
-        module:Hide()
-    else
-        module:Show()
-        height = height + MODULE_SPACING + FillDungeons(module, dungeons)
+    local above = tracker.Header
+    for _, section in ipairs(tracker.sections) do
+        local lines = not collapsed and section.definition.lines() or {}
+        if #lines == 0 then
+            section:Hide()
+        else
+            section:ClearAllPoints()
+            section:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, -MODULE_SPACING)
+            section:Show()
+            height = height + MODULE_SPACING + FillSection(section, lines)
+            above = section
+        end
     end
     tracker:SetHeight(height)
 end
@@ -252,7 +305,10 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_LEVEL_UP")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 -- Not guaranteed on the Forever beta; see Core.lua.
-for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "QUEST_DATA_LOAD_RESULT" }) do
+-- Quests for Dungeons; learned spells and skill lines, and a trainer window
+-- recording what it teaches, for the skill sections.
+for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "QUEST_DATA_LOAD_RESULT",
+    "SPELLS_CHANGED", "SKILL_LINES_CHANGED", "TRAINER_SHOW", "TRAINER_UPDATE" }) do
     pcall(frame.RegisterEvent, frame, event)
 end
 frame:SetScript("OnEvent", function(_, event)

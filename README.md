@@ -181,9 +181,15 @@ Levels are kept per character in `SinkDB.splitRuns`. A level's time needs both i
 
 ## Tracker
 
-On by default. The **Tracker** tab of the options window, or `/sink tracker`, turns it off. It is a window made to look like Blizzard's objective tracker, with the same header art, fonts and spacing, titled **Sink** and the version. Drag its title to move it. The button on the title folds the whole window; the Dungeons header, or its button, folds that section. Both are remembered.
+On by default. The **Tracker** tab of the options window, or `/sink tracker`, turns it off. It is a window made to look like Blizzard's objective tracker, with the same header art, fonts and spacing, titled **Sink** and the version. Drag its title to move it. The button on the title folds the whole window. What is folded is remembered.
+
+It has three sections, each folded by clicking its header or its button, and each hidden while it has nothing to list.
 
 The **Dungeons** section lists every dungeon your level lets you enter (at least the dungeon's minimum level) that still has quests for you, lowest level first. Under each one are its quests for your faction that you have not done and your level allows, marked as on the map tooltips: a red cross for one you have not picked up, a yellow waiting mark for one in your log or one that starts inside the dungeon. Once every quest of a dungeon is done, it drops off the list; with nothing to list, the section is hidden. It updates as your quest log changes and when you level.
+
+The **Class Skills** section lists what your class trainer can teach you now, the same red-cross lines as the trainer's tooltip: of each skill, the highest rank your level allows. Paladins have a built-in list; for other classes it fills in once you open your class trainer's window.
+
+The **Weapon Skills** section lists the weapon skills your class can learn and your level allows that you do not know yet, each with the cities where a weapon master on your side teaches it, or "class trainer" for wands.
 
 It is a separate window rather than a section inside Blizzard's tracker, because addon code in Blizzard's tracker layout can taint its secure quest item buttons in combat.
 
@@ -237,7 +243,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `MapPins.lua` | Built-in map icons, the pin mixin with its tooltip and click-to-target overlay, the data provider, the `/sink map` commands |
 | `MapPins.xml` | The pin template: round icon, identity-colour ring, dark outline; the only XML file |
 | `Splits.lua` | Leveling splits: the silent `/played` requests, the splits window, the list on the Splits tab |
-| `Tracker.lua` | The Sink tracker window and its Dungeons section |
+| `Tracker.lua` | The Sink tracker window and its Dungeons, Class Skills and Weapon Skills sections |
 | `Dump.lua` | `/sink dump loc` and `/sink dump target`, developer output for filling in the tables |
 | `Options.lua` | `/sink` commands, the options window with its General, Map Pins and Splits tabs, the addon compartment click |
 | `.luacheckrc` | Globals list for `luacheck`, if you lint |

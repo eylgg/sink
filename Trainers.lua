@@ -254,6 +254,43 @@ local function SkillText(skill)
     return skill.name .. (rank and (" (" .. rank .. ")") or "")
 end
 
+-- The skills you can learn now, in list order, and the next level that has
+-- any you cannot yet. Of each skill, only the highest rank you could learn;
+-- the list is by level, so a later one replaces an earlier one of the same name.
+local function Learnable(skills)
+    local level = UnitLevel("player") or 0
+    local byName, order, nextLevel = {}, {}, nil
+    for _, skill in ipairs(skills) do
+        if not Known(skill) then
+            if skill.level <= level then
+                if not byName[skill.name] then
+                    order[#order + 1] = skill.name
+                end
+                byName[skill.name] = skill
+            elseif not nextLevel or skill.level < nextLevel then
+                nextLevel = skill.level
+            end
+        end
+    end
+    local list = {}
+    for _, name in ipairs(order) do
+        list[#list + 1] = byName[name]
+    end
+    return list, nextLevel
+end
+
+-- Your class's skills you can learn now, as the trainer tooltip lists them:
+-- "Holy Light (Rank 2)". The Sink tracker shows them. Empty until the class
+-- has a built-in list or its trainer's window has been opened once.
+function ns.ClassSkillsToLearn()
+    local _, class = UnitClass("player")
+    local list = {}
+    for _, skill in ipairs(Learnable(Skills(class))) do
+        list[#list + 1] = SkillText(skill)
+    end
+    return list
+end
+
 --------------------------------------------------------------------------------
 -- Tooltip lines
 --------------------------------------------------------------------------------
@@ -270,24 +307,9 @@ local function AddClassSkillLines(tooltip, class)
         tooltip:AddLine("Open this trainer's window once to list the skills.", ns.grey.r, ns.grey.g, ns.grey.b, true)
         return true
     end
-    local level = UnitLevel("player") or 0
-    -- Of each skill you could learn now, the highest rank; the list is by
-    -- level, so a later one replaces an earlier one of the same name.
-    local learnable, order, nextLevel = {}, {}, nil
-    for _, skill in ipairs(skills) do
-        if not Known(skill) then
-            if skill.level <= level then
-                if not learnable[skill.name] then
-                    order[#order + 1] = skill.name
-                end
-                learnable[skill.name] = skill
-            elseif not nextLevel or skill.level < nextLevel then
-                nextLevel = skill.level
-            end
-        end
-    end
-    for _, name in ipairs(order) do
-        tooltip:AddLine(CROSS .. " " .. SkillText(learnable[name]), ns.missing.r, ns.missing.g, ns.missing.b)
+    local learnable, nextLevel = Learnable(skills)
+    for _, skill in ipairs(learnable) do
+        tooltip:AddLine(CROSS .. " " .. SkillText(skill), ns.missing.r, ns.missing.g, ns.missing.b)
     end
     if nextLevel then
         tooltip:AddLine(" ")
