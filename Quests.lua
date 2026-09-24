@@ -6,7 +6,8 @@
 -- the tooltip, and a "Dungeon Quest" pin on each NPC who gives one.
 --
 -- A quest's start says how you get it:
---   { npc = id }   an NPC gives it; the NPC's record says where they stand
+--   { npc = id }   an NPC gives it; the NPC's record says where they stand,
+--                  and one inside the quest's dungeon reads 'From "Nalpak" inside'
 --   { drop = id }  an NPC drops the item that starts it; when that NPC is in
 --                  the quest's dungeon it reads "Kill "The Baron" inside"
 --   { item = id }  an item you loot starts it, one lying on the ground rather
@@ -44,6 +45,7 @@ ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020 },
     [250660] = { name = "The Baron", instance = 2999 },
     [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782 },
+    [5767] = { name = "Nalpak", instance = 43 },
 }
 
 -- Items you loot from the ground that start a quest, by item ID, with the
@@ -77,6 +79,8 @@ ns.quests = {
     [5761] = { name = "Slaying the Beast", faction = "Horde", dungeon = 389 },
     [5725] = { name = "The Power to Destroy...", faction = "Horde", dungeon = 389 },
     [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", dungeon = 389 },
+    [1487] = { name = "Deviate Eradication", dungeon = 43 },
+    [1486] = { name = "Deviate Hides", dungeon = 43, start = { npc = 5767 } },
 }
 
 --------------------------------------------------------------------------------
@@ -259,11 +263,15 @@ function ns.QuestsToFetch(questIDs)
     return list
 end
 
--- How to get a quest that starts inside its own dungeon: 'Kill "The Baron"
--- inside' for a drop, "Loot inside" for an item on the ground. nil for any
--- other quest.
+-- How to get a quest that starts inside its own dungeon: 'From "Nalpak"
+-- inside' from an NPC, 'Kill "The Baron" inside' for a drop, "Loot inside"
+-- for an item on the ground. nil for any other quest.
 local function DropText(quest)
     local start = quest.start or {}
+    local giver = start.npc and ns.npcs[start.npc]
+    if giver and giver.instance and giver.instance == quest.dungeon then
+        return ("From \"%s\" inside"):format(giver.name)
+    end
     local dropper = start.drop and ns.npcs[start.drop]
     if dropper and dropper.instance and dropper.instance == quest.dungeon then
         return ("Kill \"%s\" inside"):format(dropper.name)
@@ -284,9 +292,9 @@ end
 -- order, each group alphabetical. A quest in a series has its step after
 -- the name, "Hidden Enemies (3/5)", except in a series whose parts all have
 -- their own names and on the first of a series that starts inside the
--- dungeon. A quest that starts inside the dungeon,
--- from a drop or an item on the ground, is yellow until done, never red,
--- with how to get it after the name.
+-- dungeon. A quest that starts inside the dungeon, from an NPC, a drop or an
+-- item on the ground, is yellow until done, never red, with how to get it
+-- after the name.
 function ns.AddQuestLines(tooltip, questIDs)
     local rows = {}
     for _, questID in ipairs(questIDs) do

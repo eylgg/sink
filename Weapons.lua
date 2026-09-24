@@ -403,7 +403,7 @@ local function OnTrainerShow()
     RememberLevels(rows)
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
     if npcID then
-        RememberMaster(npcID, UnitName and UnitName("npc") or nil, rows)
+        RememberMaster(npcID, UnitName and ns.Readable(UnitName("npc")) or nil, rows)
     end
 end
 

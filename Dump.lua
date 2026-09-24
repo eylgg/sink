@@ -124,7 +124,7 @@ local function TooltipLines(unit)
         if ok and data and data.lines then
             for _, line in ipairs(data.lines) do
                 local text = LineText(line)
-                if text and text ~= "" then
+                if text and not ns.Secret(text) and text ~= "" then
                     lines[#lines + 1] = text
                 end
             end
@@ -154,6 +154,13 @@ local function DumpTarget()
     end
     local name = UnitName("target")
     local guid = UnitGUID("target")
+    -- Secret in combat and in instances; show a placeholder rather than an error.
+    if ns.Secret(name) then
+        name = "(hidden by the game)"
+    end
+    if ns.Secret(guid) then
+        guid = "(hidden by the game)"
+    end
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(guid)
     ns.Print(("target %s%s"):format(name or "?", npcID and (", NPC " .. npcID) or ", not a creature"))
     print("  guid " .. tostring(guid))

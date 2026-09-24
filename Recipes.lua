@@ -132,8 +132,15 @@ local function RecipeKnown(itemID)
 end
 ns.RecipeKnown = RecipeKnown
 
+-- The NPC ID in a unit's GUID, or nil. In combat and in instances the game
+-- can hand addons a GUID as a secret value, which can be passed along but
+-- not read; reading one is an error, so a secret GUID gives nil and the
+-- tooltip simply gets no Sink lines.
 local function NPCIDFromGUID(guid)
     if type(guid) ~= "string" then
+        return nil
+    end
+    if ns.Secret(guid) then
         return nil
     end
     local unitType, _, _, _, _, npcID = strsplit("-", guid)
@@ -297,7 +304,7 @@ local function OnMerchantShow()
 
     local npcID = NPCIDFromGUID(UnitGUID and UnitGUID("npc"))
     if npcID then
-        RememberVendor(npcID, UnitName and UnitName("npc") or nil, recipes)
+        RememberVendor(npcID, UnitName and ns.Readable(UnitName("npc")) or nil, recipes)
     end
 end
 
@@ -423,7 +430,7 @@ local function TargetNPC()
     if not npcID then
         return nil, nil
     end
-    return npcID, UnitName("target")
+    return npcID, ns.Readable(UnitName("target"))
 end
 
 local function ListVendors()

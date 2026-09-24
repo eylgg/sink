@@ -89,6 +89,22 @@ local applying = false          -- true while we are the one calling SetPoint
 local pendingAfterCombat = false
 local hooked = false
 
+-- Whether a value is one the game hides from addons. In combat and in
+-- instances some unit data (GUIDs, names, tooltip text) comes as a secret
+-- value: it can be passed along, but reading, comparing or joining it is an
+-- error blamed on Sink. Check with this first and leave a secret one alone.
+function ns.Secret(value)
+    return (issecretvalue ~= nil and issecretvalue(value)) or (canaccessvalue ~= nil and not canaccessvalue(value))
+end
+
+-- The value, or nil when it is secret.
+function ns.Readable(value)
+    if ns.Secret(value) then
+        return nil
+    end
+    return value
+end
+
 function ns.Print(msg)
     print(PREFIX .. tostring(msg))
 end
