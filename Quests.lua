@@ -82,11 +82,12 @@ ns.quests = {
     [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
     [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97290 } },
     [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97291 } },
-    -- Hidden Enemies: part 1 is from Thrall; part 3 is done in Ragefire Chasm.
+    -- Hidden Enemies: Thrall gives parts 1 to 3; part 2 sends you to Neeru
+-- Fireblade; part 3 is done in Ragefire Chasm.
     [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
     [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726, npc = 4949 },
                objective = { npc = 3216 } },
-    [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727 } },
+    [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727, npc = 4949 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
     [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", minLevel = 9, dungeon = 389 },
