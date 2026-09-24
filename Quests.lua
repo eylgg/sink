@@ -7,9 +7,10 @@
 --
 -- A quest's start says how you get it:
 --   { npc = id }   an NPC gives it; the NPC's record says where they stand,
---                  and one inside the quest's dungeon reads 'From "Nalpak" inside'
---   { drop = id }  an NPC drops the item that starts it; when that NPC is in
---                  the quest's dungeon it reads "Kill "The Baron" inside"
+--                  and one inside the quest's dungeon reads 'Talk to "Nalpak" inside'
+--   { drop = id }  an NPC drops the item that starts it (item = its ID, for
+--                  reference); when that NPC is in the quest's dungeon it
+--                  reads "Kill "The Baron" inside"
 --   { item = id }  an item you loot starts it, one lying on the ground rather
 --                  than dropped by an NPC; when the item is in the quest's
 --                  dungeon it reads "Loot inside"
@@ -46,6 +47,7 @@ ns.npcs = {
     [250660] = { name = "The Baron", instance = 2999 },
     [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782 },
     [5767] = { name = "Nalpak", instance = 43 },
+    [3654] = { name = "Mutanus the Devourer", instance = 43 },
 }
 
 -- Items you loot from the ground that start a quest, by item ID, with the
@@ -81,6 +83,13 @@ ns.quests = {
     [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", dungeon = 389 },
     [1487] = { name = "Deviate Eradication", dungeon = 43 },
     [1486] = { name = "Deviate Hides", dungeon = 43, start = { npc = 5767 } },
+    [1489] = { name = "Hamuul Runetotem", faction = "Horde" },
+    [1490] = { name = "Nara Wildmane", faction = "Horde", start = { after = 1489 } },
+    [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43, start = { after = 1490 } },
+    [962] = { name = "Serpentbloom", faction = "Horde", dungeon = 43 },
+    [1491] = { name = "Smart Drinks", dungeon = 43 },
+    -- Mutanus drops the Glowing Shard (item 10441) that starts it.
+    [6981] = { name = "The Glowing Shard", dungeon = 43, start = { drop = 3654, item = 10441 } },
 }
 
 --------------------------------------------------------------------------------
@@ -263,14 +272,14 @@ function ns.QuestsToFetch(questIDs)
     return list
 end
 
--- How to get a quest that starts inside its own dungeon: 'From "Nalpak"
--- inside' from an NPC, 'Kill "The Baron" inside' for a drop, "Loot inside"
--- for an item on the ground. nil for any other quest.
+-- How to get a quest that starts inside its own dungeon: 'Talk to
+-- "Nalpak" inside' from an NPC, 'Kill "The Baron" inside' for a drop, "Loot
+-- inside" for an item on the ground. nil for any other quest.
 local function DropText(quest)
     local start = quest.start or {}
     local giver = start.npc and ns.npcs[start.npc]
     if giver and giver.instance and giver.instance == quest.dungeon then
-        return ("From \"%s\" inside"):format(giver.name)
+        return ("Talk to \"%s\" inside"):format(giver.name)
     end
     local dropper = start.drop and ns.npcs[start.drop]
     if dropper and dropper.instance and dropper.instance == quest.dungeon then
