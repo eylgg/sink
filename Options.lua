@@ -45,7 +45,8 @@ local function OnChanged(key)
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
-    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" or key == "showDungeons" then
+    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" or key == "showDungeons"
+        or key == "showFlightMasters" then
         if ns.RefreshMapPins then
             ns.RefreshMapPins()
         end
@@ -57,13 +58,17 @@ local function OnChanged(key)
         if ns.ApplyTracker then
             ns.ApplyTracker()
         end
-    elseif key == "trackerDungeons" or key == "trackerClassSkills" or key == "trackerWeaponSkills" then
+    elseif key == "trackerTalents" or key == "trackerQuestItems" or key == "trackerDungeons"
+        or key == "trackerClassSkills" or key == "trackerWeaponSkills" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
     elseif key == "questItemWarnings" then
         if ns.RefreshBagOverlays then
             ns.RefreshBagOverlays()
+        end
+        if ns.RefreshTracker then
+            ns.RefreshTracker()
         end
     end
     RefreshWindow()
@@ -218,7 +223,7 @@ local PAGES = {
               .. " when you spam an ability." },
         { header = "Tooltips and Warnings" },
         { key = "questItemWarnings", label = "Quest item warnings",
-          tooltip = "Tooltip line, bag slot tint and popup for quest items that are safe to delete." },
+          tooltip = "Tooltip line, bag slot tint and tracker list for quest items that are safe to delete." },
         { key = "recipeTooltips", label = "Recipe vendor tooltips",
           tooltip = "Vendor tooltips list the recipes sold, with a check for the ones you know." },
         { key = "weaponTooltips", label = "Weapon master tooltips",
@@ -240,6 +245,9 @@ local PAGES = {
         { key = "showDungeons", label = "Show dungeons",
           tooltip = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
               .. " in your log or not taken." },
+        { header = "Flight Masters" },
+        { key = "showFlightMasters", label = "Show flight masters",
+          tooltip = "Flight masters for your faction on zone and city maps, grey until you have discovered them." },
     },
     {
         name = "Splits",
@@ -259,14 +267,20 @@ local PAGES = {
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
           tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
-              .. " It lists the dungeons your level lets you enter that still have quests for you, and the class"
-              .. " and weapon skills you can learn now." },
+              .. " It lists unspent talent points, quest items you can delete, the dungeons your level lets you enter that still have quests"
+              .. " for you, and the class and weapon skills you can learn now." },
+        { header = "Talents" },
+        { key = "trackerTalents", label = "Show in tracker",
+          tooltip = "How many talent points you have not spent. Hidden while there are none." },
+        { header = "Quest Items" },
+        { key = "trackerQuestItems", label = "Show in tracker",
+          tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked first." },
         { header = "Dungeons" },
         { key = "trackerDungeons", label = "Show in tracker",
           tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
         { header = "Class Skills" },
         { key = "trackerClassSkills", label = "Show in tracker",
-          tooltip = "The skills your class trainer can teach you now." },
+          tooltip = "The skills your class trainer can teach you now, and what they cost together." },
         { header = "Weapon Skills" },
         { key = "trackerWeaponSkills", label = "Show in tracker",
           tooltip = "The weapon skills your class can learn now, and the cities that teach them." },

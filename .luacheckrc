@@ -26,6 +26,13 @@ read_globals = {
     "WorldMapFrame",
     -- namespaces and mixins
     "C_AddOns",
+    "GetMoneyString",
+    "GetMoney",
+    "GetTrainerServiceCost",
+    "GetTaxiMapID",
+    "C_TaxiMap",
+    "C_Traits",
+    "C_ClassTalents",
     "C_Container",
     "C_Item",
     "C_Map",

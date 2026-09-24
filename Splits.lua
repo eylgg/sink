@@ -18,9 +18,8 @@
 --
 -- Levels are kept per character in SinkDB.splitRuns. A level's time needs
 -- both its start and the next level's, so levels before splits were turned on
--- stay blank. Until the beta's saved-variables bug (README) is fixed they
--- last one session, but the current level's start is exact after every login
--- because it comes from the server.
+-- stay blank. The current level's start is exact after every login either
+-- way, because it comes from the server.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -93,9 +92,16 @@ end
 
 local ROW_HEIGHT = 14
 
-local function SavePosition(frame)
-    local point, _, relativePoint, x, y = frame:GetPoint()
-    ns.db.splitsPoint = { point, relativePoint, x, y }
+-- Pin the window by its top-left corner and save that, so its top stays put
+-- as rows come and go; a drag leaves it anchored by whichever point.
+local function AnchorTop(frame)
+    local left, top = frame:GetLeft(), frame:GetTop()
+    if not (left and top) then
+        return
+    end
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    ns.db.splitsPoint = { "TOPLEFT", "BOTTOMLEFT", left, top }
 end
 
 local function CreateWindow()
@@ -104,8 +110,11 @@ local function CreateWindow()
     local p = ns.db.splitsPoint
     if p then
         frame:SetPoint(p[1], UIParent, p[2], p[3], p[4])
+        if p[1] ~= "TOPLEFT" then
+            AnchorTop(frame) -- saved by an older version, by some other point
+        end
     else
-        frame:SetPoint("RIGHT", UIParent, "RIGHT", -40, 120)
+        frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -40, -260)
     end
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -114,7 +123,8 @@ local function CreateWindow()
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        SavePosition(self)
+        self:SetUserPlaced(false) -- ns.db.splitsPoint is the one saved position
+        AnchorTop(self)
     end)
     frame.levels = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     frame.levels:SetPoint("TOPLEFT", 8, -6)

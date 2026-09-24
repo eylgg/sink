@@ -25,6 +25,13 @@
 -- previous target back. Targeting by name finds the NPC when it is loaded
 -- around you, so this is for "which one is the blacksmith" in town, not for
 -- locating someone across the zone.
+--
+-- Flight masters come from the client, not from a table: C_TaxiMap's nodes
+-- for the map, with their position, name, faction and whether you have
+-- discovered them. Opening a flight master's map also records every flight
+-- path you can take from there, per character, in case the client's
+-- "undiscovered" flag lags. They are drawn on zone and city maps only, and
+-- not where Blizzard's own flight point layer already draws them.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -652,6 +659,66 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
+-- Flight paths this character has, recorded from the flight master's map.
+local function KnownFlightPaths()
+    local key = UnitName("player") .. "-" .. (GetRealmName and GetRealmName() or ""):gsub("%s+", "")
+    ns.db.knownFlightPaths = ns.db.knownFlightPaths or {}
+    ns.db.knownFlightPaths[key] = ns.db.knownFlightPaths[key] or {}
+    return ns.db.knownFlightPaths[key]
+end
+
+-- At a flight master: every path on the flight map you can take is known.
+local function RecordFlightPaths()
+    if not (C_TaxiMap and C_TaxiMap.GetAllTaxiNodes and Enum and Enum.FlightPathState) then
+        return
+    end
+    local mapID = (GetTaxiMapID and GetTaxiMapID()) or C_Map.GetBestMapForUnit("player")
+    if not mapID then
+        return
+    end
+    local ok, nodes = pcall(C_TaxiMap.GetAllTaxiNodes, mapID)
+    if not ok or not nodes then
+        return
+    end
+    local known = KnownFlightPaths()
+    for _, node in ipairs(nodes) do
+        if node.state ~= Enum.FlightPathState.Unreachable then
+            known[node.nodeID] = true
+        end
+    end
+end
+
+-- Pins for the flight masters on a zone or city map, for your faction.
+local function FlightPins(mapID)
+    local pins = {}
+    if ns.db.showFlightMasters == false or not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then
+        return pins
+    end
+    local info = C_Map.GetMapInfo(mapID)
+    if not info or not Enum.UIMapType or info.mapType < Enum.UIMapType.Zone then
+        return pins -- a continent or the world: too many to be useful
+    end
+    if C_TaxiMap.ShouldMapShowTaxiNodes and C_TaxiMap.ShouldMapShowTaxiNodes(mapID) then
+        return pins -- Blizzard's own layer draws them here
+    end
+    local ok, nodes = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
+    if not ok or not nodes then
+        return pins
+    end
+    local mine = UnitFactionGroup("player")
+    local known = KnownFlightPaths()
+    local factions = Enum.FlightPathFaction or {}
+    for _, node in ipairs(nodes) do
+        local faction = (node.faction == factions.Horde and "Horde") or (node.faction == factions.Alliance and "Alliance")
+        local x, y = node.position and node.position.x, node.position and node.position.y
+        if x and y and (not faction or faction == mine) then
+            pins[#pins + 1] = { name = node.name, note = "Flight Master", x = x, y = y, atlas = node.atlasName,
+                taxiNode = node.nodeID, discovered = known[node.nodeID] == true or not node.isUndiscovered }
+        end
+    end
+    return pins
+end
+
 -- The pins to draw on a map. Only pins for your faction; dungeons only while
 -- "show dungeons" is on; a quest giver only while they have a quest for you,
 -- a quest objective NPC only while you still need to go there, and a turn-in
@@ -706,6 +773,9 @@ local function PinsToShow(mapID)
     end)
     for _, group in pairs(groups) do
         shown[#shown + 1] = ChooseTrainer(group.profession, group)
+    end
+    for _, pin in ipairs(FlightPins(mapID)) do
+        shown[#shown + 1] = pin
     end
     return shown
 end
@@ -829,6 +899,8 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
         self.Icon:SetTexture(pin.icon or DEFAULT_ICON)
         self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     end
+    -- A flight path you have not discovered is drawn grey; pins are reused, so always set it.
+    self.Icon:SetDesaturated(pin.taxiNode ~= nil and not pin.discovered)
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
@@ -925,6 +997,14 @@ function SinkMapPinMixin:OnMouseEnter()
         local profession = TrainerInfo(pin)
         if profession and profession.class and not profession.specialty then
             ns.AddClassSkillLines(GameTooltip, profession.class)
+        end
+    end
+    if pin.taxiNode then
+        GameTooltip:AddLine(pin.name, 1, 1, 1)
+        if pin.discovered then
+            GameTooltip:AddLine(ns.CHECK .. " Discovered", ns.known.r, ns.known.g, ns.known.b)
+        else
+            GameTooltip:AddLine(ns.CROSS .. " Not discovered", ns.missing.r, ns.missing.g, ns.missing.b)
         end
     end
     if pin.questIDs and ns.AddQuestLines then
@@ -1165,9 +1245,17 @@ pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
 pcall(frame.RegisterEvent, frame, "QUEST_REMOVED")
 -- Objectives completing change which objective NPCs are shown.
 pcall(frame.RegisterEvent, frame, "QUEST_LOG_UPDATE")
+-- A flight master's map lists the paths you have; talking to one discovers it.
+pcall(frame.RegisterEvent, frame, "TAXIMAP_OPENED")
+pcall(frame.RegisterEvent, frame, "TAXI_NODE_STATUS_CHANGED")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
+    elseif event == "TAXIMAP_OPENED" then
+        RecordFlightPaths()
+        Refresh()
+    elseif event == "TAXI_NODE_STATUS_CHANGED" then
+        Refresh()
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
         refreshAfterCombat = false
         Refresh()

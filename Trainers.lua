@@ -15,14 +15,16 @@
 -- "Holy Light (Rank 2)", is the text the trainer shows under it, built into
 -- the list below; only a recorded skill without one asks the spell for its
 -- subtext. Of several ranks you could learn, only the highest is listed.
+-- The window also gives each service's cost in copper, recorded as cost, so
+-- the tracker can total what the skills you can learn now will cost.
 -- Built-in lists live in ns.classSkills below, "/sink dump trainer" prints
 -- the lines for them; recorded ones are in SinkDB.classSkills.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
 
--- Built-in class skill lists, by class token: { { name, level, spell, rank }, ... },
--- from "/sink dump trainer". Level 0 is what the class starts with. rank is
+-- Built-in class skill lists, by class token: { { name, level, spell, rank, cost }, ... },
+-- from "/sink dump trainer"; cost is in copper and may be missing. Level 0 is what the class starts with. rank is
 -- the trainer's text for it, "" for none; only "Rank N" is shown. A recorded
 -- skill without a rank gets the spell's subtext.
 ns.classSkills = {}
@@ -210,6 +212,9 @@ local function Skills(class)
         if entry.known ~= nil then
             skill.known = entry.known
         end
+        if entry.cost then
+            skill.cost = entry.cost -- recorded after built-in, so the window's price wins
+        end
     end
     for _, entry in ipairs(ns.classSkills[class] or {}) do
         add(entry)
@@ -289,6 +294,22 @@ function ns.ClassSkillsToLearn()
         list[#list + 1] = SkillText(skill)
     end
     return list
+end
+
+-- What the skills you can learn now cost together, in copper, and how many
+-- of them have no price yet (not in the built-in list with one, and the
+-- trainer's window not opened since). The Sink tracker shows it.
+function ns.ClassTrainingCost()
+    local _, class = UnitClass("player")
+    local total, unpriced = 0, 0
+    for _, skill in ipairs(Learnable(Skills(class))) do
+        if skill.cost then
+            total = total + skill.cost
+        else
+            unpriced = unpriced + 1
+        end
+    end
+    return total, unpriced
 end
 
 --------------------------------------------------------------------------------
@@ -375,8 +396,9 @@ local function WindowSkills()
     for index = 1, count do
         local name, serviceType, _, reqLevel, subText = GetTrainerServiceInfo(index)
         if name and serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(name)) then
+            local cost = GetTrainerServiceCost and GetTrainerServiceCost(index)
             rows[#rows + 1] = { name = name, level = tonumber(reqLevel) or 0, spell = ServiceSpell(index),
-                rank = subText, known = serviceType == "used" }
+                rank = subText, known = serviceType == "used", cost = tonumber(cost) }
         end
     end
     return rows

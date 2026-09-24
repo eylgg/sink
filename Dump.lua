@@ -317,8 +317,10 @@ local function DumpTrainer()
             tostring(subText), tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
         print(lines[#lines])
         if serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(service)) then
-            skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s, rank = %q },"):format(tostring(service),
-                tonumber(reqLevel) or 0, spell and tostring(spell) or "nil", tostring(subText or ""))
+            local cost = GetTrainerServiceCost and tonumber(GetTrainerServiceCost(index))
+            skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s, rank = %q, cost = %s },"):format(
+                tostring(service), tonumber(reqLevel) or 0, spell and tostring(spell) or "nil", tostring(subText or ""),
+                cost and tostring(cost) or "nil")
         end
         local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
         if id then

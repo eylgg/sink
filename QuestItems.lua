@@ -1,20 +1,16 @@
 --------------------------------------------------------------------------------
 -- Sink / QuestItems.lua
 --
--- Warns when a quest item is still in your bags after the quest that needed it
--- is complete, and offers to delete it.
+-- Marks quest items that are still in your bags after the quest that needed
+-- them is complete. Nothing pops up or prints on its own:
+--   * a tooltip line on the item: yellow "Safe to delete, quest complete"
+--     once the quest is done, grey "Keep until ..." before that;
+--   * a red tint on the item's bag slot while it is safe to delete;
+--   * the Quest Items section of the Sink tracker lists them, and clicking
+--     one asks Delete / Keep before destroying it.
 --
--- Three layers, quiet to loud:
---   1. A tooltip line on the item: yellow "Safe to delete, quest complete"
---      once the quest is done, grey "Keep until ..." before that.
---   2. A chat line plus a short on-screen notice when the item is spotted in
---      the bags after the quest is complete.
---   3. A popup with Delete / Keep, once per item per session.
---   Plus a red tint on the item's bag slot for as long as it is safe to delete.
---
--- The bag check runs after a quest turn-in, on login, and whenever the bags
--- change, so an item looted late is caught too. Nothing is shown in combat;
--- the check waits for PLAYER_REGEN_ENABLED instead.
+-- The bags are checked after a quest turn-in, on login, and whenever they
+-- change, so an item looted late is caught too.
 --------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
@@ -27,10 +23,7 @@ ns.questItemRules = {
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"
-local warned = {}          -- itemID -> true once warned this session
 local scanQueued = false
-local scanAfterCombat = false
-local scanForceAfterCombat = false
 
 local function Enabled()
     return ns.db ~= nil and ns.db.questItemWarnings ~= false
@@ -142,9 +135,7 @@ local function DeleteItem(itemID)
         DeleteCursorItem()
     end)
 
-    if ok and not CursorHasItem() then
-        ns.Print("deleted " .. ItemName(itemID, link) .. ".")
-    else
+    if not (ok and not CursorHasItem()) then
         ClearCursor()
         ns.Print("could not delete " .. ItemName(itemID, link) .. (err and (" (" .. tostring(err) .. ")") or "")
             .. ". Drag it out of your bags to destroy it.")
@@ -233,42 +224,44 @@ local function HookBagFrames()
     end
 end
 
-local function Warn(itemID, rule, link)
-    warned[itemID] = true
-    local item = ItemName(itemID, link)
-    local quests = QuestNames(rule)
-
-    ns.Print(item .. " is safe to delete: " .. quests .. " is complete. Type /sink items to review.")
-    if UIErrorsFrame and UIErrorsFrame.AddMessage then
-        UIErrorsFrame:AddMessage(item .. " is safe to delete (" .. quests .. " complete)", 1.0, 0.82, 0.0)
-    end
-    StaticPopup_Show(POPUP, item, quests, { itemID = itemID })
-end
-
--- Check every rule against the bags. With force, warn again even if this
--- session already did.
-local function Scan(force)
+-- The quest items in your bags whose quests are all complete, by name:
+-- { { itemID, link, count, icon, quests }, ... }. The Sink tracker lists them.
+function ns.DeletableQuestItems()
+    local items = {}
     if not Enabled() then
-        return
-    end
-    if InCombatLockdown() then
-        scanAfterCombat = true
-        if force then
-            scanForceAfterCombat = true
-        end
-        return
+        return items
     end
     EachRule(function(itemID, rule)
-        if (force or not warned[itemID]) and QuestsComplete(rule) then
-            local bag, _, link = FindInBags(itemID)
+        if QuestsComplete(rule) then
+            local bag, _, link, count = FindInBags(itemID)
             if bag then
-                Warn(itemID, rule, link)
+                items[#items + 1] = { itemID = itemID, link = link, count = count or 1, quests = QuestNames(rule),
+                    icon = C_Item.GetItemIconByID and C_Item.GetItemIconByID(itemID) }
             end
         end
     end)
-    RefreshBagOverlays()
+    table.sort(items, function(a, b)
+        return ItemName(a.itemID) < ItemName(b.itemID)
+    end)
+    return items
 end
-ns.ScanQuestItems = Scan
+
+-- Ask Delete / Keep for one item; the tracker calls it when the item is clicked.
+function ns.ConfirmDeleteQuestItem(itemID)
+    local rule = RuleFor(itemID)
+    local _, _, link = FindInBags(itemID)
+    if rule and link then
+        StaticPopup_Show(POPUP, ItemName(itemID, link), QuestNames(rule), { itemID = itemID })
+    end
+end
+
+-- The bags or a quest changed: re-tint the slots and redraw the tracker.
+local function Scan()
+    RefreshBagOverlays()
+    if ns.RefreshTracker then
+        ns.RefreshTracker()
+    end
+end
 
 -- Bag contents and quest flags settle a moment after the events fire.
 local function QueueScan(delay)
@@ -330,7 +323,6 @@ local function ItemsHelp()
     print("  /sink items                       list rules with quest and bag status")
     print("  /sink items add <itemID> <questID> add a rule (saved per character)")
     print("  /sink items remove <itemID>       remove a rule you added")
-    print("  /sink items scan                  re-check the bags and show the popup again")
     print("  /sink items on | off              turn the warnings on or off")
 end
 
@@ -366,7 +358,6 @@ function ns.QuestItemsCommand(arg)
             return
         end
         ns.db.questItems[itemID] = questID
-        warned[itemID] = nil
         ns.Print(("rule added: %s is safe to delete once %s is complete."):format(ItemName(itemID), QuestName(questID)))
         Scan()
     elseif sub == "remove" then
@@ -377,14 +368,15 @@ function ns.QuestItemsCommand(arg)
         end
         ns.db.questItems[itemID] = nil
         ns.Print("rule removed for " .. ItemName(itemID) .. ".")
-        RefreshBagOverlays()
-    elseif sub == "scan" then
-        Scan(true)
-        ListRules()
+        Scan()
     elseif sub == "on" or sub == "off" then
-        ns.db.questItemWarnings = (sub == "on")
+        if ns.SetOption then
+            ns.SetOption("questItemWarnings", sub == "on")
+        else
+            ns.db.questItemWarnings = (sub == "on")
+        end
         ns.Print("quest item warnings " .. (sub == "on" and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
-        RefreshBagOverlays()
+        Scan()
     else
         ItemsHelp()
     end
@@ -397,7 +389,6 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- The Forever beta throws on unknown event names; see Core.lua.
 pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
 pcall(frame.RegisterEvent, frame, "BAG_UPDATE_DELAYED")
@@ -413,11 +404,5 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         end
     elseif event == "BAG_UPDATE_DELAYED" then
         QueueScan(0.5)
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        if scanAfterCombat then
-            local force = scanForceAfterCombat
-            scanAfterCombat, scanForceAfterCombat = false, false
-            Scan(force)
-        end
     end
 end)

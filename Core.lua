@@ -31,7 +31,7 @@ ns.defaults = {
     offsetY = 250,  -- height of the frame's bottom edge above the bottom of the screen
 
     -- QuestItems.lua
-    questItemWarnings = true,  -- tooltip line, notice and popup for quest items that are safe to delete
+    questItemWarnings = true,  -- tooltip line, bag tint and tracker list for quest items that are safe to delete
     questItems = {},           -- rules added in game: [itemID] = questID
 
     -- Recipes.lua
@@ -47,6 +47,8 @@ ns.defaults = {
     showAllTrainers = false,   -- every profession trainer, not just the ones for your professions
     showAllClassTrainers = false, -- every class trainer, not just your class's
     showDungeons = true,       -- dungeon entrances, with their quests on the tooltip
+    showFlightMasters = true,  -- flight masters, grey until discovered
+    knownFlightPaths = {},     -- flight paths seen at a flight master: ["Name-Realm"] = { [nodeID] = true }
 
     -- Weapons.lua
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
@@ -65,6 +67,8 @@ ns.defaults = {
     -- Tracker.lua
     tracker = true,            -- show the Sink tracker window
     trackerCollapsed = false,  -- the whole tracker folded to its title
+    trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
+    trackerQuestItems = true,  -- the Quest Items section is in the tracker, while there are some to delete
     trackerDungeons = true,    -- the Dungeons section is in the tracker
     trackerClassSkills = true, -- the Class Skills section is in the tracker
     trackerWeaponSkills = true, -- the Weapon Skills section is in the tracker
