@@ -416,6 +416,24 @@ local function TrainerInfo(pin)
     return nil
 end
 
+-- The class a trainer with a map pin teaches, by NPC ID, or nil. Built once
+-- from the pins, for the class skill lines on the trainer's own tooltip.
+local trainerClassByNPC
+function ns.ClassTrainerClass(npcID)
+    if not trainerClassByNPC then
+        trainerClassByNPC = {}
+        for _, pins in pairs(ns.mapPins) do
+            for _, pin in ipairs(pins) do
+                local profession = pin.npc and TrainerInfo(pin)
+                if profession and profession.class then
+                    trainerClassByNPC[pin.npc] = profession.class
+                end
+            end
+        end
+    end
+    return trainerClassByNPC[npcID]
+end
+
 -- Your current maximum in a profession, or nil if you do not have it.
 local function ProfessionMax(profession)
     if not (profession and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
@@ -724,6 +742,12 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.npc and ns.AddWeaponMasterLines then
         ns.AddWeaponMasterLines(GameTooltip, pin.npc)
+    end
+    if pin.npc and ns.AddClassSkillLines then
+        local profession = TrainerInfo(pin)
+        if profession and profession.class then
+            ns.AddClassSkillLines(GameTooltip, profession.class)
+        end
     end
     if pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)

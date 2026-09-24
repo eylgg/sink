@@ -52,6 +52,9 @@ ns.defaults = {
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
     weaponMasters = {},        -- masters recorded from the trainer window: [npcID] = { name = ..., skills = { id, ... } }
     weaponLevels = {},         -- level a skill needs, as a trainer window showed it: [skillID] = level
+
+    -- Trainers.lua
+    classSkills = {},          -- class trainer services recorded from the window: [class][name:level] = { ... }
 }
 
 -- Sink's identity colour, used for everything it prints or draws: the chat

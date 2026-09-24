@@ -308,13 +308,18 @@ local function DumpTrainer()
     lines[#lines + 1] = ("trainer %s%s, %d services offered to this character (the window lists only what your class can take)")
         :format(name, npcID and (", NPC " .. npcID) or "", count)
     ns.Print(lines[1])
-    local ids = {}
+    local ids, skillLines = {}, {}
     for index = 1, count do
         local service, serviceType, _, reqLevel, _, category = GetTrainerServiceInfo(index)
         local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
-        lines[#lines + 1] = ("  %d. %s | %s | level %s | %s | %s"):format(index, tostring(service), tostring(serviceType),
-            tostring(reqLevel), tostring(category), tostring(skillLine))
+        local spell = ns.TrainerServiceSpell and ns.TrainerServiceSpell(index)
+        lines[#lines + 1] = ("  %d. %s | %s | level %s | %s | %s | spell %s"):format(index, tostring(service),
+            tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
         print(lines[#lines])
+        if serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(service)) then
+            skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s },"):format(tostring(service),
+                tonumber(reqLevel) or 0, spell and tostring(spell) or "nil")
+        end
         local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
         if id then
             ids[#ids + 1] = tostring(id)
@@ -324,6 +329,16 @@ local function DumpTrainer()
         lines[#lines + 1] = ("  [%d] = { name = %q, location = %q, skills = { %s } }, -- ns.weaponMasters, Weapons.lua; this class's view")
             :format(npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", "))
         print(lines[#lines])
+    end
+    -- A class trainer's list, as a block for ns.classSkills in Trainers.lua.
+    if #skillLines > 0 and #ids == 0 and not (IsTradeskillTrainer and IsTradeskillTrainer()) then
+        local _, class = UnitClass("player")
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = ("ns.classSkills.%s = { -- %s, Trainers.lua"):format(class or "?", name)
+        for _, line in ipairs(skillLines) do
+            lines[#lines + 1] = line
+        end
+        lines[#lines + 1] = "}"
     end
     CopyWindow("Trainer dump", lines)
 end

@@ -16,6 +16,7 @@ Core.lua
 QuestItems.lua
 Recipes.lua
 Weapons.lua
+Trainers.lua
 Errors.lua
 Quests.lua
 MapPins.lua

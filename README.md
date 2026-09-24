@@ -100,6 +100,12 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 `/sink dump trainer` prints the open trainer window's services and a line for the master table. The window lists only what your class can take, and its Available, Unavailable and Already Known boxes narrow that further, so the dump and the recording see one class's view; the built-in table is the full list. Like the other in-game recordings, masters recorded from the window are lost on logout until the beta's saved-variables bug is fixed.
 
+## Class skills
+
+Hover your class's trainer, or their map icon, and the tooltip lists each skill you have not learned that you can learn now, with a red cross, then a blank line and "Next Skills (level N)" with the skills at the next level that has any, in grey. A skill that shares its name with others shows its rank, counted by level: "Holy Light (Rank 2)". Other classes' trainers get no lines.
+
+What a trainer teaches has no API outside the trainer window, so opening your class trainer's window records every service: name, level, and the spell ID from the service's tooltip data (`C_TooltipInfo.GetTrainerService`). With the spell ID, `IsPlayerSpell` says whether you know a skill at any time; without one, the state the window last showed is kept. Until a trainer has been visited the tooltip says to open the window once. `/sink dump trainer` at a class trainer also prints a block for `ns.classSkills` in `Trainers.lua`, so a class's list can be built in and work before any visit; like the other recordings, visits are lost on logout until the beta's saved-variables bug is fixed.
+
 ## Quests
 
 `Quests.lua` keeps one record per dungeon, NPC and quest, linked by ID, so each fact is written once:
@@ -169,7 +175,7 @@ Like the other in-game additions, icons added with `/sink map add` are lost on l
 | --- | --- |
 | `/sink dump loc` | Zone, map ID and parent map, subzone, and your position both as percent and as the 0 to 1 values, then a map icon line to paste |
 | `/sink dump target` | Your target's name, NPC ID, GUID and tooltip lines, then a map icon line with the NPC ID, name and title filled in |
-| `/sink dump trainer` | The open trainer window's services, and for a weapon master a line for the table in `Weapons.lua`; all of it also opens in a window, selected, to copy |
+| `/sink dump trainer` | The open trainer window's services with their spell IDs, and a line for the table in `Weapons.lua` at a weapon master or a block for `ns.classSkills` in `Trainers.lua` at a class trainer; all of it also opens in a window, selected, to copy |
 | `/sink dump skills` | Every skill line the client lists for this character, then each weapon skill with its skill line and proficiency spell status |
 | `/sink dump npc` | Every position in the built-in tables, NPCs, places such as zeppelins, quest NPCs and dungeon entrances, by zone, with the file it is in; unverified ones are marked |
 | `/sink dump npc unverified` | Only the positions not yet taken in game, the ones to check with `/sink dump target` next to the NPC or `/sink dump loc` at the place |
@@ -204,6 +210,7 @@ Offsets are stored in UIParent units and divided by the frame's scale before `Se
 | `Core.lua` | Saved variables, the positioning logic, event handling, the `SetPoint` hook |
 | `QuestItems.lua` | Quest item rules, the bag scan, the tooltip line, the bag slot tint, the Delete/Keep popup |
 | `Recipes.lua` | Vendor recipe list, the known-recipe check, the vendor and recipe tooltip lines, merchant reminders, the missing-recipes window |
+| `Trainers.lua` | Class trainer skill lists, recorded from the trainer window, and the tooltip lines for what you can learn now and next |
 | `Weapons.lua` | Weapon skill lines, class proficiencies, the weapon master table, trainer window recording, the tooltip lines, `/sink weapons` |
 | `Quests.lua` | Dungeon, NPC and quest records, the quest tooltip lines, the series step in the objective tracker |
 | `Errors.lua` | The muted message types and the blacklist switch that hides their text and voice |

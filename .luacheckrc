@@ -61,6 +61,7 @@ read_globals = {
     "GetZoneText",
     "InCombatLockdown",
     "IsPlayerSpell",
+    "IsTradeskillTrainer",
     "IsSpellKnown",
     "StaticPopup_Show",
     "UnitClass",
