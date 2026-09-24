@@ -268,6 +268,14 @@ local function QuestPins(mapID)
                 end
             end)
         end
+        if ns.EachObjectiveNPC then
+            ns.EachObjectiveNPC(function(npcID, npc)
+                if npc.map then
+                    add(npc.map, { npc = npcID, name = npc.name, note = "Quest Objective", questObjective = true,
+                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = ns.QuestsWithObjective(npcID) })
+                end
+            end)
+        end
     end
     return questPins[mapID] or {}
 end
@@ -414,7 +422,8 @@ local function ChooseTrainer(profession, group)
 end
 
 -- The pins to draw on a map. Dungeons only while "show dungeons" is on; a
--- quest giver only while they have a quest for you (Quests.lua). Trainers
+-- quest giver only while they have a quest for you, and a quest objective
+-- NPC only while you still need to go there (Quests.lua). Trainers
 -- are filtered first: a class trainer only for your class unless "show all
 -- class trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
@@ -435,6 +444,10 @@ local function PinsToShow(mapID)
             end
         elseif pin.questGiver then
             if ns.HasQuestToGive(pin.npc) then
+                shown[#shown + 1] = pin
+            end
+        elseif pin.questObjective then
+            if ns.IsObjectiveOpen(pin.npc) then
                 shown[#shown + 1] = pin
             end
         elseif profession == nil then
@@ -873,6 +886,23 @@ end
 -- Events
 --------------------------------------------------------------------------------
 
+-- QUEST_LOG_UPDATE fires often, and a redraw closes the tooltip under the
+-- mouse, so it only redraws when an objective NPC's pin comes or goes.
+local objectivesSeen = {}
+local function ObjectivesChanged()
+    local changed = false
+    if ns.EachObjectiveNPC then
+        ns.EachObjectiveNPC(function(npcID)
+            local open = ns.IsObjectiveOpen(npcID)
+            if objectivesSeen[npcID] ~= open then
+                objectivesSeen[npcID] = open
+                changed = true
+            end
+        end)
+    end
+    return changed
+end
+
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -884,6 +914,8 @@ pcall(frame.RegisterEvent, frame, "PLAYER_LEVEL_UP")
 pcall(frame.RegisterEvent, frame, "QUEST_ACCEPTED")
 pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
 pcall(frame.RegisterEvent, frame, "QUEST_REMOVED")
+-- Objectives completing change which objective NPCs are shown.
+pcall(frame.RegisterEvent, frame, "QUEST_LOG_UPDATE")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
@@ -892,6 +924,8 @@ frame:SetScript("OnEvent", function(_, event)
         Refresh()
     elseif event == "SKILL_LINES_CHANGED" or event == "PLAYER_LEVEL_UP" or event == "QUEST_ACCEPTED"
         or event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
+        Refresh()
+    elseif event == "QUEST_LOG_UPDATE" and ObjectivesChanged() then
         Refresh()
     end
 end)

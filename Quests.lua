@@ -17,6 +17,10 @@
 --   { after = id } offered once the quest before it is turned in; with npc as
 --                  well, that NPC offers it then (Thrall gives Hidden Enemies
 --                  1/5 and, once it is turned in, 2/5)
+-- A quest's objective = { npc = id } is an NPC you go to while the quest is
+-- in your log, such as Neeru Fireblade for Hidden Enemies 2/5; that NPC gets
+-- a "Quest Objective" pin until the objective is done.
+--
 -- Quests linked by after make a series, and the objective tracker adds the
 -- step to the end of each one's title: "Unending Torment (2/5)". The map
 -- tooltips add it too, except on the first quest of a series whose parts
@@ -53,6 +57,7 @@ ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020, verified = true },
     [250660] = { name = "The Baron", instance = 2999 },
     [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782, verified = true },
+    [3216] = { name = "Neeru Fireblade", map = 1454, x = 0.4948, y = 0.5059, verified = true },
     [5767] = { name = "Nalpak", instance = 43 },
     [3654] = { name = "Mutanus the Devourer", instance = 43 },
 }
@@ -79,7 +84,8 @@ ns.quests = {
     [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97291 } },
     -- Hidden Enemies: part 1 is from Thrall; part 3 is done in Ragefire Chasm.
     [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
-    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726, npc = 4949 } },
+    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726, npc = 4949 },
+               objective = { npc = 3216 } },
     [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
@@ -106,6 +112,7 @@ ns.quests = {
 
 local questsByDungeon = {} -- instance ID -> { questID, ... }
 local questsByGiver = {}   -- npcID -> { questID, ... }
+local questsByObjective = {} -- npcID -> { questID, ... } for NPCs a quest sends you to
 local stepByQuest = {}     -- questID -> { step, count, uniqueNames } for a quest in a series
 
 local function Append(index, key, value)
@@ -122,6 +129,9 @@ do
         end
         if start.npc then
             Append(questsByGiver, start.npc, questID)
+        end
+        if quest.objective and quest.objective.npc then
+            Append(questsByObjective, quest.objective.npc, questID)
         end
         if start.after then
             nextQuest[start.after] = questID
@@ -149,7 +159,7 @@ do
             end
         end
     end
-    for _, index in ipairs({ questsByDungeon, questsByGiver }) do
+    for _, index in ipairs({ questsByDungeon, questsByGiver, questsByObjective }) do
         for _, list in pairs(index) do
             table.sort(list)
         end
@@ -168,6 +178,20 @@ end
 
 function ns.QuestsFromGiver(npcID)
     return questsByGiver[npcID] or {}
+end
+
+function ns.QuestsWithObjective(npcID)
+    return questsByObjective[npcID] or {}
+end
+
+-- Calls fn(npcID, npc) for every NPC a quest sends you to.
+function ns.EachObjectiveNPC(fn)
+    for npcID in pairs(questsByObjective) do
+        local npc = ns.npcs[npcID]
+        if npc then
+            fn(npcID, npc)
+        end
+    end
 end
 
 -- Calls fn(npcID, npc) for every NPC who gives a quest.
@@ -263,6 +287,31 @@ local function ChainStart(questID)
         return questID
     end
     return nil
+end
+
+-- Whether a quest in your log still needs you at its objective NPC. With
+-- objectives, until they are complete; a talk-to quest with none is complete
+-- as soon as it is taken, and talking to the NPC turns it in, so until then.
+local function ObjectiveOpen(questID)
+    local quest = ns.quests[questID]
+    if not (quest and ForMyFaction(quest)) or QuestState(questID) ~= IN_LOG then
+        return false
+    end
+    local count = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(questID) or 0
+    if count > 0 and C_QuestLog.IsComplete then
+        return not C_QuestLog.IsComplete(questID)
+    end
+    return true
+end
+
+-- Whether an NPC is the objective of a quest you are on now.
+function ns.IsObjectiveOpen(npcID)
+    for _, questID in ipairs(ns.QuestsWithObjective(npcID)) do
+        if ObjectiveOpen(questID) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Of these quests, the ones you can go and pick up from an NPC who has a
