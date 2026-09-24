@@ -28,7 +28,7 @@ The folder name and the TOC's base name must match: `Sink/` and `Sink_Camelot.to
 | Command | Effect |
 | --- | --- |
 | `/sink` | Open the options window, which also opens with `/sink config` or by clicking Sink in the addon compartment. Its pages are icon tabs down the right edge, as on the professions window |
-| `/sink status` | Show whether centering is on and the current offsets |
+| `/sink status` | Show whether centering is on, the current offsets and the version. The options window shows the version too, in its bottom-right corner; both read the TOC's `## Version` line |
 | `/sink on`, `/sink off`, `/sink toggle` | Turn player frame centering on or off. It is off by default, and off puts the frame back where your Edit Mode layout has it |
 | `/sink x <n>` | Horizontal offset from the center of the screen, -800 to 800. Negative moves left |
 | `/sink y <n>` | Height of the frame's bottom edge above the bottom of the screen, 0 to 800. Default 250, which matches Blizzard's default layout height |

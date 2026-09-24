@@ -70,8 +70,8 @@ local OpenOptions -- defined with the window below
 
 local function Status()
     local db = ns.db
-    ns.Print(("centering is %s | x %.0f | y %.0f"):format(
-        db.enabled and "|cff00ff00on|r" or "|cffff0000off|r", db.offsetX, db.offsetY))
+    ns.Print(("centering is %s | x %.0f | y %.0f | version %s"):format(
+        db.enabled and "|cff00ff00on|r" or "|cffff0000off|r", db.offsetX, db.offsetY, ns.Version()))
 end
 
 local function Help()
@@ -322,7 +322,8 @@ local function ShowPage(index)
     end
     local title = (window.TitleContainer and window.TitleContainer.TitleText) or window.TitleText
     if title then
-        title:SetText("Sink: " .. PAGES[index].name)
+        -- The first page is the addon's own: its name and version; the others are just their name.
+        title:SetText(index == 1 and ("Sink " .. ns.Version()) or PAGES[index].name)
     end
     RefreshWindow()
 end
@@ -356,6 +357,11 @@ local function CreateWindow()
     if UISpecialFrames then
         table.insert(UISpecialFrames, WINDOW_NAME) -- Escape closes it
     end
+
+    -- The version, from the TOC, small and grey in the bottom-right corner.
+    local version = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    version:SetPoint("BOTTOMRIGHT", frame.Inset or frame, "BOTTOMRIGHT", -8, 6)
+    version:SetText("Version " .. ns.Version())
 
     -- Icon tabs down the outside of the right edge, as on the professions
     -- window: Blizzard's LargeSideTabButtonTemplate, name in the tooltip.

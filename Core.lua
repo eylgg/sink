@@ -108,6 +108,12 @@ function ns.Readable(value)
     return value
 end
 
+-- The version from the TOC's "## Version" line, so it always matches the release.
+function ns.Version()
+    local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    return getMetadata and getMetadata(ADDON_NAME, "Version") or "?"
+end
+
 function ns.Print(msg)
     print(PREFIX .. tostring(msg))
 end

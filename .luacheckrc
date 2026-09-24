@@ -25,6 +25,7 @@ read_globals = {
     "UIParent",
     "WorldMapFrame",
     -- namespaces and mixins
+    "C_AddOns",
     "C_Container",
     "C_Item",
     "C_Map",
@@ -51,6 +52,7 @@ read_globals = {
     "CreateVector2D",
     "CursorHasItem",
     "DeleteCursorItem",
+    "GetAddOnMetadata",
     "GetGameMessageInfo",
     "GetMerchantItemID",
     "GetMerchantItemLink",
