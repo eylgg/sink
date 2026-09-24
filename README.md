@@ -102,7 +102,7 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 ## Class skills
 
-Hover your class's trainer, or their map icon, and the tooltip lists each skill you have not learned that you can learn now, with a red cross, then a blank line and "Next Skills (Level N)" with the skills at the next level that has any, in grey. Ranks are the game's own, "Holy Light (Rank 2)": the text the trainer window shows under the service, or the spell's subtext. When you could learn several ranks of a skill, only the highest is listed. Other classes' trainers get no lines.
+Hover your class's trainer, or their map icon, and the tooltip lists each skill you have not learned that you can learn now, with a red cross, then a blank line and "Next Skills (Level N)" with the skills at the next level that has any, in white. Ranks are the game's own, "Holy Light (Rank 2)": the text the trainer window shows under the service, or the spell's subtext. When you could learn several ranks of a skill, only the highest is listed. Other classes' trainers get no lines.
 
 What a trainer teaches has no API outside the trainer window, so opening your class trainer's window records every service: name, level, and the spell ID from the service's tooltip data (`C_TooltipInfo.GetTrainerService`). With the spell ID, `IsPlayerSpell` says whether you know a skill at any time; without one, the state the window last showed is kept. Until a trainer has been visited the tooltip says to open the window once. `/sink dump trainer` at a class trainer also prints a block for `ns.classSkills` in `Trainers.lua`, so a class's list can be built in and work before any visit; like the other recordings, visits are lost on logout until the beta's saved-variables bug is fixed.
 
