@@ -46,6 +46,8 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 --
 -- Dungeon entrances and "Dungeon Quest" pins on quest givers are not listed
 -- here: they are built from the dungeon, NPC and quest records in Quests.lua.
+-- faction ("Horde", "Alliance" or "Both") says who sees a pin; without it the
+-- map's faction below applies, and on other maps a pin is for both.
 -- On the Forever build Durotar is map 1411, Tirisfal Glades 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
 ns.mapPins = {
     [1411] = { -- Durotar
@@ -281,6 +283,26 @@ ns.mapPins = {
     },
 }
 
+-- Maps whose pins are for one faction unless a pin says otherwise: the Horde
+-- capitals, and the Horde starting zones with Razor Hill and Brill.
+local MAP_FACTION = {
+    [1411] = "Horde", -- Durotar
+    [1420] = "Horde", -- Tirisfal Glades
+    [1454] = "Horde", -- Orgrimmar
+    [1456] = "Horde", -- Thunder Bluff
+    [1458] = "Horde", -- Undercity
+}
+
+-- Whether a pin is for your faction.
+local function ForMyFaction(pin, mapID)
+    local faction = pin.faction or MAP_FACTION[mapID] or "Both"
+    if faction == "Both" then
+        return true
+    end
+    local mine = UnitFactionGroup and UnitFactionGroup("player")
+    return mine == nil or mine == faction
+end
+
 local provider -- our data provider, once added to WorldMapFrame
 local refreshAfterCombat = false -- a pin was acquired in combat; redo them all when it ends
 
@@ -328,6 +350,8 @@ local function QuestPins(mapID)
         questPins = {}
         local function add(map, pin)
             map, pin.x, pin.y = ZonePosition(map, pin.x, pin.y)
+            -- Dungeons are open to both; quest pins follow their quests' factions instead.
+            pin.faction = "Both"
             questPins[map] = questPins[map] or {}
             table.insert(questPins[map], pin)
         end
@@ -532,12 +556,12 @@ local function ChooseTrainer(profession, group)
     return group[#group].pin
 end
 
--- The pins to draw on a map. Dungeons only while "show dungeons" is on; a
--- quest giver only while they have a quest for you, a quest objective NPC
--- only while you still need to go there, and a turn-in NPC only while a
--- quest for them is ready (Quests.lua). Trainers
--- are filtered first: a class trainer only for your class unless "show all
--- class trainers" is on; with "show all profession trainers" off, secondary
+-- The pins to draw on a map. Only pins for your faction; dungeons only while
+-- "show dungeons" is on; a quest giver only while they have a quest for you,
+-- a quest objective NPC only while you still need to go there, and a turn-in
+-- NPC only while a quest for them is ready (Quests.lua). Trainers are
+-- filtered first: a class trainer only for your class unless "show all class
+-- trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
 -- you still have a free slot. Then of a profession's ranked trainers only one
 -- is drawn. Everything else is drawn as it is.
@@ -550,7 +574,9 @@ local function PinsToShow(mapID)
     local _, playerClass = UnitClass("player")
     EachPin(mapID, function(pin)
         local profession, cap, word = TrainerInfo(pin)
-        if pin.dungeon then
+        if not ForMyFaction(pin, mapID) then
+            return
+        elseif pin.dungeon then
             if showDungeons then
                 shown[#shown + 1] = pin
             end
