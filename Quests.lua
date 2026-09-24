@@ -14,7 +14,9 @@
 --   { item = id }  an item you loot starts it, one lying on the ground rather
 --                  than dropped by an NPC; when the item is in the quest's
 --                  dungeon it reads "Loot inside"
---   { after = id } offered once the quest before it is turned in
+--   { after = id } offered once the quest before it is turned in; with npc as
+--                  well, that NPC offers it then (Thrall gives Hidden Enemies
+--                  1/5 and, once it is turned in, 2/5)
 -- Quests linked by after make a series, and the objective tracker adds the
 -- step to the end of each one's title: "Unending Torment (2/5)". The map
 -- tooltips add it too, except on the first quest of a series whose parts
@@ -77,7 +79,7 @@ ns.quests = {
     [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97291 } },
     -- Hidden Enemies: part 1 is from Thrall; part 3 is done in Ragefire Chasm.
     [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
-    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726 } },
+    [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726, npc = 4949 } },
     [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
@@ -223,11 +225,19 @@ local function MinLevel(quest)
 end
 
 -- Whether a quest is there for you to pick up now: for your faction, neither
--- in your log nor done, and your level is high enough.
+-- in your log nor done, your level is high enough, and the quest before it,
+-- if any, is turned in.
 local function Available(questID)
     local quest = ns.quests[questID]
+    if not quest then
+        return false
+    end
+    local after = quest.start and quest.start.after
+    if after and not C_QuestLog.IsQuestFlaggedCompleted(after) then
+        return false
+    end
     local level = UnitLevel and UnitLevel("player") or 0
-    return quest ~= nil and ForMyFaction(quest) and QuestState(questID) == NOT_TAKEN and level >= MinLevel(quest)
+    return ForMyFaction(quest) and QuestState(questID) == NOT_TAKEN and level >= MinLevel(quest)
 end
 
 -- Whether an NPC has a quest for you now.
@@ -240,25 +250,25 @@ function ns.HasQuestToGive(npcID)
     return false
 end
 
--- Where a quest's chain begins for you: the quest itself when an NPC gives
--- it, else back along after to the first quest you have not done yet, whose
--- giver starts you on the way. nil when that quest has no giver.
+-- Where a quest's chain begins for you: back along after to the earliest
+-- quest whose one before it is done, and that quest when an NPC gives it.
+-- nil when that quest has no giver.
 local function ChainStart(questID)
     local quest = ns.quests[questID]
     local start = quest and quest.start or {}
-    if start.npc then
-        return questID
-    end
     if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
         return ChainStart(start.after)
+    end
+    if start.npc then
+        return questID
     end
     return nil
 end
 
 -- Of these quests, the ones you can go and pick up from an NPC who has a
 -- place on the map, alphabetical: { questID, title, npcID, npc }. For a
--- follow-up that is the first undone quest of its chain, such as Hidden
--- Enemies from Thrall for the Ragefire Chasm part. These are the quests
+-- follow-up that is the first quest of its chain you still need, such as
+-- Hidden Enemies 1/5 or 2/5 from Thrall for the Ragefire Chasm part. These are the quests
 -- whose givers have a "Dungeon Quest" pin.
 function ns.QuestsToFetch(questIDs)
     local list, seen = {}, {}
