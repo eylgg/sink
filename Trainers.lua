@@ -11,15 +11,17 @@
 -- one records it: each service's name, level and spell ID. The spell ID comes
 -- from the service's tooltip data (C_TooltipInfo.GetTrainerService), and with
 -- it IsPlayerSpell says whether you know the skill at any time; without one,
--- the state the window showed ("used" is known) is kept. A skill that shares
--- its name with others gets its rank, counted by level: "Holy Light (Rank 2)".
+-- the state the window showed ("used" is known) is kept. A skill's rank is
+-- the game's own, "Holy Light (Rank 2)": the text the window shows under the
+-- service, or the spell's subtext. Of several ranks you could learn, only
+-- the highest is listed.
 -- Built-in lists live in ns.classSkills below, "/sink dump trainer" prints
 -- the lines for them; recorded ones are in SinkDB.classSkills.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
 
--- Built-in class skill lists, by class token: { { name, level, spell }, ... }.
+-- Built-in class skill lists, by class token: { { name, level, spell, rank }, ... }.
 ns.classSkills = {}
 
 local CROSS = ns.CROSS
@@ -32,7 +34,7 @@ local function Key(name, level)
     return name .. ":" .. level
 end
 
--- { { name, level, spell, known, rank }, ... } sorted by level, then name.
+-- { { name, level, spell, rank, known }, ... } sorted by level, then name.
 local function Skills(class)
     local merged, list = {}, {}
     local function add(entry)
@@ -44,6 +46,9 @@ local function Skills(class)
             list[#list + 1] = skill
         end
         skill.spell = skill.spell or entry.spell
+        if entry.rank and entry.rank ~= "" then
+            skill.rank = entry.rank
+        end
         if entry.known ~= nil then
             skill.known = entry.known
         end
@@ -61,14 +66,14 @@ local function Skills(class)
         end
         return a.name < b.name
     end)
-    -- Rank by level among skills of the same name, shown only when there is more than one.
-    local count, seen = {}, {}
+    -- The rank text, from the spell when the window gave none.
     for _, skill in ipairs(list) do
-        count[skill.name] = (count[skill.name] or 0) + 1
-    end
-    for _, skill in ipairs(list) do
-        seen[skill.name] = (seen[skill.name] or 0) + 1
-        skill.rank = count[skill.name] > 1 and seen[skill.name] or nil
+        if not skill.rank and skill.spell and C_Spell and C_Spell.GetSpellSubtext then
+            local text = C_Spell.GetSpellSubtext(skill.spell)
+            if text and text ~= "" then
+                skill.rank = text
+            end
+        end
     end
     return list
 end
@@ -86,7 +91,7 @@ local function Known(skill)
 end
 
 local function SkillText(skill)
-    return skill.name .. (skill.rank and (" (Rank " .. skill.rank .. ")") or "")
+    return skill.name .. (skill.rank and (" (" .. skill.rank .. ")") or "")
 end
 
 --------------------------------------------------------------------------------
@@ -106,19 +111,27 @@ local function AddClassSkillLines(tooltip, class)
         return true
     end
     local level = UnitLevel("player") or 0
-    local nextLevel
+    -- Of each skill you could learn now, the highest rank; the list is by
+    -- level, so a later one replaces an earlier one of the same name.
+    local learnable, order, nextLevel = {}, {}, nil
     for _, skill in ipairs(skills) do
         if not Known(skill) then
             if skill.level <= level then
-                tooltip:AddLine(CROSS .. " " .. SkillText(skill), ns.missing.r, ns.missing.g, ns.missing.b)
+                if not learnable[skill.name] then
+                    order[#order + 1] = skill.name
+                end
+                learnable[skill.name] = skill
             elseif not nextLevel or skill.level < nextLevel then
                 nextLevel = skill.level
             end
         end
     end
+    for _, name in ipairs(order) do
+        tooltip:AddLine(CROSS .. " " .. SkillText(learnable[name]), ns.missing.r, ns.missing.g, ns.missing.b)
+    end
     if nextLevel then
         tooltip:AddLine(" ")
-        tooltip:AddLine(("Next Skills (level %d)"):format(nextLevel), ns.accent.r, ns.accent.g, ns.accent.b)
+        tooltip:AddLine(("Next Skills (Level %d)"):format(nextLevel), ns.accent.r, ns.accent.g, ns.accent.b)
         for _, skill in ipairs(skills) do
             if skill.level == nextLevel and not Known(skill) then
                 tooltip:AddLine(SkillText(skill), ns.grey.r, ns.grey.g, ns.grey.b)
@@ -168,7 +181,8 @@ local function ServiceSpell(index)
 end
 ns.TrainerServiceSpell = ServiceSpell
 
--- The class skills the open window lists: { name, level, spell, known }.
+-- The class skills the open window lists: { name, level, spell, rank, known },
+-- rank being the text the window shows under the name, "Rank 2".
 -- Nothing for a profession trainer or a weapon master.
 local function WindowSkills()
     if IsTradeskillTrainer and IsTradeskillTrainer() then
@@ -177,10 +191,10 @@ local function WindowSkills()
     local rows = {}
     local count = GetNumTrainerServices and GetNumTrainerServices() or 0
     for index = 1, count do
-        local name, serviceType, _, reqLevel = GetTrainerServiceInfo(index)
+        local name, serviceType, _, reqLevel, subText = GetTrainerServiceInfo(index)
         if name and serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(name)) then
             rows[#rows + 1] = { name = name, level = tonumber(reqLevel) or 0, spell = ServiceSpell(index),
-                known = serviceType == "used" }
+                rank = subText, known = serviceType == "used" }
         end
     end
     return rows

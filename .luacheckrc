@@ -30,6 +30,7 @@ read_globals = {
     "C_Map",
     "C_QuestLog",
     "C_SkillInfo",
+    "C_Spell",
     "C_Timer",
     "C_TooltipInfo",
     "CampaignQuestObjectiveTracker",

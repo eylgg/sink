@@ -310,15 +310,15 @@ local function DumpTrainer()
     ns.Print(lines[1])
     local ids, skillLines = {}, {}
     for index = 1, count do
-        local service, serviceType, _, reqLevel, _, category = GetTrainerServiceInfo(index)
+        local service, serviceType, _, reqLevel, subText, category = GetTrainerServiceInfo(index)
         local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
         local spell = ns.TrainerServiceSpell and ns.TrainerServiceSpell(index)
-        lines[#lines + 1] = ("  %d. %s | %s | level %s | %s | %s | spell %s"):format(index, tostring(service),
-            tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
+        lines[#lines + 1] = ("  %d. %s | %s | %s | level %s | %s | %s | spell %s"):format(index, tostring(service),
+            tostring(subText), tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
         print(lines[#lines])
         if serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(service)) then
-            skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s },"):format(tostring(service),
-                tonumber(reqLevel) or 0, spell and tostring(spell) or "nil")
+            skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s, rank = %q },"):format(tostring(service),
+                tonumber(reqLevel) or 0, spell and tostring(spell) or "nil", tostring(subText or ""))
         end
         local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
         if id then
