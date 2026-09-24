@@ -110,7 +110,7 @@ Three sources feed it. Learned skills and ranks come from `C_SkillInfo`, the API
 
 From these the map draws each dungeon's entrance with its quests and a "Dungeon Quest" pin on each NPC who gives one. A drop whose NPC is inside the quest's dungeon reads "Kill "The Baron" inside", an NPC inside it who gives the quest reads "Talk to "Nalpak" inside", and an item on the ground inside it reads "Loot inside": "Crest of Lordaeron (Loot inside)". All of them are yellow until done, never red.
 
-Quests linked by `after` make a series. The step follows the name on the map tooltips, "Hidden Enemies (3/5)" on Ragefire Chasm and "(1/5)" on Thrall, though not on the first quest of a series that starts inside a dungeon, where "(Kill "The Baron" inside)" says enough, and the objective tracker adds it to the end of the title: "Unending Torment (2/5)". A series whose parts all have their own names, such as Searching for and Returning the Lost Satchel, keeps its steps in the tracker but not on the map tooltips. Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
+Quests linked by `after` make a series. The step follows the name on the map tooltips, "Hidden Enemies (3/5)" on Ragefire Chasm and "(1/5)" on Thrall, though not on the first quest of a series that starts inside a dungeon, where "(Kill "The Baron" inside)" says enough, and the objective tracker adds it to the end of the title: "Unending Torment (2/5)". A series whose parts all have their own names, such as Searching for and Returning the Lost Satchel, keeps its steps in the tracker, and on the map tooltips shows them from the second part on: "Leaders of the Fang (3/3)", but plain "Searching for the Lost Satchel". Sink hooks the tracker's `UpdateSingle`, which sets each quest's header on every update, and appends the step to the header text; if the longer title would wrap onto another line, Blizzard's title is kept so the tracker layout never breaks.
 
 ## Ability errors
 
@@ -148,7 +148,7 @@ Dungeon entrances are drawn with the map's own blue portal (the `Dungeon` atlas)
 
 Those boxes, and "Show map icons", live on the Map Pins tab of the options window, `/sink config`, under their own headings.
 
-Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
+A pin, or an NPC or dungeon record in `Quests.lua`, carries `verified = true` when its position was taken in game, next to the NPC with `/sink dump target` or at the place with `/sink dump loc`; the pasted lines include it. Without it the position came from elsewhere, such as Wowhead, and `/sink dump npc unverified` lists it. Coordinates are 0 to 1 across the zone map, which is Wowhead's numbers divided by 100. Wowhead's page text rounds them to whole percent; the map data embedded in the page (`g_mapperData` in the source) has one decimal, about five yards in a zone this size, and also names the map ID. For the exact spot, stand there and use `/sink dump loc`, or target the NPC and use `/sink dump target`. Map IDs come from the client's UiMap table, which [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893) lists per build; the dumps print it as well.
 
 | Command | Effect |
 | --- | --- |
@@ -171,6 +171,8 @@ Like the other in-game additions, icons added with `/sink map add` are lost on l
 | `/sink dump target` | Your target's name, NPC ID, GUID and tooltip lines, then a map icon line with the NPC ID, name and title filled in |
 | `/sink dump trainer` | The open trainer window's services, and for a weapon master a line for the table in `Weapons.lua` |
 | `/sink dump skills` | Every skill line the client lists for this character, then each weapon skill with its skill line and proficiency spell status |
+| `/sink dump npc` | Every position in the built-in tables, NPCs, places such as zeppelins, quest NPCs and dungeon entrances, by zone, with the file it is in; unverified ones are marked |
+| `/sink dump npc unverified` | Only the positions not yet taken in game, the ones to check with `/sink dump target` next to the NPC or `/sink dump loc` at the place |
 
 The client only reports positions for the player and group members, never for an NPC, so `/sink dump target` uses your own position for the icon line; stand next to the NPC first. For a vendor that never moves that is exact. Wowhead's page source carries one-decimal coordinates for every spawn point (`g_mapperData`) and the same map ID, which is where the built-in entries came from.
 

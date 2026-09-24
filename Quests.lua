@@ -17,8 +17,8 @@
 --   { after = id } offered once the quest before it is turned in
 -- Quests linked by after make a series, and the objective tracker adds the
 -- step to the end of each one's title: "Unending Torment (2/5)". The map
--- tooltips add it too, except for a series whose parts all have their own
--- names, where the name says enough.
+-- tooltips add it too, except on the first quest of a series whose parts
+-- all have their own names, where the name says enough.
 --
 -- The tracker is Blizzard's Retail one (Blizzard_ObjectiveTracker). Each
 -- quest is a block whose header QuestObjectiveTrackerMixin:UpdateSingle sets
@@ -33,19 +33,24 @@ local _, ns = ...
 -- Dungeons by instance ID, the Map table's ID that GetInstanceInfo() returns
 -- inside. The entrance is on uiMap map at x, y; a continent map, as a dump
 -- in a cave gives, is fine, the pin goes on the zone that point is in.
+-- verified = true once the position was taken in game (see MapPins.lua).
 ns.dungeons = {
-    [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148 },
-    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 18, map = 1454, x = 0.5302, y = 0.4876 },
+    [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148,
+        verified = true },
+    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 18, map = 1454, x = 0.5302, y = 0.4876,
+        verified = true },
     -- Recorded on the Kalimdor map (1414); MapPins.lua draws it on the zone it lies in, The Barrens.
+    -- Unverified until the converted spot on The Barrens has been checked in game.
     [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1414, x = 0.5239, y = 0.5521 },
 }
 
--- NPCs that give or drop quests. One outside has a uiMap map and x, y; one
--- inside a dungeon has its instance ID.
+-- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
+-- verified = true once that position was taken in game (see MapPins.lua);
+-- one inside a dungeon has its instance ID.
 ns.npcs = {
-    [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020 },
+    [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020, verified = true },
     [250660] = { name = "The Baron", instance = 2999 },
-    [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782 },
+    [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782, verified = true },
     [5767] = { name = "Nalpak", instance = 43 },
     [3654] = { name = "Mutanus the Devourer", instance = 43 },
 }
@@ -61,36 +66,36 @@ ns.questItems = {
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
 -- is the instance ID of the dungeon the quest is for; start is how you get it.
 ns.quests = {
-    [92421] = { name = "Light's Justice", faction = "Horde", dungeon = 2999 },
-    [95216] = { name = "The New Plague", faction = "Horde", dungeon = 2999 },
-    [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", dungeon = 2999, start = { npc = 251001 } },
-    [95204] = { name = "Crest of Lordaeron", faction = "Horde", dungeon = 2999, start = { item = 275521 } },
-    [97288] = { name = "Unending Torment", faction = "Horde", dungeon = 2999, start = { drop = 250660 } },
-    [97289] = { name = "Unending Torment", faction = "Horde", start = { after = 97288 } },
+    [92421] = { name = "Light's Justice", faction = "Horde", minLevel = 15, dungeon = 2999 },
+    [95216] = { name = "The New Plague", faction = "Horde", minLevel = 16, dungeon = 2999 },
+    [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", minLevel = 15, dungeon = 2999, start = { npc = 251001 } },
+    [95204] = { name = "Crest of Lordaeron", faction = "Horde", minLevel = 16, dungeon = 2999, start = { item = 275521 } },
+    [97288] = { name = "Unending Torment", faction = "Horde", minLevel = 16, dungeon = 2999, start = { drop = 250660 } },
+    [97289] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97288 } },
     [97290] = { name = "Unending Torment", faction = "Horde", start = { after = 97289 } },
-    [97291] = { name = "Unending Torment", faction = "Horde", start = { after = 97290 } },
-    [97292] = { name = "Unending Torment", faction = "Horde", start = { after = 97291 } },
+    [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97290 } },
+    [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16, start = { after = 97291 } },
     -- Hidden Enemies: part 1 is from Thrall; part 3 is done in Ragefire Chasm.
     [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { npc = 4949 } },
     [5727] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, start = { after = 5726 } },
-    [5728] = { name = "Hidden Enemies", faction = "Horde", dungeon = 389, start = { after = 5727 } },
+    [5728] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9, dungeon = 389, start = { after = 5727 } },
     [5729] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5728 } },
     [5730] = { name = "Hidden Enemies", faction = "Horde", start = { after = 5729 } },
-    [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", dungeon = 389 },
-    [5724] = { name = "Returning the Lost Satchel", faction = "Horde", start = { after = 5722 } },
-    [5761] = { name = "Slaying the Beast", faction = "Horde", dungeon = 389 },
-    [5725] = { name = "The Power to Destroy...", faction = "Horde", dungeon = 389 },
-    [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", dungeon = 389 },
-    [1487] = { name = "Deviate Eradication", dungeon = 43 },
-    [1486] = { name = "Deviate Hides", dungeon = 43, start = { npc = 5767 } },
-    [1489] = { name = "Hamuul Runetotem", faction = "Horde" },
-    [1490] = { name = "Nara Wildmane", faction = "Horde", start = { after = 1489 } },
+    [5722] = { name = "Searching for the Lost Satchel", faction = "Horde", minLevel = 9, dungeon = 389 },
+    [5724] = { name = "Returning the Lost Satchel", faction = "Horde", minLevel = 9, start = { after = 5722 } },
+    [5761] = { name = "Slaying the Beast", faction = "Horde", minLevel = 9, dungeon = 389 },
+    [5725] = { name = "The Power to Destroy...", faction = "Horde", minLevel = 9, dungeon = 389 },
+    [5723] = { name = "Testing an Enemy's Strength", faction = "Horde", minLevel = 9, dungeon = 389 },
+    [1487] = { name = "Deviate Eradication", minLevel = 15, dungeon = 43 },
+    [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43, start = { npc = 5767 } },
+    [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 10 },
+    [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10, start = { after = 1489 } },
     [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43, start = { after = 1490 } },
-    [962] = { name = "Serpentbloom", faction = "Horde", dungeon = 43 },
-    [1491] = { name = "Smart Drinks", dungeon = 43 },
-    [959] = { name = "Trouble at the Docks", dungeon = 43 },
+    [962] = { name = "Serpentbloom", faction = "Horde", minLevel = 14, dungeon = 43 },
+    [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43 },
+    [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43 },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
-    [6981] = { name = "The Glowing Shard", dungeon = 43, start = { drop = 3654, item = 10441 } },
+    [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43, start = { drop = 3654, item = 10441 } },
 }
 
 --------------------------------------------------------------------------------
@@ -130,7 +135,7 @@ do
                 questID = nextQuest[questID]
             end
             -- Whether every part has its own name (the Lost Satchel); the map
-            -- tooltips leave the step off those.
+            -- tooltips leave the first step off those.
             local names, unique = {}, true
             for _, id in ipairs(chain) do
                 local name = ns.quests[id] and ns.quests[id].name or id
@@ -300,9 +305,8 @@ end
 -- One line per quest for your faction: red cross for one not in your log,
 -- yellow waiting mark for one in it, green check for one done; in that
 -- order, each group alphabetical. A quest in a series has its step after
--- the name, "Hidden Enemies (3/5)", except in a series whose parts all have
--- their own names and on the first of a series that starts inside the
--- dungeon. A quest that starts inside the dungeon, from an NPC, a drop or an
+-- the name, "Hidden Enemies (3/5)", except on the first quest of a series
+-- whose parts all have their own names or that starts inside the dungeon. A quest that starts inside the dungeon, from an NPC, a drop or an
 -- item on the ground, is yellow until done, never red, with how to get it
 -- after the name.
 function ns.AddQuestLines(tooltip, questIDs)
@@ -316,7 +320,9 @@ function ns.AddQuestLines(tooltip, questIDs)
             -- A series that starts inside needs no "(1/5)": how to get it says enough.
             local step = ns.QuestSeriesSuffix(questID)
             local entry = stepByQuest[questID]
-            if step and not entry.uniqueNames and not (drop and entry.step == 1) then
+            -- The first step says nothing when the name or how to get it already
+            -- marks the start; later steps show there are quests to do first.
+            if step and not (entry.step == 1 and (entry.uniqueNames or drop)) then
                 title = title .. " " .. step
             end
             if drop then

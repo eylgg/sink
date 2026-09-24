@@ -50,6 +50,54 @@ local function DumpHelp()
     print("  /sink dump target   your target's name, NPC ID, GUID and tooltip lines, with a map icon line")
     print("  /sink dump trainer  the open trainer window's services, with a weapon master line to paste")
     print("  /sink dump skills   every skill line the client lists, then each weapon skill's two signals")
+    print("  /sink dump npc [unverified]  every NPC and place position in the tables, or only those not taken in game")
+end
+
+-- Every position in the built-in tables: the map pins in MapPins.lua, NPCs
+-- and places such as zeppelins, and the quest NPCs and dungeon entrances in
+-- Quests.lua. A position is verified once it was taken in game ("/sink dump
+-- target" next to an NPC, "/sink dump loc" at a place); the rest came from
+-- elsewhere, such as Wowhead, and may be a little off. With onlyUnverified,
+-- only those.
+local function DumpNPCs(onlyUnverified)
+    local rows = {}
+    local function add(npcID, name, mapID, x, y, verified, source)
+        if not (onlyUnverified and verified) then
+            rows[#rows + 1] = { npcID = npcID, name = name or "?", zone = ns.MapName(mapID), x = x, y = y,
+                verified = verified, source = source }
+        end
+    end
+    for mapID, pins in pairs(ns.mapPins or {}) do
+        for _, pin in ipairs(pins) do
+            add(pin.npc, pin.name, mapID, pin.x, pin.y, pin.verified == true, "MapPins.lua")
+        end
+    end
+    for npcID, npc in pairs(ns.npcs or {}) do
+        if npc.map then
+            add(npcID, npc.name, npc.map, npc.x, npc.y, npc.verified == true, "Quests.lua")
+        end
+    end
+    for _, dungeon in pairs(ns.dungeons or {}) do
+        add(nil, dungeon.name, dungeon.map, dungeon.x, dungeon.y, dungeon.verified == true, "Quests.lua")
+    end
+    table.sort(rows, function(a, b)
+        if a.zone ~= b.zone then
+            return a.zone < b.zone
+        end
+        return a.name < b.name
+    end)
+    if #rows == 0 then
+        ns.Print(onlyUnverified and "every position has been verified in game." or "no positions in the tables.")
+        return
+    end
+    ns.Print(("%d position%s%s"):format(#rows, #rows == 1 and "" or "s", onlyUnverified and " not verified in game" or ""))
+    for _, row in ipairs(rows) do
+        print(("  %s%s, %s %.1f, %.1f, %s%s"):format(row.name, row.npcID and (" (" .. row.npcID .. ")") or "", row.zone,
+            row.x * 100, row.y * 100, row.source, row.verified and "" or (" " .. ns.missing.hex .. "unverified|r")))
+    end
+    if onlyUnverified then
+        print("  To fix one, target the NPC and use /sink dump target, or stand at the place and use /sink dump loc.")
+    end
 end
 
 -- What the client says this character knows: every skill line it lists, then
@@ -229,6 +277,9 @@ function ns.DumpCommand(arg)
         DumpTrainer()
     elseif sub == "skills" or sub == "skill" then
         DumpSkills()
+    elseif sub == "npc" or sub == "npcs" then
+        local filter = ((arg or ""):match("^%S+%s+(%S+)") or ""):lower()
+        DumpNPCs(filter == "unverified")
     else
         DumpHelp()
     end
