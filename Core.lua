@@ -65,6 +65,9 @@ ns.defaults = {
     -- Tracker.lua
     tracker = true,            -- show the Sink tracker window
     trackerCollapsed = false,  -- the whole tracker folded to its title
+    trackerDungeons = true,    -- the Dungeons section is in the tracker
+    trackerClassSkills = true, -- the Class Skills section is in the tracker
+    trackerWeaponSkills = true, -- the Weapon Skills section is in the tracker
     trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classSkills", ...
     -- trackerPoint: where the tracker was dragged to, { point, relativePoint, x, y }
 }

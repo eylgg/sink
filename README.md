@@ -183,7 +183,7 @@ Levels are kept per character in `SinkDB.splitRuns`. A level's time needs both i
 
 On by default. The **Tracker** tab of the options window, or `/sink tracker`, turns it off. It is a window made to look like Blizzard's objective tracker, with the same header art, fonts and spacing, titled **Sink** and the version. Drag its title to move it. The button on the title folds the whole window. What is folded is remembered.
 
-It has three sections, each folded by clicking its header or its button, and each hidden while it has nothing to list.
+It has three sections, each folded by clicking its header or its button, and each hidden while it has nothing to list. Each also has a **Show in tracker** checkbox on the Tracker tab, on by default.
 
 The **Dungeons** section lists every dungeon your level lets you enter (at least the dungeon's minimum level) that still has quests for you, lowest level first. Under each one are its quests for your faction that you have not done and your level allows, marked as on the map tooltips: a red cross for one you have not picked up, a yellow waiting mark for one in your log or one that starts inside the dungeon. Once every quest of a dungeon is done, it drops off the list; with nothing to list, the section is hidden. It updates as your quest log changes and when you level.
 

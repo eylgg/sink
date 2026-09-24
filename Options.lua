@@ -57,6 +57,10 @@ local function OnChanged(key)
         if ns.ApplyTracker then
             ns.ApplyTracker()
         end
+    elseif key == "trackerDungeons" or key == "trackerClassSkills" or key == "trackerWeaponSkills" then
+        if ns.RefreshTracker then
+            ns.RefreshTracker()
+        end
     elseif key == "questItemWarnings" then
         if ns.RefreshBagOverlays then
             ns.RefreshBagOverlays()
@@ -257,6 +261,15 @@ local PAGES = {
           tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
               .. " It lists the dungeons your level lets you enter that still have quests for you, and the class"
               .. " and weapon skills you can learn now." },
+        { header = "Dungeons" },
+        { key = "trackerDungeons", label = "Show in tracker",
+          tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
+        { header = "Class Skills" },
+        { key = "trackerClassSkills", label = "Show in tracker",
+          tooltip = "The skills your class trainer can teach you now." },
+        { header = "Weapon Skills" },
+        { key = "trackerWeaponSkills", label = "Show in tracker",
+          tooltip = "The weapon skills your class can learn now, and the cities that teach them." },
     },
 }
 

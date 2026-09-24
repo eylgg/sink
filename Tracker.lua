@@ -13,7 +13,8 @@
 --   Class Skills   what your class trainer can teach you now (Trainers.lua)
 --   Weapon Skills  what a weapon master can teach you now, and in which
 --                  city (Weapons.lua)
--- The title's button folds the whole window. What is folded is saved.
+-- The title's button folds the whole window. What is folded is saved. Each
+-- section has a "Show in tracker" checkbox on the options window's Tracker tab.
 --
 -- It is its own frame, not a module in Blizzard's tracker: Blizzard's holds
 -- secure quest item buttons and lays itself out in combat, and addon code in
@@ -216,10 +217,12 @@ local function WeaponSkillLines()
     return lines
 end
 
+-- option is the setting that puts the section in the tracker, a "Show in
+-- tracker" checkbox on the options window's Tracker tab.
 SECTIONS = {
-    { key = "dungeons", title = "Dungeons", lines = DungeonLines },
-    { key = "classSkills", title = "Class Skills", lines = ClassSkillLines },
-    { key = "weaponSkills", title = "Weapon Skills", lines = WeaponSkillLines },
+    { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
+    { key = "classSkills", title = "Class Skills", option = "trackerClassSkills", lines = ClassSkillLines },
+    { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },
 }
 
 -- Lays out a section's lines under its header and returns its height.
@@ -259,11 +262,12 @@ local function Refresh()
     SetButtonAtlas(tracker.Header.MinimizeButton,
         collapsed and "ui-questtrackerbutton-expand-all" or "ui-questtrackerbutton-collapse-all")
     -- Each shown section below the last; like Blizzard's, one with nothing
-    -- in it is not shown at all.
+    -- in it is not shown at all, and neither is one switched off.
     local height = HEADER_HEIGHT
     local above = tracker.Header
     for _, section in ipairs(tracker.sections) do
-        local lines = not collapsed and section.definition.lines() or {}
+        local definition = section.definition
+        local lines = not collapsed and ns.db[definition.option] ~= false and definition.lines() or {}
         if #lines == 0 then
             section:Hide()
         else
