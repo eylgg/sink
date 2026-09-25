@@ -336,7 +336,7 @@ local function DumpTrainer()
     if #skillLines > 0 and #ids == 0 and not (IsTradeskillTrainer and IsTradeskillTrainer()) then
         local _, class = UnitClass("player")
         lines[#lines + 1] = ""
-        lines[#lines + 1] = ("ns.classSkills.%s = { -- %s, Trainers.lua"):format(class or "?", name)
+        lines[#lines + 1] = ("ns.classSkills.%s = {"):format(class or "?")
         for _, line in ipairs(skillLines) do
             lines[#lines + 1] = line
         end

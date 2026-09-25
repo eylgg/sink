@@ -8,7 +8,7 @@
 -- Its sections, each folded by clicking its header or its button, and hidden
 -- while it has nothing to list:
 --   Talents        how many talent points you have not spent, "2 unspent talents"
---   Quest Items    quest items in your bags whose quests are complete
+--   Items to Delete quest items in your bags whose quests are complete
 --                  (QuestItems.lua); click one to delete it, after a Delete /
 --                  Keep question
 --   Dungeons       every dungeon your level lets you enter that still has
@@ -46,10 +46,6 @@ local LINE_SPACING = 4
 local function Font(name, fallback)
     return _G[name] and name or fallback
 end
-
--- Block titles are gold and quests grey in Blizzard's tracker; the marks
--- here carry the quest colours instead.
-local TITLE_COLOR = OBJECTIVE_TRACKER_BLOCK_HEADER_COLOR or { r = 1.0, g = 0.82, b = 0.0 }
 
 local tracker -- the window, created the first time it is shown
 local pending -- a refresh is already waiting for the next frame
@@ -273,12 +269,13 @@ local function TalentLines()
     return { { block = true, text = ns.CROSS .. " " .. text, color = ns.missing } }
 end
 
--- A block per dungeon: its name and level range, then its quests.
+-- A block per dungeon: its name in the dungeon teal and its level range,
+-- then its quests.
 local function DungeonLines()
     local lines = {}
     for _, entry in ipairs(ns.DungeonsToDo and ns.DungeonsToDo() or {}) do
         local dungeon = entry.dungeon
-        lines[#lines + 1] = { block = true, color = TITLE_COLOR,
+        lines[#lines + 1] = { block = true, color = ns.dungeonColor,
             text = ("%s %s(%d-%d)|r"):format(dungeon.name, ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0) }
         for _, row in ipairs(entry.rows) do
             local text, color = ns.QuestRowText(row)
@@ -316,22 +313,18 @@ end
 
 -- One block of the class skills you can learn now, then what they cost
 -- together: white when you can pay it, red when you cannot. Skills without
--- a price yet are counted in grey; opening the trainer's window prices them.
+-- a price add nothing, and with none priced there is no cost line.
 local function ClassSkillLines()
     local lines = {}
     for i, name in ipairs(ns.ClassSkillsToLearn and ns.ClassSkillsToLearn() or {}) do
         lines[#lines + 1] = { block = i == 1, text = ns.CROSS .. " " .. name, color = ns.missing }
     end
     if #lines > 0 and ns.ClassTrainingCost then
-        local total, unpriced = ns.ClassTrainingCost()
-        local unpricedText = unpriced > 0
-            and ("%s%d not priced yet, open your trainer|r"):format(ns.grey.hex, unpriced) or nil
+        local total = ns.ClassTrainingCost()
         if total > 0 then
             local short = GetMoney and GetMoney() < total
             lines[#lines + 1] = { block = true, color = short and ns.missing or { r = 1, g = 1, b = 1 },
-                text = "Cost: " .. Money(total) .. (unpricedText and (" " .. unpricedText) or "") }
-        elseif unpricedText then
-            lines[#lines + 1] = { block = true, color = ns.grey, text = unpricedText }
+                text = "Cost: " .. Money(total) }
         end
     end
     return lines
@@ -351,7 +344,7 @@ end
 -- tracker" checkbox on the options window's Tracker tab.
 SECTIONS = {
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
-    { key = "questItems", title = "Quest Items", option = "trackerQuestItems", lines = QuestItemLines },
+    { key = "questItems", title = "Items to Delete", option = "trackerQuestItems", lines = QuestItemLines },
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
     { key = "classSkills", title = "Class Skills", option = "trackerClassSkills", lines = ClassSkillLines },
     { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },

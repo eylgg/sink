@@ -48,8 +48,8 @@ Each group also answers `help`, for example `/sink map help`.
 The built-in tables sit at the top of their files: quest item rules in `QuestItems.lua`, recipe vendors in `Recipes.lua`, weapon masters in `Weapons.lua`, class skills in `Trainers.lua`, map icons in `MapPins.lua`, and dungeons, NPCs and quests in `Quests.lua`. Each file's header comment describes its format.
 
 - Stand next to an NPC and use `/sink dump target`, or stand at a place and use `/sink dump loc`. Both print a line to paste that is marked `verified = true`. The client never reports NPC positions, so the dump uses yours.
-- `/sink dump trainer` at an open trainer window prints the table entry for that weapon master or class.
-- Merchant and trainer windows are recorded as you visit them, so tooltips fill in without any typing.
+- `/sink dump trainer` at an open trainer window prints the table entry for that weapon master or class. A class's entry has every skill with its level and price; set the window's filter to show everything first, since it only dumps what the window lists.
+- Merchant and weapon master windows are recorded as you visit them, so tooltips fill in without any typing. Class trainers are not: their skills and prices come only from the list in `Trainers.lua`.
 - `/sink dump npc unverified` lists positions that came from Wowhead rather than from the game.
 - IDs: `wowhead.com/forever/npc=<id>` and `/item=<id>`, and map IDs on [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893).
 

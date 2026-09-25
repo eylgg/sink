@@ -272,7 +272,7 @@ local PAGES = {
         { header = "Talents" },
         { key = "trackerTalents", label = "Show in tracker",
           tooltip = "How many talent points you have not spent. Hidden while there are none." },
-        { header = "Quest Items" },
+        { header = "Items to Delete" },
         { key = "trackerQuestItems", label = "Show in tracker",
           tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked first." },
         { header = "Dungeons" },

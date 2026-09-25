@@ -56,7 +56,6 @@ ns.defaults = {
     weaponLevels = {},         -- level a skill needs, as a trainer window showed it: [skillID] = level
 
     -- Trainers.lua
-    classSkills = {},          -- class trainer services recorded from the window: [class][name:level] = { ... }
 
     -- Splits.lua
     splits = false,            -- record level times and show the splits window
@@ -107,6 +106,11 @@ ns.known = { r = 0.1, g = 1.0, b = 0.1, hex = "|cff1aff1a" }
 ns.missing = { r = 1.0, g = 0.1, b = 0.1, hex = "|cffff1a1a" }
 ns.grey = { r = 0.5, g = 0.5, b = 0.5, hex = "|cff808080" }
 ns.active = { r = 1.0, g = 0.8, b = 0.0, hex = "|cffffcc00" }
+
+-- Dungeon names, in the teal of the swirl on the game's Dungeon map icon
+-- (its bright tones are about #4FA6AB), lifted a little to read on dark
+-- backgrounds: #5CBEC4.
+ns.dungeonColor = { r = 0.361, g = 0.745, b = 0.769, hex = "|cff5cbec4" }
 local applying = false          -- true while we are the one calling SetPoint
 local pendingAfterCombat = false
 local hooked = false
@@ -241,6 +245,7 @@ local function InitSavedVariables()
             SinkDB[key] = value
         end
     end
+    SinkDB.classSkills = nil -- trainer windows were once recorded here; the lists are in Trainers.lua now
     ns.db = SinkDB
 end
 
