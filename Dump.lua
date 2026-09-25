@@ -107,6 +107,45 @@ local function DumpHelp()
     print("  /sink dump trainer  the open trainer window's services, with a weapon master line to paste")
     print("  /sink dump skills   every skill line the client lists, then each weapon skill's two signals")
     print("  /sink dump npc [unverified]  every NPC and place position in the tables, or only those not taken in game")
+    print("  /sink dump taxi     the flight points on your map as the client reports them, and the open flight map's")
+end
+
+-- The flight points on the map you are on, as C_TaxiMap reports them, next
+-- to what Sink has recorded; and, at a flight master, the flight map's own
+-- list with each path's state.
+local function DumpTaxi()
+    if not C_TaxiMap then
+        ns.Print("C_TaxiMap does not exist on this client.")
+        return
+    end
+    -- Printed to chat and, all of it, into the copy window.
+    local lines = {}
+    local function add(line)
+        lines[#lines + 1] = line
+        print(line)
+    end
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local known = ns.KnownFlightPaths and ns.KnownFlightPaths() or {}
+    add(("flight points on %s (%s), Blizzard's layer %s"):format(ns.MapName and ns.MapName(mapID) or "?",
+        tostring(mapID), (C_TaxiMap.ShouldMapShowTaxiNodes and C_TaxiMap.ShouldMapShowTaxiNodes(mapID)) and "draws them"
+            or "does not draw them"))
+    local ok, nodes = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
+    for _, node in ipairs(ok and nodes or {}) do
+        add(("  %d %s | faction %s | isUndiscovered %s | recorded %s | %s"):format(node.nodeID, node.name,
+            tostring(node.faction), tostring(node.isUndiscovered), known[node.nodeID] and "yes" or "no",
+            tostring(node.atlasName)))
+    end
+    local taxiMap = GetTaxiMapID and GetTaxiMapID()
+    if taxiMap then
+        local okAll, all = pcall(C_TaxiMap.GetAllTaxiNodes, taxiMap)
+        add(("open flight map %d, %d paths"):format(taxiMap, okAll and all and #all or 0))
+        for _, node in ipairs(okAll and all or {}) do
+            add(("  %d %s | state %s"):format(node.nodeID, node.name, tostring(node.state)))
+        end
+    else
+        add("no flight map open")
+    end
+    CopyWindow("Flight point dump", lines)
 end
 
 -- Every position in the built-in tables: the map pins in MapPins.lua, NPCs
@@ -360,6 +399,8 @@ function ns.DumpCommand(arg)
         DumpTrainer()
     elseif sub == "skills" or sub == "skill" then
         DumpSkills()
+    elseif sub == "taxi" or sub == "flight" then
+        DumpTaxi()
     elseif sub == "npc" or sub == "npcs" then
         local filter = ((arg or ""):match("^%S+%s+(%S+)") or ""):lower()
         DumpNPCs(filter == "unverified")

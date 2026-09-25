@@ -247,7 +247,8 @@ local PAGES = {
               .. " in your log or not taken." },
         { header = "Flight Masters" },
         { key = "showFlightMasters", label = "Show flight masters",
-          tooltip = "Flight masters for your faction on zone and city maps, grey until you have discovered them." },
+          tooltip = "Flight masters for your faction on zone and city maps, grey until you have discovered them."
+              .. " Which you have is known once you open any flight master's map." },
     },
     {
         name = "Splits",

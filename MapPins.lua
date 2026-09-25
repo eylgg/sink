@@ -27,11 +27,17 @@
 -- locating someone across the zone.
 --
 -- Flight masters come from the client, not from a table: C_TaxiMap's nodes
--- for the map, with their position, name, faction and whether you have
--- discovered them. Opening a flight master's map also records every flight
--- path you can take from there, per character, in case the client's
--- "undiscovered" flag lags. They are drawn on zone and city maps only, and
--- not where Blizzard's own flight point layer already draws them.
+-- for the map, with their position, name and faction. The client answers
+-- with every node on the continent, so only the ones that fall on the map
+-- are drawn, and its unused "zz" test nodes are skipped.
+--
+-- Whether you have a flight path has no API away from a flight master: the
+-- nodes' isUndiscovered flag is false for all of them on Forever. So opening
+-- a flight master's map records it: that map lists every node, state 0 where
+-- you stand, 1 for paths you have, 2 for ones you do not. Until a character
+-- has opened one, pins make no claim and the tooltip says "Unknown" in grey.
+-- Drawn on zone and city maps only, and not where Blizzard's own
+-- flight point layer already draws them. "/sink dump taxi" shows the raw data.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -661,6 +667,9 @@ end
 
 -- Flight paths this character has, recorded from the flight master's map.
 local function KnownFlightPaths()
+    if not ns.db then
+        return {}
+    end
     local key = UnitName("player") .. "-" .. (GetRealmName and GetRealmName() or ""):gsub("%s+", "")
     ns.db.knownFlightPaths = ns.db.knownFlightPaths or {}
     ns.db.knownFlightPaths[key] = ns.db.knownFlightPaths[key] or {}
@@ -688,6 +697,8 @@ local function RecordFlightPaths()
     end
 end
 
+ns.KnownFlightPaths = KnownFlightPaths
+
 -- Pins for the flight masters on a zone or city map, for your faction.
 local function FlightPins(mapID)
     local pins = {}
@@ -707,13 +718,20 @@ local function FlightPins(mapID)
     end
     local mine = UnitFactionGroup("player")
     local known = KnownFlightPaths()
+    local checked = next(known) ~= nil -- a flight map was opened; where you stood is always in it
     local factions = Enum.FlightPathFaction or {}
     for _, node in ipairs(nodes) do
         local faction = (node.faction == factions.Horde and "Horde") or (node.faction == factions.Alliance and "Alliance")
         local x, y = node.position and node.position.x, node.position and node.position.y
-        if x and y and (not faction or faction == mine) then
+        local onMap = x and y and x >= 0 and x <= 1 and y >= 0 and y <= 1
+        if onMap and (not faction or faction == mine) and not node.name:find("^zz") then
+            -- discovered is nil while unknown: no flight map opened yet on this character.
+            local discovered = nil
+            if checked then
+                discovered = known[node.nodeID] == true
+            end
             pins[#pins + 1] = { name = node.name, note = "Flight Master", x = x, y = y, atlas = node.atlasName,
-                taxiNode = node.nodeID, discovered = known[node.nodeID] == true or not node.isUndiscovered }
+                taxiNode = node.nodeID, discovered = discovered }
         end
     end
     return pins
@@ -900,7 +918,7 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
         self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     end
     -- A flight path you have not discovered is drawn grey; pins are reused, so always set it.
-    self.Icon:SetDesaturated(pin.taxiNode ~= nil and not pin.discovered)
+    self.Icon:SetDesaturated(pin.taxiNode ~= nil and pin.discovered == false)
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
@@ -1001,7 +1019,9 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.taxiNode then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
-        if pin.discovered then
+        if pin.discovered == nil then
+            GameTooltip:AddLine("Unknown", ns.grey.r, ns.grey.g, ns.grey.b)
+        elseif pin.discovered then
             GameTooltip:AddLine(ns.CHECK .. " Discovered", ns.known.r, ns.known.g, ns.known.b)
         else
             GameTooltip:AddLine(ns.CROSS .. " Not discovered", ns.missing.r, ns.missing.g, ns.missing.b)
