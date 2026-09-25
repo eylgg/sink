@@ -22,19 +22,21 @@
 local _, ns = ...
 
 -- Class skill lists, by class token: { { name, level, spell, rank, cost }, ... },
--- from "/sink dump trainer"; cost is in copper and may be missing. Level 0 is
--- what the class starts with. rank is the trainer's text for it, "" for none;
--- only "Rank N" is shown. A skill without a rank gets the spell's subtext.
+-- from "/sink dump trainer"; cost is in copper and may be missing. A trainer
+-- lists a skill you already know at level 0, so take those levels from a
+-- character who does not know it yet, such as the starting area's trainer.
+-- rank is the trainer's text for it, "" for none; only "Rank N" is shown. A
+-- skill without a rank gets the spell's subtext.
 ns.classSkills = {}
 
 ns.classSkills.PALADIN = {
-    { name = "Blessing of Might", level = 0, spell = 19740, rank = "Rank 1", cost = 100 },
-    { name = "Devotion Aura", level = 0, spell = 465, rank = "Rank 1", cost = 10 },
-    { name = "Divine Protection", level = 0, spell = 498, rank = "Rank 1", cost = 100 },
-    { name = "Holy Strike", level = 0, spell = 679, rank = "Rank 1", cost = 100 },
-    { name = "Seal of the Crusader", level = 0, spell = 21082, rank = "Rank 1", cost = 100 },
+    { name = "Devotion Aura", level = 1, spell = 465, rank = "Rank 1", cost = 10 },
+    { name = "Blessing of Might", level = 4, spell = 19740, rank = "Rank 1", cost = 100 },
     { name = "Judgement", level = 4, spell = 20271, rank = "", cost = 100 },
+    { name = "Divine Protection", level = 6, spell = 498, rank = "Rank 1", cost = 100 },
     { name = "Holy Light", level = 6, spell = 639, rank = "Rank 2", cost = 100 },
+    { name = "Holy Strike", level = 6, spell = 679, rank = "Rank 1", cost = 100 },
+    { name = "Seal of the Crusader", level = 6, spell = 21082, rank = "Rank 1", cost = 100 },
     { name = "Hammer of Justice", level = 8, spell = 853, rank = "Rank 1", cost = 100 },
     { name = "Parry", level = 8, spell = 3127, rank = "Passive", cost = 100 },
     { name = "Purify", level = 8, spell = 1152, rank = "", cost = 100 },
