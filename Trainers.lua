@@ -1420,11 +1420,20 @@ end
 -- The skills you can learn now, in list order, and the next level that has
 -- any you cannot yet. Of each skill, only the highest rank you could learn;
 -- the list is by level, so a later one replaces an earlier one of the same name.
+-- A rank below one you know is not missing: learning Devotion Aura Rank 2
+-- takes Rank 1 out of the spellbook, so it reads as unknown again.
 local function Learnable(skills)
     local level = UnitLevel("player") or 0
+    local knownUpTo = {} -- base name -> level of the highest rank you know
+    for _, skill in ipairs(skills) do
+        if Known(skill) then
+            local base = BaseName(skill)
+            knownUpTo[base] = math.max(knownUpTo[base] or 0, skill.level)
+        end
+    end
     local byName, order, nextLevel = {}, {}, nil
     for _, skill in ipairs(skills) do
-        if not Known(skill) then
+        if not Known(skill) and skill.level > (knownUpTo[BaseName(skill)] or -1) then
             if skill.level <= level then
                 local base = BaseName(skill)
                 if not byName[base] then
