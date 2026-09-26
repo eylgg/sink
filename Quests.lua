@@ -50,6 +50,12 @@ ns.dungeons = {
     -- Recorded on the Kalimdor map (1414); MapPins.lua draws it on the zone it lies in, The Barrens.
     -- Unverified until the converted spot on The Barrens has been checked in game.
     [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1414, x = 0.5239, y = 0.5521 },
+    -- Levels from Wowhead's Forever database; neither entrance checked in game yet.
+    -- Deadmines: the entrance in Moonbrook, Westfall.
+    [36] = { name = "Deadmines", minLevel = 15, maxLevel = 25, map = 1436, x = 0.4250, y = 0.7170 },
+    -- The Hall of Thanes: under Ironforge, through a portal at the bottom of Old
+    -- Ironforge; placed on Ironforge's spot on the Dun Morogh map, as Wowhead's guide marks it.
+    [3065] = { name = "The Hall of Thanes", minLevel = 13, maxLevel = 18, map = 1426, x = 0.5240, y = 0.3780 },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
