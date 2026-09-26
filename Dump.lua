@@ -376,8 +376,10 @@ local function DumpTrainer()
         local service, serviceType, _, reqLevel, subText, category = GetTrainerServiceInfo(index)
         local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
         local spell = ns.TrainerServiceSpell and ns.TrainerServiceSpell(index)
-        lines[#lines + 1] = ("  %d. %s | %s | %s | level %s | %s | %s | spell %s"):format(index, tostring(service),
-            tostring(subText), tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
+        local price = GetTrainerServiceCost and tonumber((GetTrainerServiceCost(index)))
+        lines[#lines + 1] = ("  %d. %s | %s | %s | level %s | %s | %s | spell %s | cost %s"):format(index,
+            tostring(service), tostring(subText), tostring(serviceType), tostring(reqLevel), tostring(category),
+            tostring(skillLine), tostring(spell), tostring(price))
         print(lines[#lines])
         if serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(service)) then
             -- Only the first return, the price: tonumber would take the next one as its base.
@@ -393,6 +395,10 @@ local function DumpTrainer()
             local fields = { ("name = %q"):format(tostring(service)), "spell = " .. (spell and tostring(spell) or "nil") }
             if skillRank then
                 fields[#fields + 1] = "skill = " .. skillRank
+            end
+            -- Most recipes ask only for skill; a few ranks also for a level, Journeyman Fishing's 10.
+            if (tonumber(reqLevel) or 0) > 1 then
+                fields[#fields + 1] = "level = " .. tonumber(reqLevel)
             end
             if cost then
                 fields[#fields + 1] = "cost = " .. cost

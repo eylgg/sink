@@ -4,7 +4,7 @@
 -- What profession trainers teach, and which of it you are missing. The
 -- Professions tab of the options window lists, for each profession you have,
 -- the trainer recipes you do not know yet: a red cross for one your skill
--- allows now, plain grey with the skill it needs for one it does not. It is
+-- allows now, plain grey with the skill or level it needs for one it does not. It is
 -- not in the tracker.
 --
 -- Like the class training in Trainers.lua, what a trainer teaches has no API
@@ -17,11 +17,12 @@
 local _, ns = ...
 
 -- Recipe lists, by profession name as the trainer window gives it:
--- { { name, spell, skill, cost, category }, ... }. skill is the profession
--- skill the recipe needs, cost is in copper, category the trainer's grouping
--- ("Agility Food"); any of the three may be missing, and a recipe without a
--- skill counts as one you can learn now. The profession's own ranks
--- ("Journeyman Cook") are listed too.
+-- { { name, spell, skill, level, cost, category }, ... }. skill is the
+-- profession skill the recipe needs, level the character level (only where it
+-- asks for one, as Journeyman Fishing's 10), cost is in copper, category the
+-- trainer's grouping ("Agility Food"); any of them may be missing, and a
+-- recipe without skill or level counts as one you can learn now. The
+-- profession's own ranks ("Journeyman Cook") are listed too.
 ns.professionRecipes = {}
 
 ns.professionRecipes.Cooking = {
@@ -35,6 +36,12 @@ ns.professionRecipes.Cooking = {
     { name = "Dry Pork Ribs", spell = 2546, skill = 80, cost = 150, category = "Strength Food" },
     { name = "Goblin Deviled Clams", spell = 6500, skill = 125, cost = 300, category = "Everyday Meals" },
     { name = "Spider Sausage", spell = 21175, skill = 200, cost = 4000, category = "Everyday Meals" },
+}
+
+ns.professionRecipes.Fishing = {
+    { name = "Apprentice Fishing", spell = 7620, cost = 100 },
+    { name = "Journeyman Fishing", spell = 7731, skill = 50, level = 10, cost = 500 },
+    { name = "Fish Bowl", spell = 1229745, skill = 20, cost = 100, category = "Camping" },
 }
 
 -- Skill line IDs, for your current skill in each; the same IDs as the
@@ -56,6 +63,12 @@ local function Skill(profession)
         return info.skillRank or 0
     end
     return nil
+end
+
+-- Whether your skill and level are enough for a recipe now.
+local function CanLearnNow(recipe, skill)
+    local level = UnitLevel and UnitLevel("player") or 0
+    return (recipe.skill or 0) <= skill and (recipe.level or 0) <= level
 end
 
 local function Known(recipe)
@@ -82,7 +95,7 @@ local function Missing()
             end
             table.sort(missing, function(a, b)
                 local aNeed, bNeed = a.skill or 0, b.skill or 0
-                local aNow, bNow = aNeed <= skill, bNeed <= skill
+                local aNow, bNow = CanLearnNow(a, skill), CanLearnNow(b, skill)
                 if aNow ~= bNow then
                     return aNow
                 end
@@ -129,11 +142,19 @@ function ns.BuildProfessionList(page, y)
 end
 
 -- "Crab Cake (1s)" for one you can learn now, grey "Crab Cake (skill 75)" for
--- one your skill is too low for.
+-- one your skill is too low for, "(skill 50, level 10)" when both are asked
+-- for and one is short.
 local function RecipeLine(recipe, skill)
     local cost = recipe.cost and recipe.cost > 0 and GetMoneyString and GetMoneyString(recipe.cost, true)
-    if (recipe.skill or 0) > skill then
-        return ("%s%s (skill %d)|r"):format(ns.grey.hex, recipe.name, recipe.skill)
+    if not CanLearnNow(recipe, skill) then
+        local needs = {}
+        if recipe.skill then
+            needs[#needs + 1] = "skill " .. recipe.skill
+        end
+        if recipe.level then
+            needs[#needs + 1] = "level " .. recipe.level
+        end
+        return ("%s%s (%s)|r"):format(ns.grey.hex, recipe.name, table.concat(needs, ", "))
     end
     return ("%s %s%s|r%s"):format(ns.CROSS, ns.missing.hex, recipe.name, cost and (" " .. cost) or "")
 end

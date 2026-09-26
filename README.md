@@ -3,14 +3,14 @@
 The everything WoW: Forever addon.
 
 - **Player frame centering**: keeps the player frame centered whatever Edit Mode does. Off by default.
-- **Quest item warnings**: tooltip line and bag slot tint for quest items that are safe to delete; the tracker lists them.
+- **Quest item warnings**: bag slot tint for quest items that are safe to delete, and the tracker lists them; a quest item still needed says until when on its tooltip.
 - **Recipe vendors**: vendor tooltips list the recipes sold, checked when you know them; `/sink recipes missing` lists what you still lack.
 - **Weapon skills and class training**: weapon master and class trainer tooltips show what you can still learn and at what level.
 - **Profession recipes**: the Professions tab of the options window lists, for each profession you have, the trainer recipes you do not know yet and the skill each needs.
 - **Ability errors**: hides the repeating "Not enough energy" text and voice when you spam an ability.
 - **Map icons**: vendors, trainers, flight masters, dungeon entrances and quest NPCs on the world map, filtered to your faction, class and professions. Click one to target and ping the NPC.
 - **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.
-- **Tracker**: a window styled like the objective tracker, listing unspent talent points, gathering tracking that is off (click to turn it on), quest items to delete (click to delete), dungeons with quests left, class training with its total cost, and weapon skills you can learn.
+- **Tracker**: a window styled like the objective tracker, listing unspent talent points, gathering tracking that is off (click to turn it on), quest items to delete (click to delete), dungeons with quests left (click a red quest to see its giver on the map), class training with its total cost (hover a skill for its tooltip, right-click to ignore it; the Ignored tab brings it back), and weapon skills you can learn.
 
 Type `/sink` or click Sink in the addon compartment to open the options window.
 

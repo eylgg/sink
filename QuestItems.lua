@@ -3,10 +3,10 @@
 --
 -- Marks quest items that are still in your bags after the quest that needed
 -- them is complete. Nothing pops up or prints on its own:
---   * a tooltip line on the item: yellow "Safe to delete, quest complete"
---     once the quest is done, grey "Keep until ..." before that;
+--   * a grey "Keep until ..." line on the item's tooltip while its quest is
+--     not done yet;
 --   * a red tint on the item's bag slot while it is safe to delete;
---   * the Quest Items section of the Sink tracker lists them, and clicking
+--   * the Items to Delete section of the Sink tracker lists them, and clicking
 --     one asks Delete / Keep before destroying it.
 --
 -- The bags are checked after a quest turn-in, on login, and whenever they
@@ -20,6 +20,7 @@ local ADDON_NAME, ns = ...
 -- in SinkDB.questItems and take priority over these.
 ns.questItemRules = {
     [286176] = 99134,
+    [279023] = 97891, -- Inert Potion, Prompt Potion Runner (Undercity)
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"
@@ -87,10 +88,12 @@ local function QuestName(questID)
     return "quest #" .. questID
 end
 
-local function QuestNames(rule)
+-- The rule's quest names joined with commas; with color, each wrapped in it.
+local function QuestNames(rule, color)
     local names = {}
     for _, questID in ipairs(QuestIDs(rule)) do
-        names[#names + 1] = QuestName(questID)
+        local name = QuestName(questID)
+        names[#names + 1] = color and (color .. name .. "|r") or name
     end
     return table.concat(names, ", ")
 end
@@ -143,7 +146,7 @@ local function DeleteItem(itemID)
 end
 
 StaticPopupDialogs[POPUP] = {
-    text = "%s is no longer needed.\n%s is complete.\n\nDelete it?",
+    text = "Delete %s?\n\nYou finished %s and no longer need it.",
     button1 = DELETE or "Delete",
     button2 = "Keep",
     OnAccept = function(_, data)
@@ -251,7 +254,8 @@ function ns.ConfirmDeleteQuestItem(itemID)
     local rule = RuleFor(itemID)
     local _, _, link = FindInBags(itemID)
     if rule and link then
-        StaticPopup_Show(POPUP, ItemName(itemID, link), QuestNames(rule), { itemID = itemID })
+        -- Quest names in the yellow of quest links.
+        StaticPopup_Show(POPUP, ItemName(itemID, link), QuestNames(rule, "|cffffff00"), { itemID = itemID })
     end
 end
 
@@ -303,9 +307,8 @@ local function AddTooltipLine(tooltip, data)
     if not rule then
         return
     end
-    if QuestsComplete(rule) then
-        tooltip:AddLine("Safe to delete, quest complete", 1.0, 0.82, 0.0, true)
-    else
+    -- Once the quest is done the slot's tint and the tracker say it; nothing is added here.
+    if not QuestsComplete(rule) then
         tooltip:AddLine("Keep until " .. QuestNames(rule) .. " is complete", 0.7, 0.7, 0.7, true)
     end
 end

@@ -35,7 +35,7 @@
 -- nodes' isUndiscovered flag is false for all of them on Forever. So opening
 -- a flight master's map records it: that map lists every node, state 0 where
 -- you stand, 1 for paths you have, 2 for ones you do not. Until a character
--- has opened one, pins make no claim and the tooltip says "Unknown" in grey.
+-- has opened one, pins are grey and the tooltip says it is unknown.
 -- Drawn on zone and city maps only, and not where Blizzard's own
 -- flight point layer already draws them. "/sink dump taxi" shows the raw data.
 --------------------------------------------------------------------------------
@@ -63,7 +63,8 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- here: they are built from the dungeon, NPC and quest records in Quests.lua.
 -- faction ("Horde", "Alliance" or "Both") says who sees a pin; without it the
 -- map's faction below applies, and on other maps a pin is for both.
--- On the Forever build Durotar is map 1411, Tirisfal Glades 1420, Undercity 1458, Orgrimmar 1454 and Thunder Bluff 1456.
+-- On the Forever build Durotar is map 1411, Mulgore 1412, Tirisfal Glades 1420, Undercity 1458,
+-- Orgrimmar 1454, Thunder Bluff 1456 and Zephras Isle, the Skyborne starting island, 2521.
 ns.mapPins = {
     [1411] = { -- Durotar
         -- No npc, so clicking it does nothing: no target, no ping.
@@ -72,19 +73,19 @@ ns.mapPins = {
         { name = "Zeppelin to Stranglethorn", x = 0.5058, y = 0.1261,
           atlas = "poi-horde", verified = true },
         { npc = 3707, name = "Ken'jai", note = "Priest Trainer", x = 0.4236, y = 0.6882,
-          icon = "Interface\\Icons\\ClassIcon_Priest", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Priest", teachesUpTo = 6, verified = true },
         { npc = 3157, name = "Shikrik", note = "Shaman Trainer", x = 0.4239, y = 0.6900,
           icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
         { npc = 5884, name = "Mai'ah", note = "Mage Trainer", x = 0.4251, y = 0.6904,
-          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Mage", teachesUpTo = 6, verified = true },
         { npc = 3154, name = "Jen'shan", note = "Hunter Trainer", x = 0.4284, y = 0.6933,
-          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Hunter", teachesUpTo = 6, verified = true },
         { npc = 3153, name = "Frang", note = "Warrior Trainer", x = 0.4289, y = 0.6944,
-          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Warrior", teachesUpTo = 6, verified = true },
         { npc = 267329, name = "Zor'la", note = "Junior Herbalism Trainer", x = 0.4266, y = 0.6739,
           icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
         { npc = 3155, name = "Rwag", note = "Rogue Trainer", x = 0.4128, y = 0.6800,
-          icon = "Interface\\Icons\\ClassIcon_Rogue", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Rogue", teachesUpTo = 6, verified = true },
         { npc = 267327, name = "Kagil", note = "Junior Skinning Trainer", x = 0.4079, y = 0.6786,
           icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
         { npc = 267328, name = "Norzsh", note = "Junior Mining Trainer", x = 0.4053, y = 0.6814,
@@ -113,6 +114,16 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
         { npc = 11025, name = "Mukdrak", note = "Journeyman Engineer", x = 0.5218, y = 0.4080,
           icon = "Interface\\Icons\\Trade_Engineering", verified = true },
+        { npc = 266881, name = "Pa'zula", note = "Journeyman Enchanter", x = 0.5669, y = 0.7375,
+          icon = "Interface\\Icons\\Trade_Engraving", verified = true },
+        { npc = 5880, name = "Un'Thuwa", note = "Mage Trainer", x = 0.5631, y = 0.7512,
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 3185, name = "Mishiki", note = "Herbalist", x = 0.5544, y = 0.7508,
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 3184, name = "Miao'zan", note = "Journeyman Alchemist", x = 0.5541, y = 0.7395,
+          icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 5941, name = "Lau'Tiki", note = "Fisherman", x = 0.5325, y = 0.8159,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
     },
     [1420] = { -- Tirisfal Glades
         { name = "Zeppelin to Orgrimmar", x = 0.6070, y = 0.5878,
@@ -340,6 +351,95 @@ ns.mapPins = {
         { npc = 3352, name = "Ormak Grimshot", note = "Hunter Trainer", x = 0.6605, y = 0.1853,
           icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
     },
+    [1412] = { -- Mulgore
+        { npc = 3060, name = "Gart Mistrunner", note = "Druid Trainer", x = 0.4465, y = 0.7655,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 3062, name = "Meela Dawnstrider", note = "Shaman Trainer", x = 0.4459, y = 0.7656,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", teachesUpTo = 6, verified = true },
+        { npc = 267330, name = "Nawka Wildsong", note = "Junior Skinning Trainer", x = 0.4450, y = 0.7669,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 3061, name = "Lanka Farshot", note = "Hunter Trainer", x = 0.4395, y = 0.7635,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3059, name = "Harutt Thunderhorn", note = "Warrior Trainer", x = 0.4375, y = 0.7672,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 267332, name = "Garan Sunstrider", note = "Junior Herbalism Trainer", x = 0.4413, y = 0.7797,
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 267331, name = "Vartha Rockmane", note = "Junior Mining Trainer", x = 0.4430, y = 0.7836,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 3066, name = "Narm Skychaser", note = "Shaman Trainer", x = 0.4740, y = 0.6254,
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        { npc = 3064, name = "Gennia Runetotem", note = "Druid Trainer", x = 0.4748, y = 0.6295,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 3063, name = "Krang Stonehoof", note = "Warrior Trainer", x = 0.4834, y = 0.6374,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 6290, name = "Yonn Deepcut", note = "Skinner", x = 0.4497, y = 0.6139,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 3069, name = "Chaw Stronghide", note = "Journeyman Leatherworker", x = 0.4494, y = 0.6146,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        { npc = 3067, name = "Pyall Silentstride", note = "Cook", x = 0.4491, y = 0.6167,
+          icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
+        { npc = 5939, name = "Vira Younghoof", note = "First Aid Trainer", x = 0.4608, y = 0.6396,
+          icon = "Interface\\Icons\\Spell_Holy_SealOfSacrifice", verified = true },
+        { npc = 6747, name = "Innkeeper Kauth", note = "Innkeeper", x = 0.4593, y = 0.6416,
+          atlas = "innkeeper", verified = true },
+        { npc = 5938, name = "Uthan Stillwater", note = "Fisherman", x = 0.4416, y = 0.6380,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+        { npc = 3065, name = "Yaw Sharpmane", note = "Hunter Trainer", x = 0.4693, y = 0.5965,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 5940, name = "Harn Longcast", note = "Fishing Supplies", x = 0.4667, y = 0.5912,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+    },
+    [2521] = { -- Zephras Isle, where the Skyborne start: both factions, except the
+        -- Shaman trainers (Horde) and the Mage trainers (Alliance).
+        -- The starting camp's class trainers teach up to level 6.
+        { npc = 251374, name = "Windshaper Boro", note = "Shaman Trainer", x = 0.4279, y = 0.2357, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Shaman", teachesUpTo = 6, verified = true },
+        { npc = 251376, name = "Tai'ree Farsight", note = "Hunter Trainer", x = 0.4247, y = 0.2373,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", teachesUpTo = 6, verified = true },
+        { npc = 251389, name = "Akeri Duskblade", note = "Rogue Trainer", x = 0.4375, y = 0.2435,
+          icon = "Interface\\Icons\\ClassIcon_Rogue", teachesUpTo = 6, verified = true },
+        { npc = 251964, name = "Blademaster Ren", note = "Warrior Trainer", x = 0.4366, y = 0.2413,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", teachesUpTo = 6, verified = true },
+        { npc = 251373, name = "Xyton Silverwind", note = "Druid Trainer", x = 0.4166, y = 0.2334,
+          icon = "Interface\\Icons\\ClassIcon_Druid", teachesUpTo = 6, verified = true },
+        { npc = 251379, name = "Dorii Brightwhisper", note = "Mage Trainer", x = 0.4154, y = 0.2368, faction = "Alliance",
+          icon = "Interface\\Icons\\ClassIcon_Mage", teachesUpTo = 6, verified = true },
+        -- The town further south: its trainers teach every level.
+        { npc = 257024, name = "Mendalass Tattermend", note = "Skinner", x = 0.4329, y = 0.4337,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 257020, name = "Nasalanna Windsinger", note = "Enchanter", x = 0.4324, y = 0.4316,
+          icon = "Interface\\Icons\\Trade_Engraving", verified = true },
+        { npc = 254087, name = "Miriaan Mistblade", note = "Rogue Trainer", x = 0.4315, y = 0.4325,
+          icon = "Interface\\Icons\\ClassIcon_Rogue", verified = true },
+        { npc = 254089, name = "Coriella Calmbreeze", note = "Innkeeper", x = 0.4302, y = 0.4323,
+          atlas = "innkeeper", verified = true },
+        { npc = 257021, name = "Halassa Fernbreeze", note = "Herbalist", x = 0.4296, y = 0.4354,
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 257019, name = "Nyassa Swiftdraught", note = "Alchemist", x = 0.4369, y = 0.4342,
+          icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 251905, name = "Zerril Softbreeze", note = "Cook", x = 0.4385, y = 0.4384,
+          icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
+        { npc = 251991, name = "Taleen Shimmerthread", note = "Tailor", x = 0.4487, y = 0.4419,
+          icon = "Interface\\Icons\\Trade_Tailoring", verified = true },
+        { npc = 251913, name = "Aedi Thriceforged", note = "Blacksmith", x = 0.4488, y = 0.4435,
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 257022, name = "Messana Crestwind", note = "Miner", x = 0.4477, y = 0.4455,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 251993, name = "Indari Sunseam", note = "Leatherworker", x = 0.4468, y = 0.4452,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        { npc = 254088, name = "Corsan Earthrazer", note = "Warrior Trainer", x = 0.4494, y = 0.4510,
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 254086, name = "Shenaan Spellwind", note = "Mage Trainer", x = 0.4510, y = 0.4587, faction = "Alliance",
+          icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
+        { npc = 254084, name = "Elayaa Easewind", note = "Hunter Trainer", x = 0.4526, y = 0.4425,
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 254081, name = "Naeluna Swiftmend", note = "Druid Trainer", x = 0.4516, y = 0.4422,
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 251992, name = "Fenn Fairweather", note = "Fisherman", x = 0.4502, y = 0.4844,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+        { npc = 254082, name = "Aarnor Galestrike", note = "Shaman Trainer", x = 0.4345, y = 0.4487, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+    },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
@@ -431,9 +531,11 @@ ns.mapPins = {
 }
 
 -- Maps whose pins are for one faction unless a pin says otherwise: the Horde
--- capitals, and the Horde starting zones with Razor Hill and Brill.
+-- capitals, and the Horde starting zones with Razor Hill, Bloodhoof Village
+-- and Brill.
 local MAP_FACTION = {
     [1411] = "Horde", -- Durotar
+    [1412] = "Horde", -- Mulgore
     [1420] = "Horde", -- Tirisfal Glades
     [1454] = "Horde", -- Orgrimmar
     [1456] = "Horde", -- Thunder Bluff
@@ -452,6 +554,15 @@ end
 
 local provider -- our data provider, once added to WorldMapFrame
 local refreshAfterCombat = false -- a pin was acquired in combat; redo them all when it ends
+
+-- Pin click buttons are secure, and a frame with a secure child is protected
+-- itself: in combat the map could no longer scale or move the pin, so pins
+-- shrank to the canvas's scale and each attempt was blocked as "Interface
+-- action failed because of an AddOn". So a button sits on its pin only out of
+-- combat; the rest of the time it waits here, off the map.
+local buttonHolder = CreateFrame("Frame")
+buttonHolder:Hide()
+local pinFrames = {} -- every pin frame the map has made, for taking the buttons off when combat starts
 
 local function Enabled()
     return ns.db ~= nil and ns.db.mapIcons ~= false
@@ -718,17 +829,24 @@ local function ChooseTrainer(profession, group)
 end
 
 -- Flight paths this character has, recorded from the flight master's map.
+-- Kept by the character's GUID, not its name: a new character with the name
+-- of a deleted one must not inherit its flight paths.
 local function KnownFlightPaths()
     if not ns.db then
         return {}
     end
-    local key = UnitName("player") .. "-" .. (GetRealmName and GetRealmName() or ""):gsub("%s+", "")
+    local key = ns.Readable(UnitGUID("player"))
+    if not key then
+        return {}
+    end
     ns.db.knownFlightPaths = ns.db.knownFlightPaths or {}
     ns.db.knownFlightPaths[key] = ns.db.knownFlightPaths[key] or {}
     return ns.db.knownFlightPaths[key]
 end
 
--- At a flight master: every path on the flight map you can take is known.
+-- At a flight master: every path on the flight map you can take is known,
+-- and every one you cannot is not. Each visit replaces what the paths on
+-- that map were before, so a path recorded wrongly once does not stay.
 local function RecordFlightPaths()
     if not (C_TaxiMap and C_TaxiMap.GetAllTaxiNodes and Enum and Enum.FlightPathState) then
         return
@@ -743,9 +861,7 @@ local function RecordFlightPaths()
     end
     local known = KnownFlightPaths()
     for _, node in ipairs(nodes) do
-        if node.state ~= Enum.FlightPathState.Unreachable then
-            known[node.nodeID] = true
-        end
+        known[node.nodeID] = node.state ~= Enum.FlightPathState.Unreachable or nil
     end
 end
 
@@ -917,13 +1033,10 @@ function SinkMapPinMixin:OnLoad()
     self:SetNudgeZoomedOutFactor(1)
     self:SetNudgeZoomedInFactor(0.5)
 
-    local button = CreateFrame("Button", nil, self, "SecureActionButtonTemplate")
-    button:SetAllPoints(self)
+    pinFrames[self] = true
+    local button = CreateFrame("Button", nil, buttonHolder, "SecureActionButtonTemplate")
     -- The secure handler runs the action once, on down or up per ActionButtonUseKeyDown.
     button:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
-    if button.SetPassThroughButtons then
-        pcall(button.SetPassThroughButtons, button, "RightButton")
-    end
     button:SetScript("OnEnter", function(b)
         b:GetParent():OnMouseEnter()
     end)
@@ -934,8 +1047,19 @@ function SinkMapPinMixin:OnLoad()
     self.ClickButton = button
 end
 
+-- Take a pin's button off it, back to the holder, so the pin is an ordinary
+-- frame again. Only possible out of combat, or as combat starts.
+local function DetachClickButton(pinFrame)
+    local button = pinFrame.ClickButton
+    if button and button:GetParent() ~= buttonHolder then
+        button:SetParent(buttonHolder)
+        button:ClearAllPoints()
+        button:Hide()
+    end
+end
+
 -- A secure button's attributes can only be changed out of combat. A pin
--- acquired during a fight is left as it was, and every pin is redone when the
+-- acquired during a fight has no button, and every pin is redone when the
 -- fight ends.
 function SinkMapPinMixin:SetClickTarget(name)
     local button = self.ClickButton
@@ -947,6 +1071,12 @@ function SinkMapPinMixin:SetClickTarget(name)
         return
     end
     if name then
+        button:SetParent(self)
+        button:ClearAllPoints()
+        button:SetAllPoints(self)
+        -- Right clicks go through to the map, which zooms out. Set here, out of
+        -- combat, as SetPassThroughButtons is blocked for addons in combat.
+        pcall(button.SetPassThroughButtons, button, "RightButton")
         button:SetAttribute("type", "macro")
         -- Clearing first makes the previous target the "last target". If the
         -- NPC is not found, nothing is pinged and the last line puts the
@@ -961,7 +1091,7 @@ function SinkMapPinMixin:SetClickTarget(name)
         button:Show()
     else
         button:SetAttribute("type", nil)
-        button:Hide()
+        DetachClickButton(self)
     end
 end
 
@@ -973,23 +1103,27 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
         self.Icon:SetTexture(pin.icon or DEFAULT_ICON)
         self.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     end
-    -- A flight path you have not discovered is drawn grey; pins are reused, so always set it.
-    self.Icon:SetDesaturated(pin.taxiNode ~= nil and pin.discovered == false)
+    -- A flight path is drawn grey unless you are known to have it, so before
+    -- any flight map is opened they all are; pins are reused, so always set it.
+    self.Icon:SetDesaturated(pin.taxiNode ~= nil and pin.discovered ~= true)
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
     self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
 end
 
--- Left clicks go through to the map, which zooms in, unless the pin uses them:
--- a dungeon with quests to fetch. Right clicks always go through, so the map
--- still zooms out. The map calls this after OnAcquired, since pins are reused.
+-- Clicks go through to the map, so a left click zooms in and a right click
+-- zooms out. The map calls this after OnAcquired, since pins are reused.
+-- SetPassThroughButtons is blocked for addon code in combat ("Interface
+-- action failed because of an AddOn"), so then it is skipped: a reused pin
+-- keeps the setting it already has, which never changes, and pins are redone
+-- when combat ends.
 function SinkMapPinMixin:CheckMouseButtonPassthrough(...)
-    local buttons = { "RightButton" }
-    if not (self.pin and self.pin.dungeon) then
-        buttons[#buttons + 1] = "LeftButton"
+    if InCombatLockdown() then
+        refreshAfterCombat = true
+        return
     end
-    pcall(self.SetPassThroughButtons, self, unpack(buttons))
+    pcall(self.SetPassThroughButtons, self, "LeftButton", "RightButton")
 end
 
 -- Make the pin for an NPC pulse for a few seconds so it stands out.
@@ -1013,16 +1147,24 @@ local function Pulse(pinFrame)
     end)
 end
 
--- Open the map where an NPC stands and make their pin pulse.
+-- Open the world map where an NPC stands and make their pin pulse. The
+-- Sink tracker calls it when you click a red quest.
 local function ShowNPC(npcID, npc)
     local map = provider and provider:GetMap()
     if not map then
         return
     end
-    GameTooltip:Hide() -- the dungeon's pin goes away with its map
+    GameTooltip:Hide()
+    if not map:IsShown() then
+        -- Opening it goes through the secure panel manager, blocked for addons in combat.
+        if InCombatLockdown() then
+            return
+        end
+        ShowUIPanel(map)
+    end
     map:SetMapID((ZonePosition(npc.map, npc.x, npc.y)))
-    -- The new map's pins are drawn by now or on the next frame; look then.
-    C_Timer.After(0, function()
+    -- The new map's pins are drawn a moment after it opens or changes; look then.
+    C_Timer.After(0.1, function()
         for pinFrame in map:EnumeratePinsByTemplate(TEMPLATE) do
             if pinFrame.pin and pinFrame.pin.npc == npcID then
                 Pulse(pinFrame)
@@ -1030,28 +1172,7 @@ local function ShowNPC(npcID, npc)
         end
     end)
 end
-
--- Clicking a dungeon: with one quest to fetch, go to its giver; with more,
--- a menu of them to choose from.
-function SinkMapPinMixin:OnMouseClickAction(button)
-    local pin = self.pin
-    if button ~= "LeftButton" or not (pin and pin.dungeon and pin.questIDs and ns.QuestsToFetch) then
-        return
-    end
-    local fetch = ns.QuestsToFetch(pin.questIDs)
-    if #fetch == 1 then
-        ShowNPC(fetch[1].npcID, fetch[1].npc)
-    elseif #fetch > 1 and MenuUtil and MenuUtil.CreateContextMenu then
-        MenuUtil.CreateContextMenu(self, function(_, root)
-            root:CreateTitle(pin.name)
-            for _, entry in ipairs(fetch) do
-                root:CreateButton(("%s |cff808080(%s)|r"):format(entry.title, entry.npc.name), function()
-                    ShowNPC(entry.npcID, entry.npc)
-                end)
-            end
-        end)
-    end
-end
+ns.ShowNPCOnMap = ShowNPC
 
 function SinkMapPinMixin:OnMouseEnter()
     TintRing(self, true)
@@ -1076,7 +1197,7 @@ function SinkMapPinMixin:OnMouseEnter()
     if pin.taxiNode then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
         if pin.discovered == nil then
-            GameTooltip:AddLine("Unknown", ns.grey.r, ns.grey.g, ns.grey.b)
+            GameTooltip:AddLine("Unknown until you open a flight master's map", ns.grey.r, ns.grey.g, ns.grey.b)
         elseif pin.discovered then
             GameTooltip:AddLine(ns.CHECK .. " Discovered", ns.known.r, ns.known.g, ns.known.b)
         else
@@ -1085,13 +1206,6 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)
-    end
-    if pin.dungeon and ns.QuestsToFetch then
-        local count = #ns.QuestsToFetch(pin.questIDs or {})
-        if count > 0 then
-            GameTooltip:AddLine(count == 1 and "Click to show where to get it" or "Click to choose a quest to find",
-                ns.grey.r, ns.grey.g, ns.grey.b)
-        end
     end
     GameTooltip:Show()
 end
@@ -1324,9 +1438,17 @@ pcall(frame.RegisterEvent, frame, "QUEST_LOG_UPDATE")
 -- A flight master's map lists the paths you have; talking to one discovers it.
 pcall(frame.RegisterEvent, frame, "TAXIMAP_OPENED")
 pcall(frame.RegisterEvent, frame, "TAXI_NODE_STATUS_CHANGED")
+-- Combat starting: take every click button off its pin. This event comes just
+-- before the lockdown, while that is still allowed; they go back when it ends.
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 frame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         Install()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        for pinFrame in pairs(pinFrames) do
+            DetachClickButton(pinFrame)
+        end
+        refreshAfterCombat = true
     elseif event == "TAXIMAP_OPENED" then
         RecordFlightPaths()
         Refresh()

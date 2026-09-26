@@ -78,6 +78,7 @@ read_globals = {
     "IsTradeskillTrainer",
     "IsSpellKnown",
     "StaticPopup_Show",
+    "ShowUIPanel",
     "UnitClass",
     "UnitExists",
     "UnitFactionGroup",

@@ -48,7 +48,7 @@ ns.defaults = {
     showAllClassTrainers = false, -- every class trainer, not just your class's
     showDungeons = true,       -- dungeon entrances, with their quests on the tooltip
     showFlightMasters = true,  -- flight masters, grey until discovered
-    knownFlightPaths = {},     -- flight paths seen at a flight master: ["Name-Realm"] = { [nodeID] = true }
+    knownFlightPaths = {},     -- flight paths seen at a flight master: [player GUID] = { [nodeID] = true }
 
     -- Weapons.lua
     weaponTooltips = true,     -- weapon master tooltips, map icon lines and reminders
@@ -72,7 +72,9 @@ ns.defaults = {
     trackerDungeons = true,    -- the Dungeons section is in the tracker
     trackerClassTraining = true, -- the Class Training section is in the tracker
     trackerWeaponSkills = true, -- the Weapon Skills section is in the tracker
-    trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classTraining", ...
+    ignoredTraining = {},      -- skills kept out of the tracker's Class Training: [class][name] = true, all ranks
+    trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classTraining", ...;
+                               -- and dungeons folded to their name, key "dungeon" .. instance ID
     -- trackerPoint: where the tracker was dragged to, { point, relativePoint, x, y }
 }
 
@@ -248,6 +250,12 @@ local function InitSavedVariables()
     end
     SinkDB.classSkills = nil -- trainer windows were once recorded here; the lists are in Trainers.lua now
     SinkDB.trackerClassSkills = nil -- renamed trackerClassTraining
+    -- Flight paths were once kept by "Name-Realm"; now by GUID, "Player-...".
+    for key in pairs(SinkDB.knownFlightPaths or {}) do
+        if not tostring(key):find("^Player%-") then
+            SinkDB.knownFlightPaths[key] = nil
+        end
+    end
     ns.db = SinkDB
 end
 

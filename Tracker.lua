@@ -15,11 +15,15 @@
 --                  Keep question
 --   Dungeons       every dungeon your level lets you enter that still has
 --                  quests for you (Quests.lua), each quest with the same
---                  marks as the map tooltips
+--                  marks as the map tooltips; click a red one to see its
+--                  giver on the world map, or a dungeon's name to fold its
+--                  quests away
 --   Class Training what your class trainer can teach you now, and the cost
---                  of it all, red when you cannot afford it (Trainers.lua)
+--                  of it all, red when you cannot afford it (Trainers.lua);
+--                  hover one for its tooltip, right-click it to ignore it
+--                  and all its ranks
 --   Weapon Skills  what a weapon master can teach you now, and in which
---                  city (Weapons.lua)
+--                  city, and the cost as for Class Training (Weapons.lua)
 -- The title's button folds the whole window. What is folded is saved. Each
 -- section has a "Show in tracker" checkbox on the options window's Tracker tab.
 --
@@ -178,19 +182,29 @@ local function CreateTracker()
     return frame
 end
 
--- The nth click area of a section, over a line that does something when
--- clicked, made the first time it is needed.
+-- The nth mouse area of a section, over a line that has a tooltip or does
+-- something when clicked, made the first time it is needed.
 local function ClickArea(section, n)
     section.buttons = section.buttons or {}
     local button = section.buttons[n]
     if not button then
         button = CreateFrame("Button", nil, section)
+        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         local highlight = button:CreateTexture(nil, "HIGHLIGHT")
         highlight:SetAllPoints()
         highlight:SetColorTexture(1, 1, 1, 0.08)
-        button:SetScript("OnClick", function(self)
-            if self.entry and self.entry.onClick then
-                self.entry.onClick()
+        button:SetScript("OnClick", function(self, mouseButton)
+            local entry = self.entry
+            if not entry then
+                return
+            end
+            if mouseButton == "RightButton" then
+                if entry.onRightClick then
+                    GameTooltip:Hide()
+                    entry.onRightClick(self)
+                end
+            elseif entry.onClick then
+                entry.onClick()
             end
         end)
         button:SetScript("OnEnter", function(self)
@@ -224,10 +238,12 @@ end
 -- Filling it in
 --------------------------------------------------------------------------------
 
--- What each section lists, as lines: { text, color, block, onClick, tooltip }.
+-- What each section lists, as lines: { text, color, block, onClick,
+-- onRightClick, tooltip }.
 -- A line with block starts a new block, set apart as Blizzard sets apart its
 -- quests; the lines after it sit under it. A line with onClick can be
--- clicked, and tooltip(GameTooltip) fills its tooltip.
+-- clicked, one with onRightClick(owner) right-clicked, and tooltip(GameTooltip)
+-- fills its tooltip.
 
 -- Talent points not spent yet, or nil when the client cannot say. Forever
 -- uses Retail's trait system: the class tree's currency in the active
@@ -312,17 +328,48 @@ local function TrackingLines()
     return lines
 end
 
--- A block per dungeon: its name in the dungeon teal and its level range,
--- then its quests.
+-- A block per dungeon: "[10-18] Ragefire Chasm (2/4 Quests)", the level range
+-- first as the quest log has it, the name in the dungeon teal, and of its
+-- quests for your faction not finished yet, how many are in your log; then
+-- the quests left.
 local function DungeonLines()
     local lines = {}
     for _, entry in ipairs(ns.DungeonsToDo and ns.DungeonsToDo() or {}) do
         local dungeon = entry.dungeon
+        -- Clicking the title folds the dungeon's quests away, saved like a section's.
+        local key = "dungeon" .. entry.instanceID
+        local folded = Folded(key)
         lines[#lines + 1] = { block = true, color = ns.dungeonColor,
-            text = ("%s %s(%d-%d)|r"):format(dungeon.name, ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0) }
-        for _, row in ipairs(entry.rows) do
+            text = ("%s[%d-%d]|r %s %s(%d/%d Quests)|r"):format(ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0,
+                dungeon.name, ns.grey.hex, entry.have, entry.total),
+            onClick = function()
+                ns.db.trackerFolded = ns.db.trackerFolded or {}
+                ns.db.trackerFolded[key] = not folded or nil
+                ns.RefreshTracker()
+            end,
+            tooltip = function(tooltip)
+                tooltip:SetText(dungeon.name, ns.dungeonColor.r, ns.dungeonColor.g, ns.dungeonColor.b)
+                tooltip:AddLine(folded and "Click to show its quests" or "Click to hide its quests",
+                    ns.grey.r, ns.grey.g, ns.grey.b)
+            end }
+        for _, row in ipairs(folded and {} or entry.rows) do
             local text, color = ns.QuestRowText(row)
-            lines[#lines + 1] = { text = text, color = color }
+            local line = { text = text, color = color }
+            -- A red quest, one you have not picked up: click to see its giver on the map.
+            local fetch = color == ns.missing and ns.QuestToFetch and ns.QuestToFetch(row.questID)
+            if fetch and ns.ShowNPCOnMap then
+                line.onClick = function()
+                    ns.ShowNPCOnMap(fetch.npcID, fetch.npc)
+                end
+                line.tooltip = function(tooltip)
+                    local step = ns.QuestSeriesSuffix(fetch.questID)
+                    tooltip:SetText(fetch.title .. (step and (" " .. step) or ""))
+                    tooltip:AddLine(("Talk to \"%s\" in %s"):format(fetch.npc.name,
+                        ns.MapName and ns.MapName(fetch.npc.map) or "?"), 1, 1, 1)
+                    tooltip:AddLine("Click to show on the map", ns.grey.r, ns.grey.g, ns.grey.b)
+                end
+            end
+            lines[#lines + 1] = line
         end
     end
     return lines
@@ -333,8 +380,10 @@ local function QuestItemLines()
     local lines = {}
     for i, item in ipairs(ns.DeletableQuestItems and ns.DeletableQuestItems() or {}) do
         local icon = item.icon and ("|T" .. item.icon .. ":14:14|t ") or ""
+        -- The link keeps its quality colour; the brackets around the name go.
+        local name = item.link and item.link:gsub("%[(.-)%]", "%1") or ("item #" .. item.itemID)
         lines[#lines + 1] = { block = i == 1, color = ns.active,
-            text = icon .. (item.link or ("item #" .. item.itemID)) .. (item.count > 1 and (" x" .. item.count) or ""),
+            text = icon .. name .. (item.count > 1 and (" x" .. item.count) or ""),
             onClick = function()
                 ns.ConfirmDeleteQuestItem(item.itemID)
             end,
@@ -354,31 +403,62 @@ local function Money(copper)
     return ("%dg %ds %dc"):format(math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100)
 end
 
+-- A section's closing "Cost: 1g 20s" line: white when you can pay it, red when you cannot.
+local function CostLine(total)
+    local short = GetMoney and GetMoney() < total
+    return { block = true, color = short and ns.missing or { r = 1, g = 1, b = 1 }, text = "Cost: " .. Money(total) }
+end
+
 -- One block of the class training you can learn now, then what they cost
 -- together: white when you can pay it, red when you cannot. Skills without
 -- a price add nothing, and with none priced there is no cost line.
 local function ClassTrainingLines()
     local lines = {}
-    for i, name in ipairs(ns.ClassTrainingToLearn and ns.ClassTrainingToLearn() or {}) do
-        lines[#lines + 1] = { block = i == 1, text = ns.CROSS .. " " .. name, color = ns.missing }
+    for i, skill in ipairs(ns.ClassTrainingToLearn and ns.ClassTrainingToLearn() or {}) do
+        lines[#lines + 1] = { block = i == 1, text = ns.CROSS .. " " .. skill.text, color = ns.missing,
+            -- The spell's own tooltip, as the spellbook shows it.
+            tooltip = function(tooltip)
+                if skill.spell then
+                    tooltip:SetSpellByID(skill.spell)
+                else
+                    tooltip:SetText(skill.text)
+                end
+                tooltip:AddLine("Right-click to ignore", ns.grey.r, ns.grey.g, ns.grey.b)
+            end,
+            -- Ignore every rank of it; the Ignored tab of the options window brings it back.
+            onRightClick = function(owner)
+                if not (MenuUtil and MenuUtil.CreateContextMenu) then
+                    return
+                end
+                MenuUtil.CreateContextMenu(owner, function(_, root)
+                    root:CreateTitle(skill.name)
+                    root:CreateButton("Ignore", function()
+                        ns.SetTrainingIgnored(skill.name, true)
+                    end)
+                end)
+            end }
     end
     if #lines > 0 and ns.ClassTrainingCost then
         local total = ns.ClassTrainingCost()
         if total > 0 then
-            local short = GetMoney and GetMoney() < total
-            lines[#lines + 1] = { block = true, color = short and ns.missing or { r = 1, g = 1, b = 1 },
-                text = "Cost: " .. Money(total) }
+            lines[#lines + 1] = CostLine(total)
         end
     end
     return lines
 end
 
--- One block of the weapon skills you can learn now, each with where.
+-- One block of the weapon skills you can learn now, each with where, then
+-- what they cost together as for Class Training. A skill without a price
+-- adds nothing.
 local function WeaponSkillLines()
-    local lines = {}
+    local lines, total = {}, 0
     for i, skill in ipairs(ns.WeaponSkillsToLearn and ns.WeaponSkillsToLearn() or {}) do
         lines[#lines + 1] = { block = i == 1, color = ns.missing,
             text = ("%s %s %s(%s)|r"):format(ns.CROSS, skill.name, ns.grey.hex, skill.where) }
+        total = total + (skill.cost or 0)
+    end
+    if total > 0 then
+        lines[#lines + 1] = CostLine(total)
     end
     return lines
 end
@@ -412,7 +492,7 @@ local function FillSection(section, lines)
             line:SetTextColor(entry.color.r, entry.color.g, entry.color.b)
             line:Show()
             local button = section.buttons and section.buttons[n]
-            if entry.onClick then
+            if entry.onClick or entry.onRightClick or entry.tooltip then
                 button = ClickArea(section, n)
                 button.entry = entry
                 button:ClearAllPoints()

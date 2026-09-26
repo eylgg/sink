@@ -26,7 +26,8 @@ local _, ns = ...
 -- The names are what the trainer window and the skill list call them; some go
 -- by both the vanilla name and the later one, so both are matched. level is
 -- the character level the trainer asks for, where known; the trainer window
--- records the others as you visit.
+-- records the others as you visit. cost is the trainer's price in copper,
+-- where known; "/sink dump trainer" at a weapon master shows it.
 --
 -- Fist weapons are the odd one. Weapon masters offer them, but on Forever
 -- the rank is kept under the Unarmed skill every character has, so the
@@ -34,8 +35,8 @@ local _, ns = ...
 -- character has trained them. Line 473 is vanilla's; here it only serves as
 -- the table key.
 ns.weaponSkills = {
-    { id = 43,  spell = 201,   names = { "One-Handed Swords", "Swords" } },
-    { id = 55,  spell = 202,   names = { "Two-Handed Swords" } },
+    { id = 43,  spell = 201,   names = { "One-Handed Swords", "Swords" }, cost = 1000 },
+    { id = 55,  spell = 202,   names = { "Two-Handed Swords" }, cost = 1000 },
     { id = 44,  spell = 196,   names = { "One-Handed Axes", "Axes" } },
     { id = 172, spell = 197,   names = { "Two-Handed Axes" } },
     { id = 54,  spell = 198,   names = { "One-Handed Maces", "Maces" } },
@@ -43,7 +44,7 @@ ns.weaponSkills = {
     { id = 173, spell = 1180,  names = { "Daggers" } },
     { id = 473, spell = 15590, names = { "Fist Weapons" } },
     { id = 136, spell = 227,   names = { "Staves" } },
-    { id = 229, spell = 200,   names = { "Polearms" }, level = 20 },
+    { id = 229, spell = 200,   names = { "Polearms" }, level = 20, cost = 10000 },
     { id = 45,  spell = 264,   names = { "Bows" } },
     { id = 46,  spell = 266,   names = { "Guns" } },
     { id = 226, spell = 5011,  names = { "Crossbows" } },
@@ -418,13 +419,13 @@ local function WhereToLearn(skill)
 end
 
 -- The weapon skills your class can learn and your level allows now, by
--- level then name: { name, where }. The Sink tracker shows them.
+-- level then name: { name, where, cost }. The Sink tracker shows them.
 function ns.WeaponSkillsToLearn()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
     for _, row in ipairs(SortedRows(ns.weaponSkills)) do
         if row.group == MISSING and SkillLevel(row.skill) <= level then
-            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill) }
+            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill), cost = row.skill.cost }
         end
     end
     return list

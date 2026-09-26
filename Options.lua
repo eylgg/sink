@@ -223,7 +223,8 @@ local PAGES = {
               .. " when you spam an ability." },
         { header = "Tooltips and Warnings" },
         { key = "questItemWarnings", label = "Quest item warnings",
-          tooltip = "Tooltip line, bag slot tint and tracker list for quest items that are safe to delete." },
+          tooltip = "Bag slot tint and tracker list for quest items that are safe to delete, and a"
+              .. " \"Keep until\" tooltip line on the ones whose quest is not done yet." },
         { key = "recipeTooltips", label = "Recipe vendor tooltips",
           tooltip = "Vendor tooltips list the recipes sold, with a check for the ones you know." },
         { key = "weaponTooltips", label = "Weapon master tooltips",
@@ -297,6 +298,14 @@ local PAGES = {
         { header = "Weapon Skills" },
         { key = "trackerWeaponSkills", label = "Show in tracker",
           tooltip = "The weapon skills your class can learn now, and the cities that teach them." },
+    },
+    {
+        name = "Ignored",
+        icon = "Interface\\Icons\\INV_Misc_Note_01",
+        { header = "Class Training" },
+        { build = function(page, y)
+            return ns.BuildIgnoredList and ns.BuildIgnoredList(page, y) or 0
+        end },
     },
 }
 
@@ -399,6 +408,9 @@ function RefreshWindow()
     end
     if ns.RefreshProfessionList then
         ns.RefreshProfessionList()
+    end
+    if ns.RefreshIgnoredList then
+        ns.RefreshIgnoredList()
     end
 end
 

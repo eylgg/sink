@@ -409,27 +409,22 @@ function ns.IsObjectiveOpen(npcID)
     return false
 end
 
--- Of these quests, the ones you can go and pick up from an NPC who has a
--- place on the map, alphabetical: { questID, title, npcID, npc }. For a
--- follow-up that is the first quest of its chain you still need, such as
--- Hidden Enemies 1/5 or 2/5 from Thrall for the Ragefire Chasm part. These are the quests
--- whose givers have a "Dungeon Quest" pin.
-function ns.QuestsToFetch(questIDs)
-    local list, seen = {}, {}
-    for _, dungeonQuestID in ipairs(questIDs) do
-        local questID = ChainStart(dungeonQuestID)
-        local start = questID and ns.quests[questID].start
-        local npc = start and ns.npcs[start.npc]
-        if npc and npc.map and not seen[questID] and Available(questID)
-            and QuestState(dungeonQuestID) == NOT_TAKEN then
-            seen[questID] = true
-            list[#list + 1] = { questID = questID, title = QuestTitle(questID), npcID = start.npc, npc = npc }
-        end
+-- Where to go for a quest you have not taken: { questID, title, npcID, npc },
+-- the quest to pick up and the NPC who gives it, when that NPC has a place on
+-- the map; else nil. For a follow-up it is the first quest of its chain you
+-- still need, such as Hidden Enemies 1/5 or 2/5 from Thrall for the Ragefire
+-- Chasm part. The Sink tracker shows it when you click a red quest.
+function ns.QuestToFetch(questID)
+    if QuestState(questID) ~= NOT_TAKEN then
+        return nil
     end
-    table.sort(list, function(a, b)
-        return a.title < b.title
-    end)
-    return list
+    local fetchID = ChainStart(questID)
+    local start = fetchID and ns.quests[fetchID].start
+    local npc = start and ns.npcs[start.npc]
+    if not (npc and npc.map and Available(fetchID)) then
+        return nil
+    end
+    return { questID = fetchID, title = QuestTitle(fetchID), npcID = start.npc, npc = npc }
 end
 
 -- How to get a quest that starts inside its own dungeon: 'Talk to
@@ -516,21 +511,30 @@ function ns.AddQuestLines(tooltip, questIDs)
 end
 
 -- The dungeons you can enter, your level at least theirs, that still have
--- quests for you, sorted by level: { instanceID, dungeon, rows }. rows are
--- the quests not done, leaving out any your level is still too low for.
+-- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
+-- rows are the quests not done, leaving out any your level is still too low
+-- for. total counts the dungeon's quests for your faction you have not
+-- finished yet, and have the ones of them in your log.
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
     for instanceID, dungeon in pairs(ns.dungeons) do
         if level >= (dungeon.minLevel or 0) then
-            local rows = {}
+            local rows, have, total = {}, 0, 0
             for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
-                if row.state ~= DONE and level >= MinLevel(ns.quests[row.questID]) then
-                    rows[#rows + 1] = row
+                if row.state ~= DONE then
+                    total = total + 1
+                    -- Its real state: a quest that starts inside shows as in your log before you have it.
+                    if QuestState(row.questID) == IN_LOG then
+                        have = have + 1
+                    end
+                    if level >= MinLevel(ns.quests[row.questID]) then
+                        rows[#rows + 1] = row
+                    end
                 end
             end
             if #rows > 0 then
-                list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows }
+                list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
             end
         end
     end
