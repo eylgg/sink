@@ -20,6 +20,7 @@ QuestItems.lua
 Recipes.lua
 Weapons.lua
 Trainers.lua
+Professions.lua
 Errors.lua
 Quests.lua
 Splits.lua

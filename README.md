@@ -6,6 +6,7 @@ The everything WoW: Forever addon.
 - **Quest item warnings**: tooltip line and bag slot tint for quest items that are safe to delete; the tracker lists them.
 - **Recipe vendors**: vendor tooltips list the recipes sold, checked when you know them; `/sink recipes missing` lists what you still lack.
 - **Weapon and class skills**: weapon master and class trainer tooltips show what you can still learn and at what level.
+- **Profession recipes**: the Professions tab of the options window lists, for each profession you have, the trainer recipes you do not know yet and the skill each needs.
 - **Ability errors**: hides the repeating "Not enough energy" text and voice when you spam an ability.
 - **Map icons**: vendors, trainers, flight masters, dungeon entrances and quest NPCs on the world map, filtered to your faction, class and professions. Click one to target and ping the NPC.
 - **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.
@@ -45,7 +46,7 @@ Each group also answers `help`, for example `/sink map help`.
 
 ## Adding data
 
-The built-in tables sit at the top of their files: quest item rules in `QuestItems.lua`, recipe vendors in `Recipes.lua`, weapon masters in `Weapons.lua`, class skills in `Trainers.lua`, map icons in `MapPins.lua`, and dungeons, NPCs and quests in `Quests.lua`. Each file's header comment describes its format.
+The built-in tables sit at the top of their files: quest item rules in `QuestItems.lua`, recipe vendors in `Recipes.lua`, weapon masters in `Weapons.lua`, class skills in `Trainers.lua`, profession trainer recipes in `Professions.lua`, map icons in `MapPins.lua`, and dungeons, NPCs and quests in `Quests.lua`. Each file's header comment describes its format.
 
 - Stand next to an NPC and use `/sink dump target`, or stand at a place and use `/sink dump loc`. Both print a line to paste that is marked `verified = true`. The client never reports NPC positions, so the dump uses yours.
 - `/sink dump trainer` at an open trainer window prints the table entry for that weapon master or class. A class's entry has every skill with its level and price; set the window's filter to show everything first, since it only dumps what the window lists.

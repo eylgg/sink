@@ -332,6 +332,28 @@ local function DumpTarget()
     PasteLine("Map icon line for MapPins.lua", ns.MapPinLine(mapID, { npc = npcID, name = name, note = TitleFrom(lines), x = x, y = y }))
 end
 
+-- The profession skill a trainer service needs, or nil. GetTrainerServiceSkillReq
+-- gives it where the client fills it in; Forever leaves it empty, so the
+-- service's tooltip is read for its "Requires Cooking (50)" line instead.
+local function ServiceSkillReq(index)
+    local rank = GetTrainerServiceSkillReq and select(2, GetTrainerServiceSkillReq(index))
+    if tonumber(rank) and tonumber(rank) > 0 then
+        return tonumber(rank)
+    end
+    if not (C_TooltipInfo and C_TooltipInfo.GetTrainerService and ns.TooltipLineText) then
+        return nil
+    end
+    local ok, data = pcall(C_TooltipInfo.GetTrainerService, index)
+    for _, line in ipairs(ok and data and data.lines or {}) do
+        local text = ns.TooltipLineText(line)
+        local skill = text and not ns.Secret(text) and text:match("^Requires .- %((%d+)%)$")
+        if skill then
+            return tonumber(skill)
+        end
+    end
+    return nil
+end
+
 -- Every service the open trainer window lists, as its filter boxes show them,
 -- and for a weapon master the line for the table in Weapons.lua.
 local function DumpTrainer()
@@ -347,7 +369,9 @@ local function DumpTrainer()
     lines[#lines + 1] = ("trainer %s%s, %d services offered to this character (the window lists only what your class can take)")
         :format(name, npcID and (", NPC " .. npcID) or "", count)
     ns.Print(lines[1])
-    local ids, skillLines = {}, {}
+    local ids, skillLines, recipeLines = {}, {}, {}
+    local profession -- the profession a tradeskill trainer teaches, from its services' skill line
+    local tradeskill = IsTradeskillTrainer and IsTradeskillTrainer()
     for index = 1, count do
         local service, serviceType, _, reqLevel, subText, category = GetTrainerServiceInfo(index)
         local skillLine = GetTrainerServiceSkillLine and GetTrainerServiceSkillLine(index)
@@ -356,10 +380,27 @@ local function DumpTrainer()
             tostring(subText), tostring(serviceType), tostring(reqLevel), tostring(category), tostring(skillLine), tostring(spell))
         print(lines[#lines])
         if serviceType ~= "header" and not (ns.WeaponSkillID and ns.WeaponSkillID(service)) then
-            local cost = GetTrainerServiceCost and tonumber(GetTrainerServiceCost(index))
+            -- Only the first return, the price: tonumber would take the next one as its base.
+            local cost = GetTrainerServiceCost and tonumber((GetTrainerServiceCost(index)))
             skillLines[#skillLines + 1] = ("    { name = %q, level = %d, spell = %s, rank = %q, cost = %s },"):format(
                 tostring(service), tonumber(reqLevel) or 0, spell and tostring(spell) or "nil", tostring(subText or ""),
                 cost and tostring(cost) or "nil")
+        end
+        if tradeskill and serviceType ~= "header" then
+            profession = profession or skillLine
+            local skillRank = ServiceSkillReq(index)
+            local cost = GetTrainerServiceCost and tonumber((GetTrainerServiceCost(index)))
+            local fields = { ("name = %q"):format(tostring(service)), "spell = " .. (spell and tostring(spell) or "nil") }
+            if skillRank then
+                fields[#fields + 1] = "skill = " .. skillRank
+            end
+            if cost then
+                fields[#fields + 1] = "cost = " .. cost
+            end
+            if category and category ~= "" then
+                fields[#fields + 1] = ("category = %q"):format(category)
+            end
+            recipeLines[#recipeLines + 1] = "    { " .. table.concat(fields, ", ") .. " },"
         end
         local id = ns.WeaponSkillID and ns.WeaponSkillID(service)
         if id then
@@ -377,6 +418,17 @@ local function DumpTrainer()
         lines[#lines + 1] = ""
         lines[#lines + 1] = ("ns.classSkills.%s = {"):format(class or "?")
         for _, line in ipairs(skillLines) do
+            lines[#lines + 1] = line
+        end
+        lines[#lines + 1] = "}"
+    end
+    -- A profession trainer's list, as a block for ns.professionRecipes in Professions.lua.
+    if #recipeLines > 0 then
+        local key = tostring(profession or "?")
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = (key:match("^%a+$") and ("ns.professionRecipes.%s = {"):format(key)
+            or ("ns.professionRecipes[%q] = {"):format(key))
+        for _, line in ipairs(recipeLines) do
             lines[#lines + 1] = line
         end
         lines[#lines + 1] = "}"

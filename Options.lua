@@ -264,6 +264,14 @@ local PAGES = {
         end },
     },
     {
+        name = "Professions",
+        icon = "Interface\\Icons\\INV_Misc_Book_11",
+        { header = "Recipes to Learn" },
+        { build = function(page, y)
+            return ns.BuildProfessionList and ns.BuildProfessionList(page, y) or 0
+        end },
+    },
+    {
         name = "Tracker",
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
@@ -384,6 +392,9 @@ function RefreshWindow()
     refreshing = false
     if ns.RefreshSplitsList then
         ns.RefreshSplitsList()
+    end
+    if ns.RefreshProfessionList then
+        ns.RefreshProfessionList()
     end
 end
 
