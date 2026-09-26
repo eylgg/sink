@@ -8,6 +8,8 @@
 -- Its sections, each folded by clicking its header or its button, and hidden
 -- while it has nothing to list:
 --   Talents        how many talent points you have not spent, "2 unspent talents"
+--   Tracking       Find Minerals and Find Herbs, while you know one and no
+--                  tracking is on; click one to turn it on
 --   Items to Delete quest items in your bags whose quests are complete
 --                  (QuestItems.lua); click one to delete it, after a Delete /
 --                  Keep question
@@ -269,6 +271,47 @@ local function TalentLines()
     return { { block = true, text = ns.CROSS .. " " .. text, color = ns.missing } }
 end
 
+-- The gathering tracking spells: Find Minerals and Find Herbs.
+local GATHERING_TRACKING = { [2580] = true, [2383] = true }
+
+-- While no tracking spell is on, a line for each gathering one you know;
+-- clicking it turns that one on. Hunter tracks and the like count as on, so
+-- the section stays hidden while any of them is. The minimap's tracking list
+-- (C_Minimap) has them all, with the spell, its icon and whether it is on;
+-- turning one on through it is the same as casting the spell, and is not
+-- protected. Other entries in that list, such as flight masters, are not
+-- spells and do not count.
+local function TrackingLines()
+    if not (C_Minimap and C_Minimap.GetNumTrackingTypes and C_Minimap.GetTrackingInfo and C_Minimap.SetTracking) then
+        return {}
+    end
+    local choices = {}
+    for index = 1, C_Minimap.GetNumTrackingTypes() do
+        local info = C_Minimap.GetTrackingInfo(index)
+        if info and info.type == "spell" then
+            if info.active then
+                return {} -- some tracking is on already
+            end
+            if info.spellID and GATHERING_TRACKING[info.spellID] then
+                choices[#choices + 1] = { index = index, name = info.name, texture = info.texture }
+            end
+        end
+    end
+    local lines = {}
+    for i, choice in ipairs(choices) do
+        lines[#lines + 1] = { block = i == 1, color = ns.missing,
+            text = ("|T%s:14:14|t %s"):format(tostring(choice.texture), choice.name),
+            onClick = function()
+                C_Minimap.SetTracking(choice.index, true)
+            end,
+            tooltip = function(tooltip)
+                tooltip:SetText(choice.name)
+                tooltip:AddLine("Click to turn it on", ns.grey.r, ns.grey.g, ns.grey.b)
+            end }
+    end
+    return lines
+end
+
 -- A block per dungeon: its name in the dungeon teal and its level range,
 -- then its quests.
 local function DungeonLines()
@@ -344,6 +387,7 @@ end
 -- tracker" checkbox on the options window's Tracker tab.
 SECTIONS = {
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
+    { key = "tracking", title = "Tracking", option = "trackerTracking", lines = TrackingLines },
     { key = "questItems", title = "Items to Delete", option = "trackerQuestItems", lines = QuestItemLines },
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
     { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
@@ -455,7 +499,9 @@ for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "
     -- Talent points gained or spent.
     "PLAYER_TALENT_UPDATE", "TRAIT_CONFIG_UPDATED", "CHARACTER_POINTS_CHANGED",
     -- Whether you can pay for your training.
-    "PLAYER_MONEY" }) do
+    "PLAYER_MONEY",
+    -- Minimap tracking turned on or off.
+    "MINIMAP_UPDATE_TRACKING" }) do
     pcall(frame.RegisterEvent, frame, event)
 end
 frame:SetScript("OnEvent", function(_, event)

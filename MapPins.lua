@@ -55,7 +55,9 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- master in Weapons.lua so the tooltip also lists what they sell or teach. A
 -- "<Class> Trainer" note makes a class trainer; class = "PRIEST" does the same
 -- for one whose note is a title such as "High Priest". atlas draws a map
--- atlas instead of an icon texture.
+-- atlas instead of an icon texture. teachesUpTo is the highest level a
+-- trainer teaches, for a starting area's class trainer; the pin is hidden
+-- once you are past it.
 --
 -- Dungeon entrances and "Dungeon Quest" pins on quest givers are not listed
 -- here: they are built from the dungeon, NPC and quest records in Quests.lua.
@@ -88,7 +90,7 @@ ns.mapPins = {
         { npc = 267328, name = "Norzsh", note = "Junior Mining Trainer", x = 0.4053, y = 0.6814,
           icon = "Interface\\Icons\\Trade_Mining", verified = true },
         { npc = 3156, name = "Nartok", note = "Warlock Trainer", x = 0.4065, y = 0.6852,
-          icon = "Interface\\Icons\\ClassIcon_Warlock", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Warlock", teachesUpTo = 6, verified = true },
         { npc = 3171, name = "Thotar", note = "Hunter Trainer", x = 0.5185, y = 0.4349,
           icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
         { npc = 3170, name = "Kaplak", note = "Rogue Trainer", x = 0.5198, y = 0.4369,
@@ -140,7 +142,7 @@ ns.mapPins = {
         { npc = 246152, name = "Shari Stilwell", note = "Paladin Trainer", x = 0.6023, y = 0.5267,
           icon = "Interface\\Icons\\ClassIcon_Paladin", verified = true },
         { npc = 244808, name = "Aramis Hammerhand", note = "Paladin Trainer", x = 0.3109, y = 0.6639,
-          icon = "Interface\\Icons\\ClassIcon_Paladin", verified = true },
+          icon = "Interface\\Icons\\ClassIcon_Paladin", teachesUpTo = 6, verified = true },
         { npc = 2126, name = "Maximillion", note = "Warlock Trainer", x = 0.3091, y = 0.6634,
           icon = "Interface\\Icons\\ClassIcon_Warlock", verified = true },
         { npc = 2124, name = "Isabella", note = "Mage Trainer", x = 0.3093, y = 0.6606,
@@ -157,6 +159,14 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Mining", verified = true },
         { npc = 267324, name = "Margaret Weaver", note = "Junior Skinning Trainer", x = 0.3260, y = 0.6581,
           icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 276067, name = "Angus Hammerhand", note = "Blacksmith", x = 0.2116, y = 0.4572,
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 246389, name = "Hilda the Breaker", note = "Paladin Trainer", x = 0.2205, y = 0.4717,
+          icon = "Interface\\Icons\\ClassIcon_Paladin", verified = true },
+        { npc = 6289, name = "Rand Rhobart", note = "Skinner", x = 0.6559, y = 0.6003,
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 3549, name = "Shelene Rhobart", note = "Journeyman Leatherworker", x = 0.6542, y = 0.6011,
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
     },
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
@@ -349,7 +359,9 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
         { npc = 3013, name = "Komin Winterhoof", note = "Herbalism Trainer", x = 0.4996, y = 0.4039,
           icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
-        { npc = 8722, name = "Auctioneer Gullem", x = 0.3889, y = 0.5021,
+        { npc = 8722, name = "Auctioneer Gullem", note = "Auction House", x = 0.3889, y = 0.5021,
+          icon = "Interface\\Icons\\INV_Misc_Coin_01", verified = true },
+        { npc = 8674, name = "Auctioneer Stampi", note = "Auction House", x = 0.4040, y = 0.5178,
           icon = "Interface\\Icons\\INV_Misc_Coin_01", verified = true },
         { npc = 3001, name = "Brek Stonehoof", note = "Mining Trainer", x = 0.3438, y = 0.5786,
           icon = "Interface\\Icons\\Trade_Mining", verified = true },
@@ -780,8 +792,9 @@ end
 -- The pins to draw on a map. Only pins for your faction; dungeons only while
 -- "show dungeons" is on; a quest giver only while they have a quest for you,
 -- a quest objective NPC only while you still need to go there, and a turn-in
--- NPC only while a quest for them is ready (Quests.lua). Trainers are
--- filtered first: a class trainer only for your class unless "show all class
+-- NPC only while a quest for them is ready (Quests.lua); a starting area's
+-- class trainer only until you are past the level they teach up to. Trainers
+-- are filtered first: a class trainer only for your class unless "show all class
 -- trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
 -- you still have a free slot. Then of a profession's ranked trainers only one
@@ -793,10 +806,13 @@ local function PinsToShow(mapID)
     local showDungeons = not (ns.db and ns.db.showDungeons == false)
     local freeSlot = PrimaryCount() < 2
     local _, playerClass = UnitClass("player")
+    local level = UnitLevel("player") or 0
     EachPin(mapID, function(pin)
         local profession, cap, word = TrainerInfo(pin)
         if not ForMyFaction(pin, mapID) then
             return
+        elseif pin.teachesUpTo and level > pin.teachesUpTo then
+            return -- a starting area's trainer with nothing left for your level
         elseif pin.dungeon then
             if showDungeons then
                 shown[#shown + 1] = pin
@@ -1319,7 +1335,9 @@ frame:SetScript("OnEvent", function(_, event)
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then
         refreshAfterCombat = false
         Refresh()
-    elseif event == "SKILL_LINES_CHANGED" or event == "PLAYER_LEVEL_UP" or event == "QUEST_ACCEPTED"
+    elseif event == "PLAYER_LEVEL_UP" then
+        C_Timer.After(1, Refresh) -- UnitLevel still has the old level while this event runs
+    elseif event == "SKILL_LINES_CHANGED" or event == "QUEST_ACCEPTED"
         or event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
         Refresh()
     elseif event == "QUEST_LOG_UPDATE" and ObjectivesChanged() then

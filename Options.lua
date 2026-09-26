@@ -58,7 +58,7 @@ local function OnChanged(key)
         if ns.ApplyTracker then
             ns.ApplyTracker()
         end
-    elseif key == "trackerTalents" or key == "trackerQuestItems" or key == "trackerDungeons"
+    elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
         or key == "trackerClassTraining" or key == "trackerWeaponSkills" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
@@ -276,11 +276,15 @@ local PAGES = {
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
           tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
-              .. " It lists unspent talent points, quest items you can delete, the dungeons your level lets you enter that still have quests"
-              .. " for you, and the class and weapon skills you can learn now." },
+              .. " It lists unspent talent points, gathering tracking that is off, quest items you can delete,"
+              .. " the dungeons your level lets you enter that still have quests for you, and the class training"
+              .. " and weapon skills you can learn now." },
         { header = "Talents" },
         { key = "trackerTalents", label = "Show in tracker",
           tooltip = "How many talent points you have not spent. Hidden while there are none." },
+        { header = "Tracking" },
+        { key = "trackerTracking", label = "Show in tracker",
+          tooltip = "Find Minerals or Find Herbs while you know it and no tracking is on. Click it to turn it on." },
         { header = "Items to Delete" },
         { key = "trackerQuestItems", label = "Show in tracker",
           tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked first." },

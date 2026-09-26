@@ -37,6 +37,7 @@ read_globals = {
     "C_Container",
     "C_Item",
     "C_Map",
+    "C_Minimap",
     "C_QuestLog",
     "C_SkillInfo",
     "C_Spell",

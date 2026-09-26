@@ -10,7 +10,7 @@ The everything WoW: Forever addon.
 - **Ability errors**: hides the repeating "Not enough energy" text and voice when you spam an ability.
 - **Map icons**: vendors, trainers, flight masters, dungeon entrances and quest NPCs on the world map, filtered to your faction, class and professions. Click one to target and ping the NPC.
 - **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.
-- **Tracker**: a window styled like the objective tracker, listing unspent talent points, quest items to delete (click to delete), dungeons with quests left, class training with its total cost, and weapon skills you can learn.
+- **Tracker**: a window styled like the objective tracker, listing unspent talent points, gathering tracking that is off (click to turn it on), quest items to delete (click to delete), dungeons with quests left, class training with its total cost, and weapon skills you can learn.
 
 Type `/sink` or click Sink in the addon compartment to open the options window.
 

@@ -67,6 +67,7 @@ ns.defaults = {
     tracker = true,            -- show the Sink tracker window
     trackerCollapsed = false,  -- the whole tracker folded to its title
     trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
+    trackerTracking = true,    -- the Tracking section is in the tracker, while a gathering tracking is off
     trackerQuestItems = true,  -- the Quest Items section is in the tracker, while there are some to delete
     trackerDungeons = true,    -- the Dungeons section is in the tracker
     trackerClassTraining = true, -- the Class Training section is in the tracker
