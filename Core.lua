@@ -69,9 +69,9 @@ ns.defaults = {
     trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
     trackerQuestItems = true,  -- the Quest Items section is in the tracker, while there are some to delete
     trackerDungeons = true,    -- the Dungeons section is in the tracker
-    trackerClassSkills = true, -- the Class Skills section is in the tracker
+    trackerClassTraining = true, -- the Class Training section is in the tracker
     trackerWeaponSkills = true, -- the Weapon Skills section is in the tracker
-    trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classSkills", ...
+    trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classTraining", ...
     -- trackerPoint: where the tracker was dragged to, { point, relativePoint, x, y }
 }
 
@@ -246,6 +246,7 @@ local function InitSavedVariables()
         end
     end
     SinkDB.classSkills = nil -- trainer windows were once recorded here; the lists are in Trainers.lua now
+    SinkDB.trackerClassSkills = nil -- renamed trackerClassTraining
     ns.db = SinkDB
 end
 

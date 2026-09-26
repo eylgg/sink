@@ -412,11 +412,11 @@ local function DumpTrainer()
             :format(npcID, name, GetZoneText and GetZoneText() or "?", table.concat(ids, ", "))
         print(lines[#lines])
     end
-    -- A class trainer's list, as a block for ns.classSkills in Trainers.lua.
+    -- A class trainer's list, as a block for ns.classTraining in Trainers.lua.
     if #skillLines > 0 and #ids == 0 and not (IsTradeskillTrainer and IsTradeskillTrainer()) then
         local _, class = UnitClass("player")
         lines[#lines + 1] = ""
-        lines[#lines + 1] = ("ns.classSkills.%s = {"):format(class or "?")
+        lines[#lines + 1] = ("ns.classTraining.%s = {"):format(class or "?")
         for _, line in ipairs(skillLines) do
             lines[#lines + 1] = line
         end

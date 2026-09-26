@@ -1051,10 +1051,10 @@ function SinkMapPinMixin:OnMouseEnter()
     if pin.npc and ns.AddWeaponMasterLines then
         ns.AddWeaponMasterLines(GameTooltip, pin.npc)
     end
-    if pin.npc and ns.AddClassSkillLines then
+    if pin.npc and ns.AddClassTrainingLines then
         local profession = TrainerInfo(pin)
         if profession and profession.class and not profession.specialty then
-            ns.AddClassSkillLines(GameTooltip, profession.class)
+            ns.AddClassTrainingLines(GameTooltip, profession.class)
         end
     end
     if pin.taxiNode then

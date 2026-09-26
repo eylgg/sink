@@ -59,7 +59,7 @@ local function OnChanged(key)
             ns.ApplyTracker()
         end
     elseif key == "trackerTalents" or key == "trackerQuestItems" or key == "trackerDungeons"
-        or key == "trackerClassSkills" or key == "trackerWeaponSkills" then
+        or key == "trackerClassTraining" or key == "trackerWeaponSkills" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -287,8 +287,8 @@ local PAGES = {
         { header = "Dungeons" },
         { key = "trackerDungeons", label = "Show in tracker",
           tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
-        { header = "Class Skills" },
-        { key = "trackerClassSkills", label = "Show in tracker",
+        { header = "Class Training" },
+        { key = "trackerClassTraining", label = "Show in tracker",
           tooltip = "The skills your class trainer can teach you now, and what they cost together." },
         { header = "Weapon Skills" },
         { key = "trackerWeaponSkills", label = "Show in tracker",

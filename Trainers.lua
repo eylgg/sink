@@ -1,14 +1,14 @@
 --------------------------------------------------------------------------------
 -- Sink / Trainers.lua
 --
--- Class skills: what your class trainer teaches, which of it you can learn
+-- Class training: what your class trainer teaches, which of it you can learn
 -- now, and what comes next. Hover your class's trainer, or their map icon,
 -- and the tooltip lists each skill you have not learned and can learn now
 -- (red cross), then a blank line and "Next Skills (Level N)" with the skills
 -- at the next level that has any, in white.
 --
 -- What a trainer teaches has no API outside the trainer window, so it is
--- built into the addon: ns.classSkills below, one list per class, pasted from
+-- built into the addon: ns.classTraining below, one list per class, pasted from
 -- "/sink dump trainer" at that class's trainer. Nothing is saved from the
 -- window in game. Each skill has its name, level, spell ID, rank and cost.
 -- With the spell ID, IsPlayerSpell says whether you know the skill at any
@@ -27,9 +27,9 @@ local _, ns = ...
 -- character who does not know it yet, such as the starting area's trainer.
 -- rank is the trainer's text for it, "" for none; only "Rank N" is shown. A
 -- skill without a rank gets the spell's subtext.
-ns.classSkills = {}
+ns.classTraining = {}
 
-ns.classSkills.PALADIN = {
+ns.classTraining.PALADIN = {
     { name = "Devotion Aura", level = 1, spell = 465, rank = "Rank 1", cost = 10 },
     { name = "Blessing of Might", level = 4, spell = 19740, rank = "Rank 1", cost = 100 },
     { name = "Judgement", level = 4, spell = 20271, rank = "", cost = 100 },
@@ -184,7 +184,7 @@ ns.classSkills.PALADIN = {
     { name = "Seal of Light", level = 60, spell = 20349, rank = "Rank 4", cost = 46000 },
 }
 
-ns.classSkills.WARLOCK = {
+ns.classTraining.WARLOCK = {
     { name = "Immolate", level = 1, spell = 348, rank = "Rank 1", cost = 10 },
     { name = "Corruption", level = 4, spell = 172, rank = "Rank 1", cost = 100 },
     { name = "Curse of Weakness", level = 4, spell = 702, rank = "Rank 1", cost = 100 },
@@ -344,7 +344,7 @@ local CROSS = ns.CROSS
 -- copies of the class's list, so filling in a rank leaves the list alone.
 local function Skills(class)
     local list = {}
-    for _, entry in ipairs(ns.classSkills[class] or {}) do
+    for _, entry in ipairs(ns.classTraining[class] or {}) do
         local skill = {}
         for k, v in pairs(entry) do
             skill[k] = v
@@ -408,7 +408,7 @@ end
 -- Your class's skills you can learn now, as the trainer tooltip lists them:
 -- "Holy Light (Rank 2)". The Sink tracker shows them. Empty until the class
 -- has a built-in list or its trainer's window has been opened once.
-function ns.ClassSkillsToLearn()
+function ns.ClassTrainingToLearn()
     local _, class = UnitClass("player")
     local list = {}
     for _, skill in ipairs(Learnable(Skills(class))) do
@@ -435,14 +435,14 @@ end
 
 -- Lines for a trainer of class: the skills you can learn now, then the next
 -- level's. Only for your own class. Returns true when lines were added.
-local function AddClassSkillLines(tooltip, class)
+local function AddClassTrainingLines(tooltip, class)
     local _, playerClass = UnitClass("player")
     if not class or class ~= playerClass then
         return false
     end
     local skills = Skills(class)
     if #skills == 0 then
-        return false -- no list for this class in ns.classSkills yet
+        return false -- no list for this class in ns.classTraining yet
     end
     local learnable, nextLevel = Learnable(skills)
     for _, skill in ipairs(learnable) do
@@ -459,7 +459,7 @@ local function AddClassSkillLines(tooltip, class)
     end
     return true
 end
-ns.AddClassSkillLines = AddClassSkillLines
+ns.AddClassTrainingLines = AddClassTrainingLines
 
 -- Hovering a class trainer who has a map pin.
 local function AddUnitTooltipLines(tooltip, data)
@@ -474,7 +474,7 @@ local function AddUnitTooltipLines(tooltip, data)
     local npcID = ns.NPCIDFromGUID and ns.NPCIDFromGUID(guid)
     local class = npcID and ns.ClassTrainerClass and ns.ClassTrainerClass(npcID)
     if class then
-        AddClassSkillLines(tooltip, class)
+        AddClassTrainingLines(tooltip, class)
     end
 end
 
@@ -487,7 +487,7 @@ end
 --------------------------------------------------------------------------------
 
 -- The spell a trainer service teaches, from its tooltip data, or nil.
--- Dump.lua puts it in the lines it prints for ns.classSkills.
+-- Dump.lua puts it in the lines it prints for ns.classTraining.
 local function ServiceSpell(index)
     if not (C_TooltipInfo and C_TooltipInfo.GetTrainerService) then
         return nil

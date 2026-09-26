@@ -14,7 +14,7 @@
 --   Dungeons       every dungeon your level lets you enter that still has
 --                  quests for you (Quests.lua), each quest with the same
 --                  marks as the map tooltips
---   Class Skills   what your class trainer can teach you now, and the cost
+--   Class Training what your class trainer can teach you now, and the cost
 --                  of it all, red when you cannot afford it (Trainers.lua)
 --   Weapon Skills  what a weapon master can teach you now, and in which
 --                  city (Weapons.lua)
@@ -311,12 +311,12 @@ local function Money(copper)
     return ("%dg %ds %dc"):format(math.floor(copper / 10000), math.floor(copper % 10000 / 100), copper % 100)
 end
 
--- One block of the class skills you can learn now, then what they cost
+-- One block of the class training you can learn now, then what they cost
 -- together: white when you can pay it, red when you cannot. Skills without
 -- a price add nothing, and with none priced there is no cost line.
-local function ClassSkillLines()
+local function ClassTrainingLines()
     local lines = {}
-    for i, name in ipairs(ns.ClassSkillsToLearn and ns.ClassSkillsToLearn() or {}) do
+    for i, name in ipairs(ns.ClassTrainingToLearn and ns.ClassTrainingToLearn() or {}) do
         lines[#lines + 1] = { block = i == 1, text = ns.CROSS .. " " .. name, color = ns.missing }
     end
     if #lines > 0 and ns.ClassTrainingCost then
@@ -346,7 +346,7 @@ SECTIONS = {
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
     { key = "questItems", title = "Items to Delete", option = "trackerQuestItems", lines = QuestItemLines },
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
-    { key = "classSkills", title = "Class Skills", option = "trackerClassSkills", lines = ClassSkillLines },
+    { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
     { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },
 }
 
