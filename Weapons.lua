@@ -27,7 +27,9 @@ local _, ns = ...
 -- by both the vanilla name and the later one, so both are matched. level is
 -- the character level the trainer asks for, where known; the trainer window
 -- records the others as you visit. cost is the trainer's price in copper,
--- where known; "/sink dump trainer" at a weapon master shows it.
+-- where known; "/sink dump trainer" at a weapon master shows it. A weapon
+-- master's skill with no level requirement and no cost here is taken to cost
+-- 10s, as every one seen so far has.
 --
 -- Fist weapons are the odd one. Weapon masters offer them, but on Forever
 -- the rank is kept under the Unarmed skill every character has, so the
@@ -408,6 +410,21 @@ local function OnTrainerShow()
     end
 end
 
+-- What a skill costs at the trainer, in copper, or nil when not known: the
+-- price in the table, else 10s for a weapon master's skill with no level
+-- requirement.
+local SKILL_WITHOUT_LEVEL_COST = 1000
+
+local function SkillCost(skill)
+    if skill.cost then
+        return skill.cost
+    end
+    if not skill.classTrainer and SkillLevel(skill) == 0 then
+        return SKILL_WITHOUT_LEVEL_COST
+    end
+    return nil
+end
+
 -- Where to learn a skill: "class trainer", or the cities with a master on
 -- your side who teaches it.
 local function WhereToLearn(skill)
@@ -425,7 +442,7 @@ function ns.WeaponSkillsToLearn()
     local list = {}
     for _, row in ipairs(SortedRows(ns.weaponSkills)) do
         if row.group == MISSING and SkillLevel(row.skill) <= level then
-            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill), cost = row.skill.cost }
+            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill), cost = SkillCost(row.skill) }
         end
     end
     return list
