@@ -64,6 +64,7 @@ read_globals = {
     "DeleteCursorItem",
     "GetAddOnMetadata",
     "GetGameMessageInfo",
+    "GetInstanceInfo",
     "GetMerchantItemID",
     "GetMerchantItemLink",
     "GetMerchantNumItems",

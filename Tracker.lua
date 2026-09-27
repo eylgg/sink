@@ -7,6 +7,8 @@
 --
 -- Its sections, each folded by clicking its header or its button, and hidden
 -- while it has nothing to list:
+--   Current Dungeon the dungeon you are in, if Sink knows it: each boss ticked
+--                  off as it dies, and your quests there with their objectives
 --   Talents        how many talent points you have not spent, "2 unspent talents"
 --   Tracking       Find Minerals and Find Herbs, while you know one and no
 --                  tracking is on; click one to turn it on
@@ -287,6 +289,40 @@ local function TalentLines()
     return { { block = true, text = ns.CROSS .. " " .. text, color = ns.missing } }
 end
 
+-- While you are in a dungeon Sink knows: its name and how many bosses are
+-- dead, each boss ticked off as it dies, then your quests there with their
+-- objectives as your quest log counts them.
+local function CurrentDungeonLines()
+    local here = ns.CurrentDungeon and ns.CurrentDungeon()
+    if not here then
+        return {}
+    end
+    local dead = 0
+    for _, boss in ipairs(here.bosses) do
+        if boss.dead then
+            dead = dead + 1
+        end
+    end
+    local count = #here.bosses > 0 and (" %s(%d/%d Bosses)|r"):format(ns.grey.hex, dead, #here.bosses) or ""
+    local lines = { { block = true, color = ns.dungeonColor, text = here.name .. count } }
+    for _, boss in ipairs(here.bosses) do
+        lines[#lines + 1] = boss.dead and { text = ns.CHECK .. " " .. boss.name, color = ns.known }
+            or { text = ns.CROSS .. " " .. boss.name, color = ns.missing }
+    end
+    for i, quest in ipairs(here.quests) do
+        local text, color = ns.QuestRowText(quest.row)
+        lines[#lines + 1] = { block = i == 1, text = text, color = color }
+        -- Each objective under its quest: white while open, green once done.
+        for _, objective in ipairs(quest.objectives) do
+            if objective.text and objective.text ~= "" then
+                lines[#lines + 1] = { text = "      " .. objective.text,
+                    color = objective.finished and ns.known or { r = 0.8, g = 0.8, b = 0.8 } }
+            end
+        end
+    end
+    return lines
+end
+
 -- The gathering tracking spells: Find Minerals and Find Herbs.
 local GATHERING_TRACKING = { [2580] = true, [2383] = true }
 
@@ -331,8 +367,8 @@ end
 -- A block per dungeon: "[13-18] Ragefire Chasm (2/4 Quests)", the level range
 -- first as the quest log has it and coloured for your level (Quests.lua),
 -- the name in the dungeon teal, and of its
--- quests for your faction not finished yet, how many are in your log; then
--- the quests left.
+-- quests for your faction not finished yet, how many are in your log or start
+-- inside; then the quests left.
 local function DungeonLines()
     local lines = {}
     for _, entry in ipairs(ns.DungeonsToDo and ns.DungeonsToDo() or {}) do
@@ -467,6 +503,7 @@ end
 -- option is the setting that puts the section in the tracker, a "Show in
 -- tracker" checkbox on the options window's Tracker tab.
 SECTIONS = {
+    { key = "currentDungeon", title = "Current Dungeon", option = "trackerCurrentDungeon", lines = CurrentDungeonLines },
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
     { key = "tracking", title = "Tracking", option = "trackerTracking", lines = TrackingLines },
     { key = "questItems", title = "Items to Delete", option = "trackerQuestItems", lines = QuestItemLines },
@@ -582,7 +619,9 @@ for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "
     -- Whether you can pay for your training.
     "PLAYER_MONEY",
     -- Minimap tracking turned on or off.
-    "MINIMAP_UPDATE_TRACKING" }) do
+    "MINIMAP_UPDATE_TRACKING",
+    -- Entering or leaving a dungeon, and its bosses dying, for Current Dungeon.
+    "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "ENCOUNTER_END" }) do
     pcall(frame.RegisterEvent, frame, event)
 end
 frame:SetScript("OnEvent", function(_, event)

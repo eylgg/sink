@@ -68,7 +68,7 @@ local function OnChanged(key)
             ns.ApplyTracker()
         end
     elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
-        or key == "trackerClassTraining" or key == "trackerWeaponSkills" then
+        or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -279,27 +279,29 @@ local PAGES = {
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
           tooltip = "A window like the objective tracker, titled Sink, that you can drag by its title."
-              .. " It lists unspent talent points, gathering tracking that is off, quest items you can delete,"
+              .. " It lists the dungeon you are in, unspent talent points, gathering tracking that is off, quest"
+              .. " items you can delete,"
               .. " the dungeons your level lets you enter that still have quests for you, and the class training"
               .. " and weapon skills you can learn now." },
-        { header = "Talents" },
-        { key = "trackerTalents", label = "Show in tracker",
-          tooltip = "How many talent points you have not spent. Hidden while there are none." },
-        { header = "Tracking" },
-        { key = "trackerTracking", label = "Show in tracker",
-          tooltip = "Find Minerals or Find Herbs while you know it and no tracking is on. Click it to turn it on." },
-        { header = "Items to Delete" },
-        { key = "trackerQuestItems", label = "Show in tracker",
-          tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked first." },
-        { header = "Dungeons" },
-        { key = "trackerDungeons", label = "Show in tracker",
-          tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
-        { header = "Class Training" },
-        { key = "trackerClassTraining", label = "Show in tracker",
-          tooltip = "The skills your class trainer can teach you now, and what they cost together." },
-        { header = "Weapon Skills" },
-        { key = "trackerWeaponSkills", label = "Show in tracker",
-          tooltip = "The weapon skills your class can learn now, and the cities that teach them." },
+        { header = "Show in the Tracker" },
+        { grid = {
+            { key = "trackerCurrentDungeon", label = "Current dungeon",
+              tooltip = "While you are in a dungeon Sink knows: each boss ticked off as it dies, and your"
+                  .. " quests there with their objectives." },
+            { key = "trackerTalents", label = "Talents",
+              tooltip = "How many talent points you have not spent. Hidden while there are none." },
+            { key = "trackerTracking", label = "Tracking",
+              tooltip = "Find Minerals or Find Herbs while you know it and no tracking is on. Click it to turn it on." },
+            { key = "trackerQuestItems", label = "Items to delete",
+              tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked"
+                  .. " first." },
+            { key = "trackerDungeons", label = "Dungeons",
+              tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
+            { key = "trackerClassTraining", label = "Class training",
+              tooltip = "The skills your class trainer can teach you now, and what they cost together." },
+            { key = "trackerWeaponSkills", label = "Weapon skills",
+              tooltip = "The weapon skills your class can learn now, and the cities that teach them." },
+        } },
     },
     {
         name = "Ignored",
@@ -393,16 +395,23 @@ local KIND_TOOLTIPS = {
     showOtherPins = "Everything else: vendors such as fishing suppliers and quartermasters, and icons you added.",
 }
 
--- A checkbox for each kind of map icon (ns.PIN_KINDS, MapPins.lua), two to a
--- row. Returns the height used.
-local function KindCheckboxes(page, y)
-    local kinds = ns.PIN_KINDS or {}
-    for i, kind in ipairs(kinds) do
+-- Checkboxes two to a row, { key, label, tooltip } each; returns the height
+-- used. KindCheckboxes makes one for each kind of map icon (ns.PIN_KINDS,
+-- MapPins.lua).
+local function Grid(page, y, items)
+    for i, item in ipairs(items) do
         local row, column = math.floor((i - 1) / 2), (i - 1) % 2
-        Checkbox(page, { key = kind.key, label = kind.label, tooltip = KIND_TOOLTIPS[kind.key] or kind.label },
-            y + row * 28, column * 190)
+        Checkbox(page, item, y + row * 28, column * 190)
     end
-    return math.ceil(#kinds / 2) * 28
+    return math.ceil(#items / 2) * 28
+end
+
+local function KindCheckboxes(page, y)
+    local items = {}
+    for _, kind in ipairs(ns.PIN_KINDS or {}) do
+        items[#items + 1] = { key = kind.key, label = kind.label, tooltip = KIND_TOOLTIPS[kind.key] or kind.label }
+    end
+    return Grid(page, y, items)
 end
 
 local function BuildPage(frame, definition)
@@ -418,6 +427,8 @@ local function BuildPage(frame, definition)
             y = y + item.build(page, y)
         elseif item.kinds then
             y = y + KindCheckboxes(page, y)
+        elseif item.grid then
+            y = y + Grid(page, y, item.grid)
         elseif item.range then
             y = y + Slider(page, item, y)
         else

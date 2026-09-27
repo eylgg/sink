@@ -81,6 +81,131 @@ ns.dungeons = {
         verified = true },
 }
 
+-- Each dungeon's bosses in order, from the game's DungeonEncounter table: by
+-- instance ID, then by the difficulty GetInstanceInfo reports (0 is any), a
+-- list of { id, name }. id is the encounter ID ENCOUNTER_END gives when the
+-- boss dies. Blackfathom Deeps has three versions.
+ns.dungeonBosses = {
+    [48] = { -- Blackfathom Deeps
+        [1] = {
+            { id = 2916, name = "Ghamoo-ra" },
+            { id = 2915, name = "Lady Sarevess" },
+            { id = 2914, name = "Geilhast" },
+            { id = 2913, name = "Lorgus Jett" },
+            { id = 2912, name = "Old Serra'kis" },
+            { id = 2911, name = "Twilight Lord Kelris" },
+            { id = 2910, name = "Aku'mai" },
+        },
+        [198] = {
+            { id = 2694, name = "Baron Aquanis" },
+            { id = 2697, name = "Ghamoo-ra" },
+            { id = 2699, name = "Lady Sarevess" },
+            { id = 2704, name = "Gelihast" },
+            { id = 2710, name = "Lorgus Jett" },
+            { id = 2825, name = "Twilight Lord Kelris" },
+            { id = 2891, name = "Aku'mai" },
+        },
+        [201] = {
+            { id = 2761, name = "Ghamoo-ra" },
+            { id = 2762, name = "Lady Sarevess" },
+            { id = 2763, name = "Geilhast" },
+            { id = 2764, name = "Lorgus Jett" },
+            { id = 2765, name = "Old Serra'kis" },
+            { id = 2766, name = "Twilight Lord Kelris" },
+            { id = 2767, name = "Aku'mai" },
+        },
+    },
+    [36] = { -- Deadmines
+        [0] = {
+            { id = 2741, name = "Rhahk'Zor" },
+            { id = 2742, name = "Sneed" },
+            { id = 2743, name = "Gilnid" },
+            { id = 2744, name = "Captain Greenskin" },
+            { id = 2745, name = "Mr. Smite" },
+            { id = 2746, name = "Cookie" },
+            { id = 2747, name = "Edwin VanCleef" },
+        },
+    },
+    [2998] = { -- Excavation Site: Wetlands
+        [0] = {
+            { id = 3480, name = "Saltspine" },
+            { id = 3481, name = "Shadetooth" },
+            { id = 3644, name = "Highland Horror" },
+            { id = 3482, name = "Relic Guardian" },
+        },
+    },
+    [389] = { -- Ragefire Chasm
+        [0] = {
+            { id = 2732, name = "Oggleflint" },
+            { id = 2733, name = "Taragaman the Hungerer" },
+            { id = 2734, name = "Jergosh the Invoker" },
+            { id = 2735, name = "Bazzalan" },
+        },
+    },
+    [47] = { -- Razorfen Kraul
+        [0] = {
+            { id = 2773, name = "Roogug" },
+            { id = 2774, name = "Aggem Thorncurse" },
+            { id = 2775, name = "Death Speaker Jargba" },
+            { id = 2776, name = "Overlord Ramtusk" },
+            { id = 2777, name = "Agathelos the Raging" },
+            { id = 2778, name = "Charlga Razorflank" },
+        },
+    },
+    [2999] = { -- Ruins of Lordaeron
+        [0] = {
+            { id = 3353, name = "Witherfang" },
+            { id = 3357, name = "The Abandoned" },
+            { id = 3355, name = "The Butcher" },
+            { id = 3354, name = "Rath'mael" },
+            { id = 3408, name = "Lordaeron Captain" },
+            { id = 3411, name = "Viktor the Vile" },
+            { id = 3412, name = "Bjork" },
+        },
+    },
+    [33] = { -- Shadowfang Keep
+        [0] = {
+            { id = 2748, name = "Rethilgore" },
+            { id = 2749, name = "Razorclaw the Butcher" },
+            { id = 2750, name = "Baron Silverlaine" },
+            { id = 2751, name = "Commander Springvale" },
+            { id = 2752, name = "Odo the Blindwatcher" },
+            { id = 2753, name = "Fenrus the Devourer" },
+            { id = 2754, name = "Wolf Master Nandos" },
+            { id = 2755, name = "Archmage Arugal" },
+        },
+    },
+    [34] = { -- Stormwind Stockade
+        [0] = {
+            { id = 2756, name = "Targorr the Dread" },
+            { id = 2757, name = "Kam Deepfury" },
+            { id = 2758, name = "Hamhock" },
+            { id = 2759, name = "Dextren Ward" },
+            { id = 2760, name = "Bazil Thredd" },
+        },
+    },
+    [3065] = { -- The Hall of Thanes
+        [0] = {
+            { id = 3493, name = "Faldrim Anvilmar" },
+            { id = 3495, name = "Infurnus" },
+            { id = 3494, name = "Plunder" },
+            { id = 3496, name = "Durgen Dirgehammer" },
+        },
+    },
+    [43] = { -- Wailing Caverns
+        [0] = {
+            { id = 585, name = "Lady Anacondra" },
+            { id = 586, name = "Lord Cobrahn" },
+            { id = 587, name = "Kresh" },
+            { id = 588, name = "Lord Pythas" },
+            { id = 589, name = "Skum" },
+            { id = 590, name = "Lord Serpentis" },
+            { id = 591, name = "Verdan the Everliving" },
+            { id = 592, name = "Mutanus the Devourer" },
+        },
+    },
+}
+
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
 -- verified = true once that position was taken in game (see MapPins.lua);
 -- one inside a dungeon has its instance ID.
@@ -689,6 +814,73 @@ function ns.AddQuestLines(tooltip, questIDs)
     end
 end
 
+--------------------------------------------------------------------------------
+-- The dungeon you are in: its bosses, which are dead, and your quests there
+--------------------------------------------------------------------------------
+
+local killed = {}       -- encounter ID -> true, for the dungeon below
+local killedIn          -- the instance ID the kills are for
+
+-- Bosses die in ENCOUNTER_END. The kills are kept while you are in or return
+-- to the same dungeon, as after a corpse run, and start over in another.
+local function OnEnterWorld()
+    local _, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
+    if instanceType == "party" and instanceID ~= killedIn then
+        killedIn = instanceID
+        wipe(killed)
+    end
+end
+
+local function OnEncounterEnd(encounterID, success)
+    if success == 1 and encounterID and not ns.Secret(encounterID) then
+        killed[encounterID] = true
+    end
+end
+
+-- The dungeon you are in, or nil outside one Sink has bosses or quests for:
+-- { name, dungeon, bosses = { { name, dead } }, quests = { { row, objectives } } }.
+-- quests are the dungeon's quests in your log, with the objectives your quest
+-- log gives, and the ones that start inside ("Kill "The Baron" inside").
+function ns.CurrentDungeon()
+    local name, instanceType, difficultyID, _, _, _, _, instanceID = GetInstanceInfo()
+    if instanceType ~= "party" or not instanceID then
+        return nil
+    end
+    local dungeon, lists = ns.dungeons[instanceID], ns.dungeonBosses[instanceID]
+    if not (dungeon or lists) then
+        return nil
+    end
+    local bosses = {}
+    local list = lists and (lists[difficultyID] or lists[0] or select(2, next(lists)))
+    for _, boss in ipairs(list or {}) do
+        bosses[#bosses + 1] = { name = boss.name, dead = killed[boss.id] == true }
+    end
+    local quests = {}
+    for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
+        if row.state == IN_LOG then
+            local objectives
+            if QuestState(row.questID) == IN_LOG and C_QuestLog.GetQuestObjectives then
+                objectives = C_QuestLog.GetQuestObjectives(row.questID)
+            end
+            quests[#quests + 1] = { row = row, objectives = objectives or {} }
+        end
+    end
+    return { name = dungeon and dungeon.name or name, dungeon = dungeon, bosses = bosses, quests = quests }
+end
+
+do
+    local frame = CreateFrame("Frame")
+    frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    pcall(frame.RegisterEvent, frame, "ENCOUNTER_END") -- see Core.lua
+    frame:SetScript("OnEvent", function(_, event, encounterID, _, _, _, success)
+        if event == "ENCOUNTER_END" then
+            OnEncounterEnd(encounterID, success)
+        else
+            OnEnterWorld()
+        end
+    end)
+end
+
 -- A dungeon's level range coloured as the quest log colours a quest of the
 -- range's middle level: GetQuestDifficultyColor, the game's own rule. Red 5
 -- or more levels above you, orange 3 to 4, yellow within 2, green below that
@@ -728,7 +920,8 @@ end
 -- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
 -- rows are the quests not done; ones your level is still too low for come
 -- last, with needsLevel set. total counts the dungeon's quests for your
--- faction you have not finished yet, and have the ones of them in your log.
+-- faction you have not finished yet, and have the ones of them in your log or
+-- that start inside the dungeon.
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
@@ -738,8 +931,9 @@ function ns.DungeonsToDo()
             for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
                 if row.state ~= DONE then
                     total = total + 1
-                    -- Its real state: a quest that starts inside shows as in your log before you have it.
-                    if QuestState(row.questID) == IN_LOG then
+                    -- In your log, or one that starts inside the dungeon: that one is
+                    -- yellow before you have it, and counts as yours as it looks.
+                    if row.state == IN_LOG then
                         have = have + 1
                     end
                     -- One your level is too low for is listed after the rest, with the level it needs.
