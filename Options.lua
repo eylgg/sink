@@ -392,6 +392,8 @@ local KIND_TOOLTIPS = {
     showQuestNPCs = "Quest givers while they have a quest for you, and the NPCs a quest sends you to or"
         .. " that take it in.",
     showTravel = "Zeppelins, boats and teleporters, titled for where they take you.",
+    showEntrances = "Cave and crypt entrances, such as the Entrance to Crypts in Tirisfal Glades.",
+    showEliteQuests = "Elites that drop an item starting a quest, shown until you have done that quest.",
     showOtherPins = "Everything else: vendors such as fishing suppliers and quartermasters, and icons you added.",
 }
 

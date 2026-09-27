@@ -58,6 +58,8 @@ ns.defaults = {
     showBooks = true,
     showQuestNPCs = true,
     showTravel = true,         -- zeppelins, boats and teleporters
+    showEntrances = true,      -- cave and crypt entrances
+    showEliteQuests = true,    -- elites that drop an item starting a quest, until that quest is done
     showOtherPins = true,      -- vendors and anything else
     knownFlightPaths = {},     -- flight paths seen at a flight master: [player GUID] = { [nodeID] = true }
 

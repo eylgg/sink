@@ -181,6 +181,14 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
         { npc = 3549, name = "Shelene Rhobart", note = "Journeyman Leatherworker", x = 0.6542, y = 0.6011,
           icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        -- Caves and crypts, titled "Entrance to ...": open to both factions.
+        { name = "Entrance to Crypts", x = 0.1291, y = 0.6572, faction = "Both",
+          atlas = "caveunderground-down", verified = true },
+        -- Elites that drop an item starting a quest: shown until that quest is done
+        -- (eliteQuest). item is what drops, quest what it starts, hint where to look.
+        { npc = 260396, name = "Whispering Horror", note = "Elite", x = 0.0870, y = 0.6005, faction = "Both",
+          eliteQuest = true, item = 268812, itemName = "Whispering Horror Residue", quest = 95328,
+          questName = "Whispering Horror Residue", hint = "Inside Crypt", atlas = "vignettekillelite", verified = true },
     },
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
@@ -1456,6 +1464,8 @@ ns.PIN_KINDS = {
     { key = "showDungeons", label = "Dungeons" },
     { key = "showQuestNPCs", label = "Quest NPCs" },
     { key = "showTravel", label = "Travel" },
+    { key = "showEntrances", label = "Entrances" },
+    { key = "showEliteQuests", label = "Elite quests" },
     { key = "showOtherPins", label = "Vendors" },
 }
 
@@ -1473,6 +1483,8 @@ local NOTE_KINDS = {
 local function PinKind(pin, profession)
     if pin.dungeon then
         return "showDungeons"
+    elseif pin.eliteQuest then
+        return "showEliteQuests"
     elseif pin.questGiver or pin.questObjective or pin.questFinish then
         return "showQuestNPCs"
     elseif profession then
@@ -1480,10 +1492,13 @@ local function PinKind(pin, profession)
     elseif profession == false then
         return "showProfessionTrainers"
     end
-    -- Zeppelins, boats and teleporters are titled for where they take you.
+    -- Zeppelins, boats and teleporters are titled for where they take you,
+    -- cave and crypt entrances for what they lead into.
     local title = pin.note or pin.name or ""
     if title:find("^Zeppelin to ") or title:find("^Boat to ") or title:find("^Teleport to ") then
         return "showTravel"
+    elseif title:find("^Entrance to ") then
+        return "showEntrances" -- caves and crypts
     end
     return NOTE_KINDS[pin.note or ""] or "showOtherPins"
 end
@@ -1511,6 +1526,8 @@ local function PinsToShow(mapID)
             return
         elseif ns.db and ns.db[PinKind(pin, profession)] == false then
             return -- its kind is switched off
+        elseif pin.eliteQuest and pin.quest and C_QuestLog.IsQuestFlaggedCompleted(pin.quest) then
+            return -- an elite whose quest you have done
         elseif pin.teachesUpTo and level > pin.teachesUpTo then
             return -- a starting area's trainer with nothing left for your level
         elseif pin.dungeon then
@@ -1776,6 +1793,22 @@ function SinkMapPinMixin:OnMouseEnter()
         local profession = TrainerInfo(pin)
         if profession and profession.class and not profession.specialty then
             ns.AddClassTrainingLines(GameTooltip, profession.class)
+        end
+    end
+    -- An elite with a quest: where to look, then what it drops and the quest
+    -- that starts, its name in the yellow of quest links.
+    if pin.eliteQuest then
+        GameTooltip:AddLine(pin.name, 1, 1, 1)
+        if pin.hint then
+            GameTooltip:AddLine(pin.hint, ns.grey.r, ns.grey.g, ns.grey.b)
+        end
+        local itemName = (pin.item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(pin.item)) or pin.itemName
+        local questName = pin.quest and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(pin.quest)
+        if not questName or questName == "" then
+            questName = pin.questName or ("quest #" .. tostring(pin.quest))
+        end
+        if itemName then
+            GameTooltip:AddLine(("Drops %s, which starts |cffffff00%s|r"):format(itemName, questName), 1, 1, 1, true)
         end
     end
     if pin.taxiNode then
