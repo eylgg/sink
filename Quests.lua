@@ -668,9 +668,13 @@ local function QuestRows(questIDs)
 end
 
 -- A row as text with its mark, and its colour: red cross for not taken,
--- yellow waiting mark for in your log, green check for done.
+-- yellow waiting mark for in your log, green check for done; one your level
+-- is too low for is grey with no mark and the level it needs in front, "[15]".
 function ns.QuestRowText(row)
-    if row.state == NOT_TAKEN then
+    if row.needsLevel then
+        -- Not for you yet: plain grey, no mark, the level it asks for in front as the quest log has it.
+        return ("[%d] %s"):format(row.needsLevel, row.title), ns.grey
+    elseif row.state == NOT_TAKEN then
         return ns.CROSS .. " " .. row.title, ns.missing
     elseif row.state == IN_LOG then
         return ns.WAIT .. " " .. row.title, ns.active
@@ -722,15 +726,15 @@ end
 
 -- The dungeons you can enter, your level at least their entry level, that still have
 -- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
--- rows are the quests not done, leaving out any your level is still too low
--- for. total counts the dungeon's quests for your faction you have not
--- finished yet, and have the ones of them in your log.
+-- rows are the quests not done; ones your level is still too low for come
+-- last, with needsLevel set. total counts the dungeon's quests for your
+-- faction you have not finished yet, and have the ones of them in your log.
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
     for instanceID, dungeon in pairs(ns.dungeons) do
         if level >= (dungeon.entryLevel or dungeon.minLevel or 0) then
-            local rows, have, total = {}, 0, 0
+            local rows, later, have, total = {}, {}, 0, 0
             for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
                 if row.state ~= DONE then
                     total = total + 1
@@ -738,10 +742,24 @@ function ns.DungeonsToDo()
                     if QuestState(row.questID) == IN_LOG then
                         have = have + 1
                     end
-                    if level >= MinLevel(ns.quests[row.questID]) then
+                    -- One your level is too low for is listed after the rest, with the level it needs.
+                    local needs = MinLevel(ns.quests[row.questID])
+                    if level >= needs then
                         rows[#rows + 1] = row
+                    else
+                        row.needsLevel = needs
+                        later[#later + 1] = row
                     end
                 end
+            end
+            table.sort(later, function(a, b)
+                if a.needsLevel ~= b.needsLevel then
+                    return a.needsLevel < b.needsLevel
+                end
+                return a.title < b.title
+            end)
+            for _, row in ipairs(later) do
+                rows[#rows + 1] = row
             end
             if #rows > 0 then
                 list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }

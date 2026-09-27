@@ -271,6 +271,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
         { npc = 4611, name = "Doctor Herbert Halsey", note = "Artisan Alchemist", x = 0.4777, y = 0.7334,
           icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 14729, name = "Ralston Farnsley", note = "Horde Cloth Quartermaster", x = 0.7166, y = 0.2922,
+          icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
@@ -1856,7 +1858,7 @@ local function Install()
                 return
             end
             root:CreateDivider()
-            root:CreateTitle("Sink")
+            root:CreateTitle(ns.Accent("Sink")) -- in Sink's colour, as everywhere
             Checkbox(root, "Show Sink icons", "mapIcons")
             for _, kind in ipairs(ns.PIN_KINDS) do
                 Checkbox(root, kind.label, kind.key)
