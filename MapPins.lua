@@ -1111,7 +1111,7 @@ local function QuestPins(mapID)
         for instanceID, dungeon in pairs(ns.dungeons or {}) do
             -- A dungeon whose entrance is not recorded yet has no pin.
             if dungeon.map then
-                add(dungeon.map, { name = dungeon.name, dungeon = true, minLevel = dungeon.minLevel,
+                add(dungeon.map, { name = dungeon.name, dungeon = true, dungeonID = instanceID, minLevel = dungeon.minLevel,
                     maxLevel = dungeon.maxLevel, entryLevel = dungeon.entryLevel, x = dungeon.x, y = dungeon.y, atlas = "Dungeon",
                     questIDs = ns.QuestsForDungeon(instanceID) })
             end
@@ -1729,9 +1729,10 @@ local function Pulse(pinFrame)
     end)
 end
 
--- Open the world map where an NPC stands and make their pin pulse. The
--- Sink tracker calls it when you click a red quest.
-local function ShowNPC(npcID, npc)
+-- Open the world map at a place and make its pin pulse: place is { map, x, y }
+-- with npcID for an NPC's pin or dungeonID for a dungeon's (Quests.lua,
+-- ns.QuestNextStep). The Sink tracker calls it when you click a quest.
+local function ShowPlace(place)
     local map = provider and provider:GetMap()
     if not map then
         return
@@ -1744,17 +1745,18 @@ local function ShowNPC(npcID, npc)
         end
         ShowUIPanel(map)
     end
-    map:SetMapID((ZonePosition(npc.map, npc.x, npc.y)))
+    map:SetMapID((ZonePosition(place.map, place.x, place.y)))
     -- The new map's pins are drawn a moment after it opens or changes; look then.
     C_Timer.After(0.1, function()
         for pinFrame in map:EnumeratePinsByTemplate(TEMPLATE) do
-            if pinFrame.pin and pinFrame.pin.npc == npcID then
+            local pin = pinFrame.pin
+            if pin and ((place.npcID and pin.npc == place.npcID) or (place.dungeonID and pin.dungeonID == place.dungeonID)) then
                 Pulse(pinFrame)
             end
         end
     end)
 end
-ns.ShowNPCOnMap = ShowNPC
+ns.ShowOnMap = ShowPlace
 
 function SinkMapPinMixin:OnMouseEnter()
     TintRing(self, true)

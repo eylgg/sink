@@ -669,21 +669,6 @@ function ns.HasQuestToGive(npcID)
     return false
 end
 
--- Where a quest's chain begins for you: back along after to the earliest
--- quest whose one before it is done, and that quest when an NPC gives it.
--- nil when that quest has no giver.
-local function ChainStart(questID)
-    local quest = ns.quests[questID]
-    local start = quest and quest.start or {}
-    if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
-        return ChainStart(start.after)
-    end
-    if start.npc then
-        return questID
-    end
-    return nil
-end
-
 -- Whether a quest in your log still needs you at its objective NPC. With
 -- objectives, until they are complete; a talk-to quest with none is complete
 -- as soon as it is taken, and talking to the NPC turns it in, so until then.
@@ -730,6 +715,77 @@ function ns.IsObjectiveOpen(npcID)
     return false
 end
 
+-- Where a quest's next step is, for a click in the tracker. The step is the
+-- earliest quest of its chain you still need whose record is here: Leaders of
+-- the Fang while Nara Wildmane is in your log is Nara Wildmane. Returns
+-- { questID, title, action, place, note }: action says what to do at place,
+-- place is { map, x, y, name } with npcID for an NPC or dungeonID for a
+-- dungeon entrance, note a grey line to add, or nil when nowhere is known.
+local function NPCPlace(npcID)
+    local npc = npcID and ns.npcs[npcID]
+    if npc and npc.map then
+        return { map = npc.map, x = npc.x, y = npc.y, npcID = npcID, name = npc.name }
+    end
+    return nil
+end
+
+local function DungeonPlace(instanceID)
+    local dungeon = instanceID and ns.dungeons[instanceID]
+    if dungeon and dungeon.map then
+        return { map = dungeon.map, x = dungeon.x, y = dungeon.y, dungeonID = instanceID, name = dungeon.name }
+    end
+    return nil
+end
+
+local function CurrentStep(questID)
+    local step, seen = questID, {}
+    while not seen[step] do
+        seen[step] = true
+        local quest = ns.quests[step]
+        local after = quest and quest.start and quest.start.after
+        if not (after and ns.quests[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)) then
+            break
+        end
+        step = after
+    end
+    return step
+end
+
+function ns.QuestNextStep(questID)
+    if QuestState(questID) == DONE then
+        return nil
+    end
+    local stepID = CurrentStep(questID)
+    local quest = ns.quests[stepID]
+    if not quest then
+        return nil
+    end
+    local next = { questID = stepID, title = QuestTitle(stepID) }
+    if QuestState(stepID) == IN_LOG then
+        if quest.objective and ObjectiveOpen(stepID) and NPCPlace(quest.objective.npc) then
+            next.action, next.place = "Go to", NPCPlace(quest.objective.npc)
+        elseif ReadyToTurnIn(stepID) and quest.finish and NPCPlace(quest.finish.npc) then
+            next.action, next.place = "Turn in to", NPCPlace(quest.finish.npc)
+        elseif quest.dungeon and DungeonPlace(quest.dungeon) then
+            next.action, next.place = "Do it in", DungeonPlace(quest.dungeon)
+        elseif quest.finish and NPCPlace(quest.finish.npc) then
+            next.action, next.place = "Turn in to", NPCPlace(quest.finish.npc)
+        end
+    else
+        local start = quest.start or {}
+        if NPCPlace(start.npc) then
+            next.action, next.place = "Pick it up from", NPCPlace(start.npc)
+            -- An earlier quest Sink has no record of comes first, such as quest 865 before Smart Drinks.
+            if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
+                next.note = "Needs an earlier quest first"
+            end
+        elseif quest.dungeon and DungeonPlace(quest.dungeon) then
+            next.action, next.place = "Starts inside", DungeonPlace(quest.dungeon)
+        end
+    end
+    return next.place and next or nil
+end
+
 -- A quest NPC's pin tooltip: for each quest that is theirs right now, what to
 -- do there with the quest name in the yellow of quest links, then the dungeon
 -- it is for in the dungeon teal, or "Leads to <quest> in <dungeon>" when the
@@ -759,24 +815,6 @@ function ns.AddQuestPinLines(tooltip, role, npcID)
             end
         end
     end
-end
-
--- Where to go for a quest you have not taken: { questID, title, npcID, npc },
--- the quest to pick up and the NPC who gives it, when that NPC has a place on
--- the map; else nil. For a follow-up it is the first quest of its chain you
--- still need, such as Hidden Enemies 1/5 or 2/5 from Thrall for the Ragefire
--- Chasm part. The Sink tracker shows it when you click a red quest.
-function ns.QuestToFetch(questID)
-    if QuestState(questID) ~= NOT_TAKEN then
-        return nil
-    end
-    local fetchID = ChainStart(questID)
-    local start = fetchID and ns.quests[fetchID].start
-    local npc = start and ns.npcs[start.npc]
-    if not (npc and npc.map and Available(fetchID)) then
-        return nil
-    end
-    return { questID = fetchID, title = QuestTitle(fetchID), npcID = start.npc, npc = npc }
 end
 
 -- How to get a quest that starts inside its own dungeon: 'Talk to

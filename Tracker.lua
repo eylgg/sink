@@ -392,17 +392,23 @@ local function DungeonLines()
         for _, row in ipairs(folded and {} or entry.rows) do
             local text, color = ns.QuestRowText(row)
             local line = { text = text, color = color }
-            -- A red quest, one you have not picked up: click to see its giver on the map.
-            local fetch = color == ns.missing and ns.QuestToFetch and ns.QuestToFetch(row.questID)
-            if fetch and ns.ShowNPCOnMap then
+            -- Click a quest to see its next step on the map: the giver to pick it
+            -- up from, the NPC to turn it in to, or the dungeon to do it in. For a
+            -- chain, the step you are on. Not for one your level is too low for.
+            local next = not row.needsLevel and ns.QuestNextStep and ns.QuestNextStep(row.questID)
+            if next and ns.ShowOnMap then
                 line.onClick = function()
-                    ns.ShowNPCOnMap(fetch.npcID, fetch.npc)
+                    ns.ShowOnMap(next.place)
                 end
                 line.tooltip = function(tooltip)
-                    local step = ns.QuestSeriesSuffix(fetch.questID)
-                    tooltip:SetText(fetch.title .. (step and (" " .. step) or ""))
-                    tooltip:AddLine(("Talk to \"%s\" in %s"):format(fetch.npc.name,
-                        ns.MapName and ns.MapName(fetch.npc.map) or "?"), 1, 1, 1)
+                    local step = ns.QuestSeriesSuffix(next.questID)
+                    tooltip:SetText(next.title .. (step and (" " .. step) or ""), 1, 1, 0)
+                    local where = next.place.dungeonID and (ns.dungeonColor.hex .. next.place.name .. "|r")
+                        or ("\"%s\" in %s"):format(next.place.name, ns.MapName and ns.MapName(next.place.map) or "?")
+                    tooltip:AddLine(next.action .. " " .. where, 1, 1, 1)
+                    if next.note then
+                        tooltip:AddLine(next.note, ns.grey.r, ns.grey.g, ns.grey.b)
+                    end
                     tooltip:AddLine("Click to show on the map", ns.grey.r, ns.grey.g, ns.grey.b)
                 end
             end
