@@ -39,14 +39,16 @@
 local _, ns = ...
 
 -- Dungeons by instance ID, the Map table's ID that GetInstanceInfo() returns
--- inside. minLevel and maxLevel are the recommended range, the one shown;
+-- inside. minLevel and maxLevel are the recommended range, the one shown: the
+-- game's Looking for Group range where it has been read there, as for Ruins of
+-- Lordaeron, Wailing Caverns, Deadmines, Hall of Thanes and Shadowfang Keep;
 -- entryLevel, where known, is the lowest level the game lets in, and without
 -- it minLevel counts as that. The entrance is on uiMap map at x, y; a continent map, as a dump
 -- in a cave gives, is fine, the pin goes on the zone that point is in. A
 -- dungeon without map has no pin until its entrance is recorded.
 -- verified = true once the position was taken in game (see MapPins.lua).
 ns.dungeons = {
-    [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, entryLevel = 10, map = 1458, x = 0.7261, y = 0.1148,
+    [2999] = { name = "Ruins of Lordaeron", minLevel = 15, maxLevel = 22, entryLevel = 10, map = 1458, x = 0.7261, y = 0.1148,
         verified = true },
     [389] = { name = "Ragefire Chasm", minLevel = 13, maxLevel = 18, entryLevel = 10, map = 1454, x = 0.5302, y = 0.4876,
         verified = true },
@@ -54,18 +56,18 @@ ns.dungeons = {
     -- Wowhead's Wailing Caverns page (Wowhead has no position of its own); the
     -- portal inside is at 47.7, 35.0. Unverified until checked in game.
     [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1413, x = 0.4600, y = 0.3600 },
-    -- Levels from Wowhead's Forever database; neither entrance checked in game yet.
+    -- Neither entrance checked in game yet.
     -- Deadmines: the entrance in Moonbrook, Westfall.
-    [36] = { name = "Deadmines", minLevel = 15, maxLevel = 25, map = 1436, x = 0.4250, y = 0.7170 },
+    [36] = { name = "Deadmines", minLevel = 17, maxLevel = 26, map = 1436, x = 0.4250, y = 0.7170 },
     -- The Hall of Thanes: under Ironforge, through a portal at the bottom of Old
     -- Ironforge; placed on Ironforge's spot on the Dun Morogh map, as Wowhead's guide marks it.
     -- Levels as the game's Looking for Group shows them.
     [3065] = { name = "The Hall of Thanes", minLevel = 13, maxLevel = 20, map = 1426, x = 0.5240, y = 0.3780 },
-    -- Levels from Wowhead's Forever dungeon overview. Entrances from the game's
+    -- Levels from Wowhead's Forever dungeon overview, except Shadowfang Keep's. Entrances from the game's
     -- Map table, where your corpse is sent when you die inside, converted to the
     -- zone map; checked against Ragefire Chasm and Wailing Caverns, whose
     -- entrances were taken in game.
-    [33] = { name = "Shadowfang Keep", minLevel = 22, maxLevel = 30, map = 1421, x = 0.4472, y = 0.6777 },
+    [33] = { name = "Shadowfang Keep", minLevel = 20, maxLevel = 30, map = 1421, x = 0.4472, y = 0.6777 },
     [34] = { name = "Stormwind Stockade", minLevel = 22, maxLevel = 30, map = 1453, x = 0.5035, y = 0.6618 },
     [48] = { name = "Blackfathom Deeps", minLevel = 24, maxLevel = 32, map = 1440, x = 0.1650, y = 0.1103 },
     -- Excavation Site: Wetlands is new in Forever: neither the game data nor
