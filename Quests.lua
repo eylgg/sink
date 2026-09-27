@@ -200,7 +200,7 @@ ns.quests = {
         start = { npc = 5768 }, finish = { npc = 5768 } },
     [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43,
         start = { npc = 5767 }, finish = { npc = 5767 } },
-    [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 10,
+    [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 13,
         start = { npc = 3448 }, finish = { npc = 5769 } },
     [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10,
         start = { after = 1489, npc = 5769 }, finish = { npc = 5770 } },
@@ -403,11 +403,32 @@ function ns.EachFinishNPC(fn)
     EachNPCIn(questsByFinish, fn)
 end
 
--- Whether any quest an NPC gives is for a dungeon: their pin says "Dungeon
--- Quest" then, "Quest" otherwise.
+-- Quests for a dungeon, and the quests before them in their chains: Hamuul
+-- Runetotem is not done in Wailing Caverns, but it starts the chain that ends
+-- with Leaders of the Fang, which is. Built once.
+local leadsToDungeon
+local function LeadsToDungeon(questID)
+    if not leadsToDungeon then
+        leadsToDungeon = {}
+        for id, quest in pairs(ns.quests) do
+            if quest.dungeon then
+                local step = id
+                while step and not leadsToDungeon[step] do
+                    leadsToDungeon[step] = true
+                    local record = ns.quests[step]
+                    step = record and record.start and record.start.after
+                end
+            end
+        end
+    end
+    return leadsToDungeon[questID] == true
+end
+
+-- Whether any quest an NPC gives is for a dungeon, or starts a chain that
+-- leads to one: their pin says "Dungeon Quest" then, "Quest" otherwise.
 function ns.GivesDungeonQuest(npcID)
     for _, questID in ipairs(ns.QuestsFromGiver(npcID)) do
-        if ns.quests[questID].dungeon then
+        if LeadsToDungeon(questID) then
             return true
         end
     end

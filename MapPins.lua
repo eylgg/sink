@@ -67,7 +67,7 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- Orgrimmar 1454, Thunder Bluff 1456, Zephras Isle (the Skyborne starting island) 2521,
 -- Teldrassil 1438, Darnassus 1457, Stormwind City 1453, Ironforge 1455, Dun Morogh 1426, Westfall 1436
 -- Stranglethorn Vale 1434, Swamp of Sorrows 1435, Feralas 1444, Thousand Needles 1441, Tanaris 1446
--- Riverglades 2548 and Badlands 1418.
+-- Riverglades 2548, Badlands 1418 and The Barrens 1413.
 ns.mapPins = {
     [1411] = { -- Durotar
         -- No npc, so clicking it does nothing: no target, no ping.
@@ -918,6 +918,17 @@ ns.mapPins = {
         { npc = 9356, name = "Innkeeper Shul'kar", note = "Innkeeper", x = 0.0281, y = 0.4587, faction = "Horde",
           atlas = "innkeeper", verified = true },
     },
+    [1413] = { -- The Barrens
+        -- Books lying in the world; what they are for is not known yet. item is the book's item ID.
+        { name = "Baxtan: On Destructive Magics", note = "Book", item = 208800, x = 0.6266, y = 0.3622,
+          icon = "Interface\\Icons\\INV_Misc_Book_09", verified = true },
+        -- Ratchet's shipmaster: the note is where the boat goes, the name the NPC, so clicking targets him.
+        { npc = 9558, name = "Grimble", note = "Boat to Booty Bay", x = 0.6354, y = 0.3861,
+          atlas = "flightmasterferry", verified = true },
+        -- Sells for reputation with Ratchet.
+        { npc = 265574, name = "Winklespark", note = "Ratchet Quartermaster", x = 0.6255, y = 0.3755,
+          icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
+    },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
@@ -1356,6 +1367,36 @@ end
 
 ns.KnownFlightPaths = KnownFlightPaths
 
+-- Talking to a flight master for the first time discovers it with "New flight
+-- path discovered!" and no flight map. Then the flight master nearest to you
+-- on your map is the one: it is recorded as known, the rest are left as they are.
+local function RecordDiscoveredFlightPath()
+    if not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap and C_Map.GetPlayerMapPosition) then
+        return
+    end
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+    if not position then
+        return
+    end
+    local px, py = position:GetXY()
+    local ok, nodes = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
+    local nearest, best
+    for _, node in ipairs(ok and nodes or {}) do
+        local x, y = node.position and node.position.x, node.position and node.position.y
+        if x and y then
+            local distance = (x - px) ^ 2 + (y - py) ^ 2
+            if not best or distance < best then
+                nearest, best = node, distance
+            end
+        end
+    end
+    -- Within a few percent of the map: you are standing at them.
+    if nearest and best < 0.05 ^ 2 then
+        KnownFlightPaths()[nearest.nodeID] = true
+    end
+end
+
 -- Pins for the flight masters on a zone or city map, for your faction.
 local function FlightPins(mapID)
     local pins = {}
@@ -1404,10 +1445,12 @@ ns.PIN_KINDS = {
     { key = "showBankers", label = "Bankers" },
     { key = "showAuctioneers", label = "Auctioneers" },
     { key = "showStableMasters", label = "Stable masters" },
+    { key = "showBooks", label = "Books" },
     { key = "showFlightMasters", label = "Flight masters" },
     { key = "showDungeons", label = "Dungeons" },
     { key = "showQuestNPCs", label = "Quest NPCs" },
-    { key = "showOtherPins", label = "Vendors and travel" },
+    { key = "showTravel", label = "Travel" },
+    { key = "showOtherPins", label = "Vendors" },
 }
 
 -- The setting a pin's kind is shown by. profession is what TrainerInfo gave:
@@ -1419,6 +1462,7 @@ local NOTE_KINDS = {
     ["Banker"] = "showBankers",
     ["Auction House"] = "showAuctioneers",
     ["Stable Master"] = "showStableMasters",
+    ["Book"] = "showBooks",
 }
 local function PinKind(pin, profession)
     if pin.dungeon then
@@ -1429,6 +1473,11 @@ local function PinKind(pin, profession)
         return profession.class and "showClassTrainers" or "showProfessionTrainers"
     elseif profession == false then
         return "showProfessionTrainers"
+    end
+    -- Zeppelins, boats and teleporters are titled for where they take you.
+    local title = pin.note or pin.name or ""
+    if title:find("^Zeppelin to ") or title:find("^Boat to ") or title:find("^Teleport to ") then
+        return "showTravel"
     end
     return NOTE_KINDS[pin.note or ""] or "showOtherPins"
 end
@@ -2000,10 +2049,12 @@ pcall(frame.RegisterEvent, frame, "QUEST_LOG_UPDATE")
 -- A flight master's map lists the paths you have; talking to one discovers it.
 pcall(frame.RegisterEvent, frame, "TAXIMAP_OPENED")
 pcall(frame.RegisterEvent, frame, "TAXI_NODE_STATUS_CHANGED")
+-- "New flight path discovered!" comes as an info message.
+pcall(frame.RegisterEvent, frame, "UI_INFO_MESSAGE")
 -- Combat starting: take every click button off its pin. This event comes just
 -- before the lockdown, while that is still allowed; they go back when it ends.
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
-frame:SetScript("OnEvent", function(_, event)
+frame:SetScript("OnEvent", function(_, event, ...)
     if event == "PLAYER_LOGIN" then
         Install()
     elseif event == "PLAYER_REGEN_DISABLED" then
@@ -2014,6 +2065,12 @@ frame:SetScript("OnEvent", function(_, event)
     elseif event == "TAXIMAP_OPENED" then
         RecordFlightPaths()
         Refresh()
+    elseif event == "UI_INFO_MESSAGE" then
+        local message = select(2, ...)
+        if message and ERR_NEWTAXIPATH and not ns.Secret(message) and message == ERR_NEWTAXIPATH then
+            RecordDiscoveredFlightPath()
+            Refresh()
+        end
     elseif event == "TAXI_NODE_STATUS_CHANGED" then
         Refresh()
     elseif event == "PLAYER_REGEN_ENABLED" and refreshAfterCombat then

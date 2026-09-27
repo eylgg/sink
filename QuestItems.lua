@@ -21,6 +21,8 @@ local ADDON_NAME, ns = ...
 ns.questItemRules = {
     [286176] = 99134,
     [279023] = 97891, -- Inert Potion, Prompt Potion Runner (Undercity)
+    [5165] = 905,
+    [5088] = 894,
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"

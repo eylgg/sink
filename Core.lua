@@ -55,8 +55,10 @@ ns.defaults = {
     showBankers = true,
     showAuctioneers = true,
     showStableMasters = true,
+    showBooks = true,
     showQuestNPCs = true,
-    showOtherPins = true,      -- vendors, zeppelins and anything else
+    showTravel = true,         -- zeppelins, boats and teleporters
+    showOtherPins = true,      -- vendors and anything else
     knownFlightPaths = {},     -- flight paths seen at a flight master: [player GUID] = { [nodeID] = true }
 
     -- Weapons.lua

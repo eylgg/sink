@@ -100,6 +100,7 @@ read_globals = {
     "BLACK_LISTED_MESSAGE_TYPES",
     "CLOSE",
     "DELETE",
+    "ERR_NEWTAXIPATH",
     "ITEM_SPELL_KNOWN",
     "NUM_BAG_SLOTS",
     "NUM_CHAT_WINDOWS",

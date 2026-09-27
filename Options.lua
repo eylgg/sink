@@ -382,13 +382,15 @@ local KIND_TOOLTIPS = {
     showBankers = "Bankers.",
     showAuctioneers = "Auctioneers.",
     showStableMasters = "Stable masters.",
+    showBooks = "Books lying in the world, such as Baxtan: On Destructive Magics.",
     showFlightMasters = "Flight masters for your faction on zone and city maps, grey until you have discovered"
         .. " them. Which you have is known once you open any flight master's map.",
     showDungeons = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
         .. " in your log or not taken.",
     showQuestNPCs = "Quest givers while they have a quest for you, and the NPCs a quest sends you to or"
         .. " that take it in.",
-    showOtherPins = "Everything else: vendors such as fishing suppliers, zeppelins and icons you added.",
+    showTravel = "Zeppelins, boats and teleporters, titled for where they take you.",
+    showOtherPins = "Everything else: vendors such as fishing suppliers and quartermasters, and icons you added.",
 }
 
 -- A checkbox for each kind of map icon (ns.PIN_KINDS, MapPins.lua), two to a
