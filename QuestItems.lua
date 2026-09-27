@@ -3,7 +3,7 @@
 --
 -- Marks quest items that are still in your bags after the quest that needed
 -- them is complete. Nothing pops up or prints on its own:
---   * a grey "Keep until ..." line on the item's tooltip while its quest is
+--   * a "Needed for <quest>" line on the item's tooltip while its quest is
 --     not done yet;
 --   * a red tint on the item's bag slot while it is safe to delete;
 --   * the Items to Delete section of the Sink tracker lists them, and clicking
@@ -311,7 +311,8 @@ local function AddTooltipLine(tooltip, data)
     end
     -- Once the quest is done the slot's tint and the tracker say it; nothing is added here.
     if not QuestsComplete(rule) then
-        tooltip:AddLine("Keep until " .. QuestNames(rule) .. " is complete", 0.7, 0.7, 0.7, true)
+        -- "Needed for" in grey, the quest names in the yellow of quest links.
+        tooltip:AddLine("Needed for " .. QuestNames(rule, "|cffffff00"), 0.7, 0.7, 0.7, true)
     end
 end
 
