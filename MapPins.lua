@@ -188,7 +188,11 @@ ns.mapPins = {
         -- (eliteQuest). item is what drops, quest what it starts, hint where to look.
         { npc = 260396, name = "Whispering Horror", note = "Elite", x = 0.0870, y = 0.6005, faction = "Both",
           eliteQuest = true, item = 268812, itemName = "Whispering Horror Residue", quest = 95328,
-          questName = "Whispering Horror Residue", hint = "Inside Crypt", atlas = "vignettekillelite", verified = true },
+          questName = "Whispering Horror Residue", hint = "Inside Crypt", atlas = "nameplates-icon-elite-gold",
+          verified = true },
+        -- Rares: the silver dragon, as on a rare's nameplate; elites have the gold one.
+        { npc = 10356, name = "Bayne", note = "Rare", rare = true, x = 0.4960, y = 0.5123, faction = "Both",
+          atlas = "nameplates-icon-elite-silver", verified = true },
     },
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
@@ -1466,6 +1470,7 @@ ns.PIN_KINDS = {
     { key = "showTravel", label = "Travel" },
     { key = "showEntrances", label = "Entrances" },
     { key = "showEliteQuests", label = "Elite quests" },
+    { key = "showRares", label = "Rares" },
     { key = "showOtherPins", label = "Vendors" },
 }
 
@@ -1485,6 +1490,8 @@ local function PinKind(pin, profession)
         return "showDungeons"
     elseif pin.eliteQuest then
         return "showEliteQuests"
+    elseif pin.rare then
+        return "showRares"
     elseif pin.questGiver or pin.questObjective or pin.questFinish then
         return "showQuestNPCs"
     elseif profession then

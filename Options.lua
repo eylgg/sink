@@ -393,7 +393,8 @@ local KIND_TOOLTIPS = {
         .. " that take it in.",
     showTravel = "Zeppelins, boats and teleporters, titled for where they take you.",
     showEntrances = "Cave and crypt entrances, such as the Entrance to Crypts in Tirisfal Glades.",
-    showEliteQuests = "Elites that drop an item starting a quest, shown until you have done that quest.",
+    showEliteQuests = "Elites that drop an item starting a quest, shown until you have done that quest. Gold dragon.",
+    showRares = "Rare mobs, such as Bayne in Tirisfal Glades. Silver dragon.",
     showOtherPins = "Everything else: vendors such as fishing suppliers and quartermasters, and icons you added.",
 }
 
