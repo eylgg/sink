@@ -69,6 +69,9 @@ ns.defaults = {
     weaponMasters = {},        -- masters recorded from the trainer window: [npcID] = { name = ..., skills = { id, ... } }
     weaponLevels = {},         -- level a skill needs, as a trainer window showed it: [skillID] = level
 
+    -- Professions.lua
+    reagentTooltips = true,    -- reagent tooltips list the recipes that use them, with a check or a cross
+
     -- Trainers.lua
 
     -- Splits.lua

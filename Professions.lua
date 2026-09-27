@@ -12,6 +12,11 @@
 -- one list per profession, pasted from "/sink dump trainer" at that
 -- profession's trainer. Nothing is saved from the window in game. Whether you
 -- know a recipe is asked of its spell, the same as for class training.
+--
+-- Reagents get a tooltip line for each recipe they are used in, from
+-- ns.reagents further down: checked when you know the recipe, a cross when
+-- you have the profession but not the recipe, grey when you lack the
+-- profession.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -181,6 +186,60 @@ function ns.RefreshProfessionList()
     end
     list.text:SetText(table.concat(lines, "\n"))
     list.child:SetHeight(list.text:GetStringHeight() + 4)
+end
+
+--------------------------------------------------------------------------------
+-- Reagents: which recipes an item is used for
+--------------------------------------------------------------------------------
+
+-- Reagent itemID -> the recipes that use it: { { spell, profession, recipe }, ... }.
+-- spell is the craft's spell (whether you know it is asked of it), profession
+-- the name as in SKILL_LINES, recipe the item that teaches it when a trainer
+-- does not. The recipe's name comes from its spell.
+ns.reagents = {
+    [6289] = { -- Raw Longjaw Mud Snapper
+        { spell = 7753, profession = "Cooking", recipe = 6328 }, -- Longjaw Mud Snapper
+    },
+}
+
+local function SpellName(spellID)
+    local name = C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spellID)
+    return name or ("spell #" .. spellID)
+end
+
+-- One line per recipe that uses the item: green check when you know it, red
+-- cross when you have the profession but not the recipe (naming the recipe
+-- item that teaches it), plain grey when you do not have the profession.
+local function AddReagentLines(tooltip, data)
+    if not (ns.db and ns.db.reagentTooltips ~= false) or not tooltip or not tooltip.AddLine then
+        return
+    end
+    if tooltip.IsForbidden and tooltip:IsForbidden() then
+        return
+    end
+    local uses = data and data.id and ns.reagents[data.id]
+    if not uses then
+        return
+    end
+    for _, use in ipairs(uses) do
+        local name = ("%s (%s)"):format(SpellName(use.spell), use.profession)
+        if not Skill(use.profession) then
+            tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
+        elseif Known(use) then
+            tooltip:AddLine(ns.CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
+        else
+            local teach = use.recipe and C_Item.GetItemNameByID and C_Item.GetItemNameByID(use.recipe)
+            if use.recipe and not teach and C_Item.RequestLoadItemDataByID then
+                C_Item.RequestLoadItemDataByID(use.recipe)
+            end
+            tooltip:AddLine(ns.CROSS .. " " .. name .. (teach and (", " .. ns.grey.hex .. teach .. "|r") or ""),
+                ns.missing.r, ns.missing.g, ns.missing.b)
+        end
+    end
+end
+
+if TooltipDataProcessor and Enum and Enum.TooltipDataType and Enum.TooltipDataType.Item then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AddReagentLines)
 end
 
 local frame = CreateFrame("Frame")

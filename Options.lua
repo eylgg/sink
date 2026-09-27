@@ -236,6 +236,8 @@ local PAGES = {
               .. " \"Needed for\" tooltip line naming the quest on the ones whose quest is not done yet." },
         { key = "recipeTooltips", label = "Recipe vendor tooltips",
           tooltip = "Vendor tooltips list the recipes sold, with a check for the ones you know." },
+        { key = "reagentTooltips", label = "Reagent tooltips",
+          tooltip = "Reagent tooltips list the recipes that use them, with a check for the ones you know." },
         { key = "weaponTooltips", label = "Weapon master tooltips",
           tooltip = "Weapon master tooltips and map icons list the skills taught." },
     },
