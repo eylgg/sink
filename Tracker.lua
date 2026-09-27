@@ -328,8 +328,9 @@ local function TrackingLines()
     return lines
 end
 
--- A block per dungeon: "[10-18] Ragefire Chasm (2/4 Quests)", the level range
--- first as the quest log has it, the name in the dungeon teal, and of its
+-- A block per dungeon: "[13-18] Ragefire Chasm (2/4 Quests)", the level range
+-- first as the quest log has it and coloured for your level (Quests.lua),
+-- the name in the dungeon teal, and of its
 -- quests for your faction not finished yet, how many are in your log; then
 -- the quests left.
 local function DungeonLines()
@@ -340,7 +341,7 @@ local function DungeonLines()
         local key = "dungeon" .. entry.instanceID
         local folded = Folded(key)
         lines[#lines + 1] = { block = true, color = ns.dungeonColor,
-            text = ("%s[%d-%d]|r %s %s(%d/%d Quests)|r"):format(ns.grey.hex, dungeon.minLevel or 0, dungeon.maxLevel or 0,
+            text = ("%s %s %s(%d/%d Quests)|r"):format(ns.DungeonRangeText(dungeon),
                 dungeon.name, ns.grey.hex, entry.have, entry.total),
             onClick = function()
                 ns.db.trackerFolded = ns.db.trackerFolded or {}

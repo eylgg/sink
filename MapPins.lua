@@ -985,9 +985,12 @@ local function QuestPins(mapID)
             table.insert(questPins[map], pin)
         end
         for instanceID, dungeon in pairs(ns.dungeons or {}) do
-            add(dungeon.map, { name = dungeon.name, dungeon = true, minLevel = dungeon.minLevel,
-                maxLevel = dungeon.maxLevel, x = dungeon.x, y = dungeon.y, atlas = "Dungeon",
-                questIDs = ns.QuestsForDungeon(instanceID) })
+            -- A dungeon whose entrance is not recorded yet has no pin.
+            if dungeon.map then
+                add(dungeon.map, { name = dungeon.name, dungeon = true, minLevel = dungeon.minLevel,
+                    maxLevel = dungeon.maxLevel, entryLevel = dungeon.entryLevel, x = dungeon.x, y = dungeon.y, atlas = "Dungeon",
+                    questIDs = ns.QuestsForDungeon(instanceID) })
+            end
         end
         if ns.EachQuestGiver then
             ns.EachQuestGiver(function(npcID, npc)
@@ -1574,6 +1577,10 @@ function SinkMapPinMixin:OnMouseEnter()
         else
             GameTooltip:AddLine(ns.CROSS .. " Not discovered", ns.missing.r, ns.missing.g, ns.missing.b)
         end
+    end
+    -- The title shows the recommended range; the lowest level let in, where known, goes under it.
+    if pin.entryLevel then
+        GameTooltip:AddLine(("Entry from level %d"):format(pin.entryLevel), ns.grey.r, ns.grey.g, ns.grey.b)
     end
     if pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)

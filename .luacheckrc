@@ -105,6 +105,9 @@ read_globals = {
     "NUM_CONTAINER_FRAMES",
     "NUM_TOTAL_EQUIPPED_BAG_SLOTS",
     "NORMAL_FONT_COLOR_CODE",
+    "GetQuestDifficultyColor",
+    "GetQuestGreenRange",
+    "UnitQuestTrivialLevelRange",
     "UISpecialFrames",
     "UNIT_LEVEL_TEMPLATE",
 }

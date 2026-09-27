@@ -177,7 +177,12 @@ local function DumpNPCs(onlyUnverified)
         end
     end
     for _, dungeon in pairs(ns.dungeons or {}) do
-        add(nil, dungeon.name, dungeon.map, dungeon.x, dungeon.y, dungeon.verified == true, "Quests.lua")
+        if dungeon.map then
+            add(nil, dungeon.name, dungeon.map, dungeon.x, dungeon.y, dungeon.verified == true, "Quests.lua")
+        else
+            -- No entrance recorded yet: "/sink dump loc" at it gives the line.
+            rows[#rows + 1] = { name = dungeon.name, zone = dungeon.name, noPosition = true, source = "Quests.lua" }
+        end
     end
     table.sort(rows, function(a, b)
         if a.zone ~= b.zone then
@@ -191,7 +196,8 @@ local function DumpNPCs(onlyUnverified)
     end
     ns.Print(("%d position%s%s"):format(#rows, #rows == 1 and "" or "s", onlyUnverified and " not verified in game" or ""))
     for _, row in ipairs(rows) do
-        local where = row.inside and ("inside " .. row.zone) or ("%s %.1f, %.1f"):format(row.zone, row.x * 100, row.y * 100)
+        local where = (row.noPosition and "entrance not recorded yet") or (row.inside and ("inside " .. row.zone))
+            or ("%s %.1f, %.1f"):format(row.zone, row.x * 100, row.y * 100)
         print(("  %s%s, %s, %s%s"):format(row.name, row.npcID and (" (" .. row.npcID .. ")") or "", where,
             row.source, row.verified and "" or (" " .. ns.missing.hex .. "unverified|r")))
     end

@@ -39,13 +39,16 @@
 local _, ns = ...
 
 -- Dungeons by instance ID, the Map table's ID that GetInstanceInfo() returns
--- inside. The entrance is on uiMap map at x, y; a continent map, as a dump
--- in a cave gives, is fine, the pin goes on the zone that point is in.
+-- inside. minLevel and maxLevel are the recommended range, the one shown;
+-- entryLevel, where known, is the lowest level the game lets in, and without
+-- it minLevel counts as that. The entrance is on uiMap map at x, y; a continent map, as a dump
+-- in a cave gives, is fine, the pin goes on the zone that point is in. A
+-- dungeon without map has no pin until its entrance is recorded.
 -- verified = true once the position was taken in game (see MapPins.lua).
 ns.dungeons = {
-    [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, map = 1458, x = 0.7261, y = 0.1148,
+    [2999] = { name = "Ruins of Lordaeron", minLevel = 11, maxLevel = 24, entryLevel = 10, map = 1458, x = 0.7261, y = 0.1148,
         verified = true },
-    [389] = { name = "Ragefire Chasm", minLevel = 10, maxLevel = 18, map = 1454, x = 0.5302, y = 0.4876,
+    [389] = { name = "Ragefire Chasm", minLevel = 13, maxLevel = 18, entryLevel = 10, map = 1454, x = 0.5302, y = 0.4876,
         verified = true },
     -- Recorded on the Kalimdor map (1414); MapPins.lua draws it on the zone it lies in, The Barrens.
     -- Unverified until the converted spot on The Barrens has been checked in game.
@@ -56,6 +59,16 @@ ns.dungeons = {
     -- The Hall of Thanes: under Ironforge, through a portal at the bottom of Old
     -- Ironforge; placed on Ironforge's spot on the Dun Morogh map, as Wowhead's guide marks it.
     [3065] = { name = "The Hall of Thanes", minLevel = 13, maxLevel = 18, map = 1426, x = 0.5240, y = 0.3780 },
+    -- Levels from Wowhead's Forever dungeon overview. Entrances from the game's
+    -- Map table, where your corpse is sent when you die inside, converted to the
+    -- zone map; checked against Ragefire Chasm and Wailing Caverns, whose
+    -- entrances were taken in game.
+    [33] = { name = "Shadowfang Keep", minLevel = 22, maxLevel = 30, map = 1421, x = 0.4472, y = 0.6777 },
+    [34] = { name = "Stormwind Stockade", minLevel = 22, maxLevel = 30, map = 1453, x = 0.5035, y = 0.6618 },
+    [48] = { name = "Blackfathom Deeps", minLevel = 24, maxLevel = 32, map = 1440, x = 0.1650, y = 0.1103 },
+    -- Excavation Site: Wetlands is new in Forever: neither the game data nor
+    -- Wowhead has its entrance yet, so it has no map pin until one is recorded.
+    [2998] = { name = "Excavation Site: Wetlands", minLevel = 24, maxLevel = 29 },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
@@ -322,10 +335,11 @@ local function ForMyFaction(quest)
     return faction == nil or faction == quest.faction
 end
 
--- The level a quest asks for: its own where known, else its dungeon's, else none.
+-- The level a quest asks for: its own where known, else the level its dungeon
+-- lets you in at (its entry level, or the bottom of its range), else none.
 local function MinLevel(quest)
     local dungeon = quest.dungeon and ns.dungeons[quest.dungeon]
-    return quest.minLevel or (dungeon and dungeon.minLevel) or 0
+    return quest.minLevel or (dungeon and (dungeon.entryLevel or dungeon.minLevel)) or 0
 end
 
 -- Whether a quest is there for you to pick up now: for your faction, neither
@@ -516,7 +530,42 @@ function ns.AddQuestLines(tooltip, questIDs)
     end
 end
 
--- The dungeons you can enter, your level at least theirs, that still have
+-- A dungeon's level range coloured as the quest log colours a quest of the
+-- range's middle level: GetQuestDifficultyColor, the game's own rule. Red 5
+-- or more levels above you, orange 3 to 4, yellow within 2, green below that
+-- while inside the game's green range, grey past it. Without that function the
+-- same rule is applied here, with the game's green range where it can say.
+local function DifficultyColor(level)
+    if GetQuestDifficultyColor then
+        local color = GetQuestDifficultyColor(level)
+        if color and color.r then
+            return color
+        end
+    end
+    local diff = level - (UnitLevel and UnitLevel("player") or 0)
+    local green = (UnitQuestTrivialLevelRange and UnitQuestTrivialLevelRange("player"))
+        or (GetQuestGreenRange and GetQuestGreenRange()) or 8
+    if diff >= 5 then
+        return { r = 1.0, g = 0.1, b = 0.1 }
+    elseif diff >= 3 then
+        return { r = 1.0, g = 0.5, b = 0.25 }
+    elseif diff >= -2 then
+        return { r = 1.0, g = 0.82, b = 0.0 }
+    elseif -diff <= green then
+        return { r = 0.25, g = 0.75, b = 0.25 }
+    end
+    return { r = 0.5, g = 0.5, b = 0.5 }
+end
+
+-- "[13-18]" in the colour of a quest of the range's middle level.
+function ns.DungeonRangeText(dungeon)
+    local low, high = dungeon.minLevel or 0, dungeon.maxLevel or dungeon.minLevel or 0
+    local color = DifficultyColor(math.floor((low + high) / 2))
+    return ("|cff%02x%02x%02x[%d-%d]|r"):format(math.floor(color.r * 255 + 0.5), math.floor(color.g * 255 + 0.5),
+        math.floor(color.b * 255 + 0.5), low, high)
+end
+
+-- The dungeons you can enter, your level at least their entry level, that still have
 -- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
 -- rows are the quests not done, leaving out any your level is still too low
 -- for. total counts the dungeon's quests for your faction you have not
@@ -525,7 +574,7 @@ function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
     for instanceID, dungeon in pairs(ns.dungeons) do
-        if level >= (dungeon.minLevel or 0) then
+        if level >= (dungeon.entryLevel or dungeon.minLevel or 0) then
             local rows, have, total = {}, 0, 0
             for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
                 if row.state ~= DONE then
