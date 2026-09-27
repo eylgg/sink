@@ -59,7 +59,8 @@ ns.dungeons = {
     [36] = { name = "Deadmines", minLevel = 15, maxLevel = 25, map = 1436, x = 0.4250, y = 0.7170 },
     -- The Hall of Thanes: under Ironforge, through a portal at the bottom of Old
     -- Ironforge; placed on Ironforge's spot on the Dun Morogh map, as Wowhead's guide marks it.
-    [3065] = { name = "The Hall of Thanes", minLevel = 13, maxLevel = 18, map = 1426, x = 0.5240, y = 0.3780 },
+    -- Levels as the game's Looking for Group shows them.
+    [3065] = { name = "The Hall of Thanes", minLevel = 13, maxLevel = 20, map = 1426, x = 0.5240, y = 0.3780 },
     -- Levels from Wowhead's Forever dungeon overview. Entrances from the game's
     -- Map table, where your corpse is sent when you die inside, converted to the
     -- zone map; checked against Ragefire Chasm and Wailing Caverns, whose
