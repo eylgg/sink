@@ -65,7 +65,9 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- map's faction below applies, and on other maps a pin is for both.
 -- On the Forever build Durotar is map 1411, Mulgore 1412, Tirisfal Glades 1420, Undercity 1458,
 -- Orgrimmar 1454, Thunder Bluff 1456, Zephras Isle (the Skyborne starting island) 2521,
--- Teldrassil 1438, Darnassus 1457, Stormwind City 1453, Ironforge 1455, Dun Morogh 1426 and Westfall 1436.
+-- Teldrassil 1438, Darnassus 1457, Stormwind City 1453, Ironforge 1455, Dun Morogh 1426, Westfall 1436
+-- Stranglethorn Vale 1434, Swamp of Sorrows 1435, Feralas 1444, Thousand Needles 1441, Tanaris 1446
+-- Riverglades 2548 and Badlands 1418.
 ns.mapPins = {
     [1411] = { -- Durotar
         -- No npc, so clicking it does nothing: no target, no ping.
@@ -807,6 +809,115 @@ ns.mapPins = {
         { npc = 6735, name = "Innkeeper Saelienne", note = "Innkeeper", x = 0.6720, y = 0.1575,
           atlas = "innkeeper" },
     },
+    [1434] = { -- Stranglethorn Vale: Grom'gol Base Camp, Horde; the zone is shared with Booty Bay
+        { npc = 5814, name = "Innkeeper Thulbek", note = "Innkeeper", x = 0.3149, y = 0.2975, faction = "Horde",
+          atlas = "innkeeper", verified = true },
+        -- The zeppelin masters: the note names where the zeppelin goes, the name
+        -- is the NPC, so clicking the icon targets them.
+        { npc = 12137, name = "Squibby Overspeck", note = "Zeppelin to Undercity", x = 0.3154, y = 0.2936,
+          faction = "Horde", atlas = "poi-horde", verified = true },
+        { npc = 3149, name = "Nez'raz", note = "Zeppelin to Orgrimmar", x = 0.3143, y = 0.2991,
+          faction = "Horde", atlas = "poi-horde", verified = true },
+        { npc = 2856, name = "Angrun", note = "Superior Herbalist", x = 0.3225, y = 0.2744, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 3624, name = "Zudd", note = "Pet Trainer", x = 0.3111, y = 0.2894, faction = "Horde",
+          icon = "Interface\\Icons\\Ability_Hunter_BeastTraining", verified = true },
+        { npc = 1404, name = "Kragg", note = "Hunter Trainer", x = 0.3124, y = 0.2869, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 1382, name = "Mudduk", note = "Superior Cook", x = 0.3135, y = 0.2799, faction = "Horde",
+          icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
+        { npc = 1385, name = "Brawn", note = "Expert Leatherworker", x = 0.3173, y = 0.2889, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+    },
+    [1435] = { -- Swamp of Sorrows: Stonard, Horde; the zone is shared
+        { npc = 987, name = "Ogromm", note = "Hunter Trainer", x = 0.4725, y = 0.5341, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        { npc = 3622, name = "Grokor", note = "Pet Trainer", x = 0.4735, y = 0.5289, faction = "Horde",
+          icon = "Interface\\Icons\\Ability_Hunter_BeastTraining", verified = true },
+        { npc = 1386, name = "Rogvar", note = "Master Alchemist", x = 0.4852, y = 0.5583, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
+        { npc = 988, name = "Kartosh", note = "Warlock Trainer", x = 0.4864, y = 0.5563, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Warlock", verified = true },
+        { npc = 12807, name = "Greshka", note = "Demon Master", x = 0.4857, y = 0.5527, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Warlock", verified = true },
+        { npc = 985, name = "Malosh", note = "Warrior Trainer", x = 0.4490, y = 0.5760, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Warrior", verified = true },
+        { npc = 6930, name = "Innkeeper Karakul", note = "Innkeeper", x = 0.4515, y = 0.5666, faction = "Horde",
+          atlas = "innkeeper", verified = true },
+        { npc = 986, name = "Haromm", note = "Shaman Trainer", x = 0.4817, y = 0.5792, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+    },
+    [1444] = { -- Feralas: Camp Mojache, Horde; the zone is shared
+        -- A goblin teleporter; Wowhead lists a "Teleport to Wirdal Wondergear" spell with it.
+        { name = "Wondergear Worldporter", note = "Teleport to Wirdal Wondergear", x = 0.8527, y = 0.4366,
+          icon = "Interface\\Icons\\INV_Misc_EngGizmos_27", verified = true },
+        { npc = 8142, name = "Jannos Lighthoof", note = "Druid Trainer", x = 0.7599, y = 0.4229, faction = "Horde",
+          icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
+        { npc = 8144, name = "Kulleg Stonehorn", note = "Skinning Trainer", x = 0.7447, y = 0.4304, faction = "Horde",
+          icon = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01", verified = true },
+        { npc = 8146, name = "Ruw", note = "Herbalism Trainer", x = 0.7598, y = 0.4334, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
+        { npc = 11098, name = "Hahrana Ironhide", note = "Master Leatherworker", x = 0.7437, y = 0.4311, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+    },
+    [1441] = { -- Thousand Needles: Freewind Post, Horde; the zone is shared
+        { npc = 11117, name = "Awenasa", note = "Stable Master", x = 0.4578, y = 0.5108, faction = "Horde",
+          atlas = "stablemaster", verified = true },
+    },
+    [1446] = { -- Tanaris: Gadgetzan, neutral, for both factions
+        { npc = 8128, name = "Pikkle", note = "Miner", x = 0.5108, y = 0.2810,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 265576, name = "Rettrick", note = "Gadgetzan Quartermaster", x = 0.5171, y = 0.2874,
+          verified = true },
+        { npc = 8661, name = "Auctioneer Beardo", note = "Auction House", x = 0.5196, y = 0.2963,
+          icon = "Interface\\Icons\\INV_Misc_Coin_01", verified = true },
+        { npc = 7799, name = "Gimblethorn", note = "Banker", x = 0.5230, y = 0.2890,
+          icon = "Interface\\Icons\\INV_Misc_Bag_10", verified = true },
+        { npc = 9985, name = "Laziphus", note = "Stable Master", x = 0.5225, y = 0.2799,
+          atlas = "stablemaster", verified = true },
+        { npc = 8736, name = "Buzzek Bracketswing", note = "Master Engineer", x = 0.5233, y = 0.2772,
+          icon = "Interface\\Icons\\Trade_Engineering", verified = true },
+        { name = "Boat to Powderfuse Port", x = 0.6837, y = 0.2303,
+          atlas = "flightmasterferry", verified = true },
+        { npc = 7733, name = "Innkeeper Fizzgrimble", note = "Innkeeper", x = 0.5250, y = 0.2793,
+          atlas = "innkeeper", verified = true },
+        { npc = 8126, name = "Nixx Sprocketspring", note = "Master Goblin Engineer", x = 0.5246, y = 0.2731,
+          icon = "Interface\\Icons\\Trade_Engineering", verified = true },
+    },
+    [2548] = { -- Riverglades: Powderfuse Port, neutral
+        { name = "Boat to Steamwheedle Port", x = 0.8033, y = 0.5440,
+          atlas = "flightmasterferry", verified = true },
+        { npc = 260487, name = "Gritta Chumwater", note = "Fisherman", x = 0.7844, y = 0.5505,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+        { npc = 260525, name = "Tallow Sparksocket", note = "Stable Master", x = 0.7845, y = 0.5407,
+          atlas = "stablemaster", verified = true },
+        { npc = 260558, name = "Krix", note = "Superior Fisherman", x = 0.7922, y = 0.5476,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
+        { npc = 255894, name = "Innkeeper Zizplink", note = "Innkeeper", x = 0.7874, y = 0.5400,
+          atlas = "innkeeper", verified = true },
+        { npc = 259766, name = "Mika Darby", note = "Blacksmithing Supplies", x = 0.7777, y = 0.5196,
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 263326, name = "Madam Swyndle", note = "Agent of the Black Market", x = 0.7826, y = 0.5183,
+          icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
+        { npc = 255891, name = "Grungle", note = "Miner", x = 0.7776, y = 0.5185,
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        { npc = 260562, name = "Melbin Powderfuse", note = "Master Goblin Engineer", x = 0.7777, y = 0.5081,
+          icon = "Interface\\Icons\\Trade_Engineering", verified = true },
+        { npc = 257292, name = "Brakkit", note = "Banker", x = 0.7673, y = 0.5437,
+          icon = "Interface\\Icons\\INV_Misc_Bag_10", verified = true },
+        { npc = 256658, name = "Gur'dok", note = "Journeyman Blacksmith", x = 0.6004, y = 0.4629, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 256655, name = "Gorg", note = "Cook", x = 0.5860, y = 0.4462, faction = "Horde",
+          icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
+        { npc = 256673, name = "Grik", note = "Stable Master", x = 0.5821, y = 0.4488, faction = "Horde",
+          atlas = "stablemaster", verified = true },
+    },
+    [1418] = { -- Badlands: Kargath, Horde; the zone is shared
+        { npc = 10058, name = "Greth", note = "Stable Master", x = 0.0367, y = 0.4761, faction = "Horde",
+          atlas = "stablemaster", verified = true },
+        { npc = 9356, name = "Innkeeper Shul'kar", note = "Innkeeper", x = 0.0281, y = 0.4587, faction = "Horde",
+          atlas = "innkeeper", verified = true },
+    },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
@@ -1049,7 +1160,10 @@ end
 -- with one gets that cap: "Journeyman Blacksmith (150)". Other notes stay as
 -- they are.
 -- Junior is Forever's, on the Razor Hill trainers, and teaches as far as Apprentice.
-local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300 }
+-- Master and Superior are the titles some Artisan trainers carry instead,
+-- such as Rogvar, "Master Alchemist" in Stonard.
+local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300, Master = 300,
+    Superior = 300 }
 
 
 -- Professions, by the words a trainer's note uses for them: "Expert
@@ -1104,6 +1218,7 @@ local CLASS_WORDS = {
 local CLASS_SPECIALTIES = {
     ["portal trainer"] = "MAGE",
     ["demon trainer"] = "WARLOCK",
+    ["demon master"] = "WARLOCK",
     ["pet trainer"] = "HUNTER",
 }
 
@@ -1279,12 +1394,51 @@ local function FlightPins(mapID)
     return pins
 end
 
--- The pins to draw on a map. Only pins for your faction; dungeons only while
--- "show dungeons" is on; a quest giver only while they have a quest for you,
--- a quest objective NPC only while you still need to go there, and a turn-in
--- NPC only while a quest for them is ready (Quests.lua); a starting area's
--- class trainer only until you are past the level they teach up to. Trainers
--- are filtered first: a class trainer only for your class unless "show all class
+-- The kinds of pin, each with a "show" setting: the Map Pins tab of the
+-- options window and the world map's filter menu both list them.
+ns.PIN_KINDS = {
+    { key = "showClassTrainers", label = "Class trainers" },
+    { key = "showProfessionTrainers", label = "Profession trainers" },
+    { key = "showWeaponMasters", label = "Weapon masters" },
+    { key = "showInnkeepers", label = "Innkeepers" },
+    { key = "showBankers", label = "Bankers" },
+    { key = "showAuctioneers", label = "Auctioneers" },
+    { key = "showStableMasters", label = "Stable masters" },
+    { key = "showFlightMasters", label = "Flight masters" },
+    { key = "showDungeons", label = "Dungeons" },
+    { key = "showQuestNPCs", label = "Quest NPCs" },
+    { key = "showOtherPins", label = "Vendors and travel" },
+}
+
+-- The setting a pin's kind is shown by. profession is what TrainerInfo gave:
+-- a class for a class trainer (and pet, portal and demon trainers), a
+-- profession or false for a profession trainer, nil for anyone else.
+local NOTE_KINDS = {
+    ["Weapon Master"] = "showWeaponMasters",
+    ["Innkeeper"] = "showInnkeepers",
+    ["Banker"] = "showBankers",
+    ["Auction House"] = "showAuctioneers",
+    ["Stable Master"] = "showStableMasters",
+}
+local function PinKind(pin, profession)
+    if pin.dungeon then
+        return "showDungeons"
+    elseif pin.questGiver or pin.questObjective or pin.questFinish then
+        return "showQuestNPCs"
+    elseif profession then
+        return profession.class and "showClassTrainers" or "showProfessionTrainers"
+    elseif profession == false then
+        return "showProfessionTrainers"
+    end
+    return NOTE_KINDS[pin.note or ""] or "showOtherPins"
+end
+
+-- The pins to draw on a map. Only pins for your faction, and of the kinds
+-- switched on; a quest giver only while they have a quest for you, a quest
+-- objective NPC only while you still need to go there, and a turn-in NPC only
+-- while a quest for them is ready (Quests.lua); a starting area's class
+-- trainer only until you are past the level they teach up to. Trainers are
+-- filtered first: a class trainer only for your class unless "show all class
 -- trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
 -- you still have a free slot. Then of a profession's ranked trainers only one
@@ -1293,7 +1447,6 @@ local function PinsToShow(mapID)
     local shown, groups = {}, {}
     local showAll = ns.db and ns.db.showAllTrainers
     local showAllClasses = ns.db and ns.db.showAllClassTrainers
-    local showDungeons = not (ns.db and ns.db.showDungeons == false)
     local freeSlot = PrimaryCount() < 2
     local _, playerClass = UnitClass("player")
     local level = UnitLevel("player") or 0
@@ -1301,12 +1454,12 @@ local function PinsToShow(mapID)
         local profession, cap, word = TrainerInfo(pin)
         if not ForMyFaction(pin, mapID) then
             return
+        elseif ns.db and ns.db[PinKind(pin, profession)] == false then
+            return -- its kind is switched off
         elseif pin.teachesUpTo and level > pin.teachesUpTo then
             return -- a starting area's trainer with nothing left for your level
         elseif pin.dungeon then
-            if showDungeons then
-                shown[#shown + 1] = pin
-            end
+            shown[#shown + 1] = pin
         elseif pin.questGiver then
             if ns.HasQuestToGive(pin.npc) then
                 shown[#shown + 1] = pin
@@ -1630,6 +1783,37 @@ local function Install()
     end
     provider = CreateFromMixins(SinkMapDataProviderMixin)
     WorldMapFrame:AddDataProvider(provider)
+
+    -- The world map's filter menu gets a Sink section: the icons as a whole,
+    -- then each kind. Through ns.SetOption, so the options window follows.
+    if Menu and Menu.ModifyMenu then
+        local function Set(key, value)
+            if ns.SetOption then
+                ns.SetOption(key, value)
+            else
+                ns.db[key] = value
+                Refresh()
+            end
+        end
+        local function Checkbox(root, label, key)
+            root:CreateCheckbox(label, function()
+                return ns.db ~= nil and ns.db[key] ~= false
+            end, function()
+                Set(key, ns.db[key] == false)
+            end)
+        end
+        Menu.ModifyMenu("MENU_WORLD_MAP_TRACKING", function(_, root)
+            if not ns.db then
+                return
+            end
+            root:CreateDivider()
+            root:CreateTitle("Sink")
+            Checkbox(root, "Show Sink icons", "mapIcons")
+            for _, kind in ipairs(ns.PIN_KINDS) do
+                Checkbox(root, kind.label, kind.key)
+            end
+        end)
+    end
 end
 
 --------------------------------------------------------------------------------

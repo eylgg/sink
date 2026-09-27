@@ -48,6 +48,15 @@ ns.defaults = {
     showAllClassTrainers = false, -- every class trainer, not just your class's
     showDungeons = true,       -- dungeon entrances, with their quests on the tooltip
     showFlightMasters = true,  -- flight masters, grey until discovered
+    showClassTrainers = true,  -- the kinds of map icon, ns.PIN_KINDS in MapPins.lua: each can be switched off
+    showProfessionTrainers = true,
+    showWeaponMasters = true,
+    showInnkeepers = true,
+    showBankers = true,
+    showAuctioneers = true,
+    showStableMasters = true,
+    showQuestNPCs = true,
+    showOtherPins = true,      -- vendors, zeppelins and anything else
     knownFlightPaths = {},     -- flight paths seen at a flight master: [player GUID] = { [nodeID] = true }
 
     -- Weapons.lua

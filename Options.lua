@@ -31,6 +31,16 @@ end
 
 local RefreshWindow -- defined with the window below
 
+-- Whether a setting is one of the map icon kinds (ns.PIN_KINDS, MapPins.lua).
+local function MapKind(key)
+    for _, kind in ipairs(ns.PIN_KINDS or {}) do
+        if kind.key == key then
+            return true
+        end
+    end
+    return false
+end
+
 -- React to a value that is already stored in ns.db.
 local function OnChanged(key)
     if key == "enabled" then
@@ -45,8 +55,7 @@ local function OnChanged(key)
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
-    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" or key == "showDungeons"
-        or key == "showFlightMasters" then
+    elseif key == "mapIcons" or key == "showAllTrainers" or key == "showAllClassTrainers" or MapKind(key) then
         if ns.RefreshMapPins then
             ns.RefreshMapPins()
         end
@@ -235,21 +244,14 @@ local PAGES = {
         icon = "Interface\\Icons\\INV_Misc_Map_01",
         { key = "mapIcons", label = "Show map icons",
           tooltip = "Icons with tooltips on the world map for the vendors and trainers Sink knows about." },
-        { header = "Profession Trainers" },
+        { header = "Show on the Map" },
+        { kinds = true }, -- a checkbox for each kind of icon, two to a row; also in the world map's filter menu
+        { header = "Trainers" },
         { key = "showAllTrainers", label = "Show all profession trainers",
           tooltip = "Off: trainers for your own professions, plus cooking, fishing and first aid, and every primary"
               .. " profession until you have picked two. On: every profession trainer." },
-        { header = "Class Trainers" },
         { key = "showAllClassTrainers", label = "Show all class trainers",
           tooltip = "Off: class trainers for your class only. On: every class trainer." },
-        { header = "Dungeons" },
-        { key = "showDungeons", label = "Show dungeons",
-          tooltip = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
-              .. " in your log or not taken." },
-        { header = "Flight Masters" },
-        { key = "showFlightMasters", label = "Show flight masters",
-          tooltip = "Flight masters for your faction on zone and city maps, grey until you have discovered them."
-              .. " Which you have is known once you open any flight master's map." },
     },
     {
         name = "Splits",
@@ -331,9 +333,9 @@ local function Header(page, item, y)
     return 24
 end
 
-local function Checkbox(page, item, y)
+local function Checkbox(page, item, y, x)
     local box = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
-    box:SetPoint("TOPLEFT", -4, -y + 4)
+    box:SetPoint("TOPLEFT", (x or 0) - 4, -y + 4)
     box.Text:SetFontObject("GameFontHighlight")
     box.Text:SetText(item.label)
     box:SetScript("OnClick", function(self)
@@ -369,6 +371,38 @@ local function Slider(page, item, y)
     return 66
 end
 
+-- What each kind of map icon covers, for its checkbox's tooltip.
+local KIND_TOOLTIPS = {
+    showClassTrainers = "Class trainers, and the pet, portal and demon trainers. Yours only unless"
+        .. " \"Show all class trainers\" is on.",
+    showProfessionTrainers = "Profession trainers, filtered to your professions unless \"Show all profession"
+        .. " trainers\" is on.",
+    showWeaponMasters = "Weapon masters, with the weapon skills they teach on the tooltip.",
+    showInnkeepers = "Innkeepers.",
+    showBankers = "Bankers.",
+    showAuctioneers = "Auctioneers.",
+    showStableMasters = "Stable masters.",
+    showFlightMasters = "Flight masters for your faction on zone and city maps, grey until you have discovered"
+        .. " them. Which you have is known once you open any flight master's map.",
+    showDungeons = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
+        .. " in your log or not taken.",
+    showQuestNPCs = "Quest givers while they have a quest for you, and the NPCs a quest sends you to or"
+        .. " that take it in.",
+    showOtherPins = "Everything else: vendors such as fishing suppliers, zeppelins and icons you added.",
+}
+
+-- A checkbox for each kind of map icon (ns.PIN_KINDS, MapPins.lua), two to a
+-- row. Returns the height used.
+local function KindCheckboxes(page, y)
+    local kinds = ns.PIN_KINDS or {}
+    for i, kind in ipairs(kinds) do
+        local row, column = math.floor((i - 1) / 2), (i - 1) % 2
+        Checkbox(page, { key = kind.key, label = kind.label, tooltip = KIND_TOOLTIPS[kind.key] or kind.label },
+            y + row * 28, column * 190)
+    end
+    return math.ceil(#kinds / 2) * 28
+end
+
 local function BuildPage(frame, definition)
     local page = CreateFrame("Frame", nil, frame.Inset)
     page:SetPoint("TOPLEFT", 14, -40) -- clear of the portrait, which hangs over the inset's corner
@@ -380,6 +414,8 @@ local function BuildPage(frame, definition)
             y = y + Header(page, item, y)
         elseif item.build then
             y = y + item.build(page, y)
+        elseif item.kinds then
+            y = y + KindCheckboxes(page, y)
         elseif item.range then
             y = y + Slider(page, item, y)
         else

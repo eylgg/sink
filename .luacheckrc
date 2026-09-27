@@ -49,6 +49,7 @@ read_globals = {
     "EventRegistry",
     "MapCanvasDataProviderMixin",
     "MapCanvasPinMixin",
+    "Menu",
     "MenuUtil",
     "MinimalSliderWithSteppersMixin",
     "TooltipDataProcessor",

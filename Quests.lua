@@ -70,6 +70,15 @@ ns.dungeons = {
     -- Excavation Site: Wetlands is new in Forever: neither the game data nor
     -- Wowhead has its entrance yet, so it has no map pin until one is recorded.
     [2998] = { name = "Excavation Site: Wetlands", minLevel = 24, maxLevel = 29 },
+    -- Taken in game on the Kalimdor map; the Map table's corpse point converts to
+    -- the same spot. Levels from Wowhead's Forever dungeon overview.
+    [47] = { name = "Razorfen Kraul", minLevel = 30, maxLevel = 40, map = 1414, x = 0.5090, y = 0.7037,
+        verified = true },
+    -- New in Forever and not in this client's Map table yet, so it has no
+    -- instance ID: keyed by name until it does. Levels from Wowhead's Forever
+    -- dungeon overview; the portal was taken in game.
+    kroldok = { name = "Krol'dok Stronghold", minLevel = 40, maxLevel = 45, map = 2548, x = 0.3746, y = 0.3733,
+        verified = true },
 }
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
@@ -99,6 +108,41 @@ ns.npcs = {
     [5768] = { name = "Ebru", instance = 43 }, -- beside Nalpak in the cave
     [5767] = { name = "Nalpak", instance = 43, verified = true },
     [3654] = { name = "Mutanus the Devourer", instance = 43, verified = true },
+    -- From Wowhead's Forever database, for the dungeon quests above; not checked in game.
+    [234] = { name = "Gryan Stoutmantle", map = 1436, x = 0.5620, y = 0.4750 },
+    [270] = { name = "Councilman Millstipe", map = 1431, x = 0.7200, y = 0.4780 },
+    [466] = { name = "General Marcus Jonathan", map = 1453, x = 0.6474, y = 0.7686 },
+    [639] = { name = "Edwin VanCleef", instance = 36 },
+    [656] = { name = "Wilder Thistlenettle", map = 1453, x = 0.6665, y = 0.2610 },
+    [820] = { name = "Scout Riell", map = 1436, x = 0.5660, y = 0.4740 },
+    [859] = { name = "Guard Berton", map = 1433, x = 0.2650, y = 0.4650 },
+    [1074] = { name = "Motley Garmason", map = 1437, x = 0.4960, y = 0.1820 },
+    [1646] = { name = "Baros Alexston", map = 1453, x = 0.5330, y = 0.3900 },
+    [1719] = { name = "Warden Thelwater", map = 1453, x = 0.4127, y = 0.5773 },
+    [1721] = { name = "Nikova Raskol", map = 1453, x = 0.7180, y = 0.4596 },
+    [1938] = { name = "Dalar Dawnweaver", map = 1421, x = 0.4420, y = 0.3980 },
+    [1952] = { name = "High Executor Hadrec", map = 1421, x = 0.4340, y = 0.4080 },
+    [2784] = { name = "King Magni Bronzebeard", map = 1455, x = 0.3960, y = 0.5550 },
+    [2786] = { name = "Gerrig Bonegrip", map = 1455, x = 0.5044, y = 0.0600 },
+    [2934] = { name = "Keeper Bel'dugur", map = 1458, x = 0.5373, y = 0.5400 },
+    [4444] = { name = "Deathstalker Vincent", instance = 33 },
+    [4783] = { name = "Dawnwatcher Selgorm", map = 1457, x = 0.5573, y = 0.2413 },
+    [4784] = { name = "Argent Guard Manados", map = 1457, x = 0.5533, y = 0.2373 },
+    [4786] = { name = "Dawnwatcher Shaedlass", map = 1457, x = 0.5550, y = 0.2450 },
+    [4787] = { name = "Argent Guard Thaelrid", instance = 48 },
+    [6181] = { name = "Jordan Stilwell", map = 1426, x = 0.5250, y = 0.3680 },
+    [6247] = { name = "Doan Karhan", map = 1413, x = 0.4920, y = 0.5720 },
+    [6579] = { name = "Shoni the Shilent", map = 1453, x = 0.5692, y = 0.1684 },
+    [8997] = { name = "Gershala Nightwhisper", map = 1439, x = 0.3840, y = 0.4300 },
+    [9087] = { name = "Bashana Runetotem", map = 1456, x = 0.7067, y = 0.3340 },
+    [12736] = { name = "Je'neu Sancrea", map = 1440, x = 0.1160, y = 0.3420 },
+    [12876] = { name = "Baron Aquanis", instance = 48 },
+    [14450] = { name = "Orphan Matron Nightingale", map = 1453, x = 0.4960, y = 0.4255 },
+    [250686] = { name = "Tabitha Heartweaver", map = 1421, x = 0.4450, y = 0.4290 },
+    [264936] = { name = "Earthseer Farsen", map = 1426, x = 0.6480, y = 0.5840 },
+    [264943] = { name = "Afadra Dunwall", map = 1455, x = 0.3331, y = 0.4774 },
+    [265002] = { name = "Ghostly Attendant", instance = 3065 },
+    [265003] = { name = "Thom Filch", map = 1455, x = 0.3215, y = 0.4473 },
 }
 
 -- Items you loot from the ground that start a quest, by item ID, with the
@@ -108,7 +152,8 @@ ns.questItems = {
 }
 
 -- Quests by ID. name stands in until the client has the quest cached;
--- faction is "Horde", "Alliance" or "Both" (the default); minLevel is the
+-- faction is "Horde", "Alliance" or "Both" (the default); class, when set, is
+-- the one class that can take it ("PALADIN"); minLevel is the
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
 -- is the instance ID of the dungeon the quest is for; start is how you get it.
 ns.quests = {
@@ -164,12 +209,91 @@ ns.quests = {
     [962] = { name = "Serpentbloom", faction = "Horde", minLevel = 14, dungeon = 43,
         start = { npc = 3419 }, finish = { npc = 3419 } },
     [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43,
-        start = { npc = 3446 }, finish = { npc = 3446 } },
+        start = { after = 865, npc = 3446 }, finish = { npc = 3446 } },
     [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43,
         start = { npc = 3665 }, finish = { npc = 3665 } },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
     [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43,
         start = { drop = 3654, item = 10441 }, finish = { npc = 8418 } },
+    -- The Hall of Thanes, from Wowhead's Forever database and dungeon quest guide.
+    [96403] = { name = "Important Heirlooms", faction = "Alliance", minLevel = 10, dungeon = 3065,
+        start = { npc = 265003 }, finish = { npc = 265003 } },
+    [96394] = { name = "The Restless Dead", faction = "Alliance", minLevel = 10, dungeon = 3065,
+        start = { npc = 264943 }, finish = { npc = 264943 } },
+    [96393] = { name = "Old Ironforge Incursion", faction = "Alliance", minLevel = 9, dungeon = 3065,
+        start = { after = 96391, npc = 264936 }, finish = { npc = 2784 } },
+    [98423] = { name = "The Treaty of Understanding", faction = "Alliance", minLevel = 9, dungeon = 3065,
+        start = {}, finish = { npc = 2784 } },
+    [96395] = { name = "An Ancient Grudge", minLevel = 10,
+        dungeon = 3065, start = { npc = 265002 } },
+    -- Deadmines, from Wowhead's Forever database and dungeon quest guide.
+    [168] = { name = "Collecting Memories", faction = "Alliance", minLevel = 14, dungeon = 36,
+        start = { npc = 656 }, finish = { npc = 656 } },
+    [167] = { name = "Oh Brother...", faction = "Alliance", minLevel = 15, dungeon = 36,
+        start = { npc = 656 }, finish = { npc = 656 } },
+    [2040] = { name = "Underground Assault", faction = "Alliance", minLevel = 15, dungeon = 36,
+        start = { npc = 6579 }, finish = { npc = 6579 } },
+    [373] = { name = "The Unsent Letter", faction = "Alliance", minLevel = 16, dungeon = 36,
+        start = { drop = 639 }, finish = { npc = 1646 } },
+    [214] = { name = "Red Silk Bandanas", faction = "Alliance", minLevel = 14, dungeon = 36,
+        start = { after = 65, npc = 820 }, finish = { npc = 820 } },
+    [166] = { name = "The Defias Brotherhood", faction = "Alliance", minLevel = 14, dungeon = 36,
+        start = { after = 65, npc = 234 }, finish = { npc = 234 } },
+    [1654] = { name = "The Test of Righteousness", faction = "Alliance", class = "PALADIN", minLevel = 20, dungeon = 36,
+        start = { npc = 6181 }, finish = { npc = 6181 } },
+    -- Ruins of Lordaeron, from Wowhead's Forever database and dungeon quest guide.
+    [92401] = { name = "A Frightened Request", faction = "Horde", minLevel = 15, dungeon = 2999,
+        start = { npc = 250686 }, finish = { npc = 250686 } },
+    [95250] = { name = "Abominable Creatures", faction = "Alliance", minLevel = 16,
+        dungeon = 2999, start = {} },
+    [95195] = { name = "Bloodied Insignia", faction = "Alliance", minLevel = 16, dungeon = 2999,
+        start = {}, finish = { npc = 466 } },
+    [92415] = { name = "Remember That I Love You", faction = "Alliance", minLevel = 15, dungeon = 2999,
+        start = {}, finish = { npc = 14450 } },
+    -- Shadowfang Keep, from Wowhead's Forever database and dungeon quest guide.
+    [1013] = { name = "The Book of Ur", faction = "Horde", minLevel = 16, dungeon = 33,
+        start = { npc = 2934 }, finish = { npc = 2934 } },
+    [1098] = { name = "Deathstalkers in Shadowfang", faction = "Horde", minLevel = 18, dungeon = 33,
+        start = { npc = 1952 }, finish = { npc = 4444 } },
+    [1014] = { name = "Arugal Must Die", faction = "Horde", minLevel = 18, dungeon = 33,
+        start = { npc = 1938 }, finish = { npc = 1938 } },
+    [1740] = { name = "The Orb of Soran'ruk", class = "WARLOCK", minLevel = 20, dungeon = 33,
+        start = { npc = 6247 }, finish = { npc = 6247 } },
+    -- Blackfathom Deeps, from Wowhead's Forever database and dungeon quest guide.
+    [6563] = { name = "The Essence of Aku'Mai", faction = "Horde", minLevel = 17, dungeon = 48,
+        start = { npc = 12736 }, finish = { npc = 12736 } },
+    [6561] = { name = "Blackfathom Villainy", faction = "Horde", minLevel = 18, dungeon = 48,
+        start = { npc = 4787 }, finish = { npc = 9087 } },
+    [6921] = { name = "Amongst the Ruins", faction = "Horde", minLevel = 21, dungeon = 48,
+        start = { npc = 12736 }, finish = { npc = 12736 } },
+    [6922] = { name = "Baron Aquanis", faction = "Horde", minLevel = 21, dungeon = 48,
+        start = { drop = 12876 }, finish = { npc = 12736 } },
+    [6565] = { name = "Allegiance to the Old Gods", faction = "Horde", minLevel = 17, dungeon = 48,
+        start = { npc = 12736 }, finish = { npc = 12736 } },
+    [971] = { name = "Knowledge in the Deeps", faction = "Alliance", minLevel = 10, dungeon = 48,
+        start = { npc = 2786 }, finish = { npc = 2786 } },
+    [1275] = { name = "Researching the Corruption", faction = "Alliance", minLevel = 18, dungeon = 48,
+        start = { npc = 8997 }, finish = { npc = 8997 } },
+    [1199] = { name = "Twilight Falls", faction = "Alliance", minLevel = 20, dungeon = 48,
+        start = { npc = 4784 }, finish = { npc = 4784 } },
+    [1198] = { name = "In Search of Thaelrid", faction = "Alliance", minLevel = 18, dungeon = 48,
+        start = { npc = 4786 }, finish = { npc = 4787 } },
+    [1200] = { name = "Blackfathom Villainy", faction = "Alliance", minLevel = 18, dungeon = 48,
+        start = { after = 1198, npc = 4787 }, finish = { npc = 4783 } },
+    -- Stormwind Stockade, from Wowhead's Forever database and dungeon quest guide.
+    [387] = { name = "Quell the Uprising", faction = "Alliance", minLevel = 22, dungeon = 34,
+        start = { npc = 1719 }, finish = { npc = 1719 } },
+    [388] = { name = "The Color of Blood", faction = "Alliance", minLevel = 22, dungeon = 34,
+        start = { npc = 1721 }, finish = { npc = 1721 } },
+    [377] = { name = "Crime and Punishment", faction = "Alliance", minLevel = 22, dungeon = 34,
+        start = { npc = 270 }, finish = { npc = 270 } },
+    [386] = { name = "What Comes Around...", faction = "Alliance", minLevel = 22, dungeon = 34,
+        start = { npc = 859 }, finish = { npc = 859 } },
+    [378] = { name = "The Fury Runs Deep", faction = "Alliance", minLevel = 22, dungeon = 34,
+        start = { after = 303, npc = 1074 }, finish = { npc = 1074 } },
+    -- Its line is The Unsent Letter (373), Bazil Thredd (389), then this.
+    [391] = { name = "The Stockade Riots", faction = "Alliance", minLevel = 16, dungeon = 34,
+        start = { after = 389, npc = 1719 }, finish = { npc = 1719 } },
 }
 
 --------------------------------------------------------------------------------
@@ -208,9 +332,11 @@ do
         end
     end
     -- A series starts at a quest something follows but that follows nothing.
+    -- A prerequisite with no record here (Red Silk Bandanas' chain starts with
+    -- quest 65) is not a series: only its last step is known.
     for first in pairs(nextQuest) do
         local quest = ns.quests[first]
-        if not (quest and quest.start and quest.start.after) then
+        if quest and not (quest.start and quest.start.after) then
             local chain, questID = {}, first
             while questID do
                 chain[#chain + 1] = questID
@@ -328,7 +454,14 @@ local function QuestState(questID)
     return NOT_TAKEN
 end
 
+-- Whether a quest is for you: your faction, and your class when it names one.
 local function ForMyFaction(quest)
+    if quest.class then
+        local _, class = UnitClass("player")
+        if class and class ~= quest.class then
+            return false
+        end
+    end
     if not quest.faction or quest.faction == "Both" then
         return true
     end
