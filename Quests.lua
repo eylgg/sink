@@ -1012,7 +1012,8 @@ end
 -- The dungeons you can enter, your level at least their entry level, that still have
 -- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
 -- rows are the quests not done; ones your level is still too low for come
--- last, with needsLevel set. total counts the dungeon's quests for your
+-- last, with needsLevel set. A dungeon is left out while every quest it has
+-- left is one of those. total counts the dungeon's quests for your
 -- faction you have not finished yet, and have the ones of them in your log or
 -- that start inside the dungeon.
 function ns.DungeonsToDo()
@@ -1024,13 +1025,14 @@ function ns.DungeonsToDo()
             for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
                 if row.state ~= DONE then
                     total = total + 1
-                    -- In your log, or one that starts inside the dungeon: that one is
-                    -- yellow before you have it, and counts as yours as it looks.
-                    if row.state == IN_LOG then
-                        have = have + 1
-                    end
                     -- One your level is too low for is listed after the rest, with the level it needs.
                     local needs = MinLevel(ns.quests[row.questID])
+                    -- In your log, or one that starts inside the dungeon: that one is
+                    -- yellow before you have it, and counts as yours as it looks, once
+                    -- your level allows it.
+                    if row.state == IN_LOG and (QuestState(row.questID) == IN_LOG or level >= needs) then
+                        have = have + 1
+                    end
                     if level >= needs then
                         rows[#rows + 1] = row
                     else
@@ -1045,10 +1047,13 @@ function ns.DungeonsToDo()
                 end
                 return a.title < b.title
             end)
+            -- Only while there is a quest you can do now; then the ones still
+            -- to come are listed under it.
+            local doable = #rows > 0
             for _, row in ipairs(later) do
                 rows[#rows + 1] = row
             end
-            if #rows > 0 then
+            if doable then
                 list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
             end
         end
