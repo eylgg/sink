@@ -1804,6 +1804,10 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     -- An elite with a quest: where to look, then what it drops and the quest
     -- that starts, its name in the yellow of quest links.
+    -- A rare: its name under the "Rare" title.
+    if pin.rare then
+        GameTooltip:AddLine(pin.name, 1, 1, 1)
+    end
     if pin.eliteQuest then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
         if pin.hint then
