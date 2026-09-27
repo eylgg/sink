@@ -129,9 +129,11 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Fishing", verified = true },
     },
     [1420] = { -- Tirisfal Glades
-        { name = "Zeppelin to Orgrimmar", x = 0.6070, y = 0.5878,
+        -- The zeppelin masters: the note names where the zeppelin goes, the name
+        -- is the NPC, so clicking the icon targets them.
+        { npc = 9566, name = "Zapetta", note = "Zeppelin to Orgrimmar", x = 0.6074, y = 0.5887,
           atlas = "poi-horde", verified = true },
-        { name = "Zeppelin to Grom'gol Base Camp", x = 0.6189, y = 0.5911,
+        { npc = 3150, name = "Hin Denburg", note = "Zeppelin to Grom'gol Base Camp", x = 0.6178, y = 0.5918,
           atlas = "poi-horde", verified = true },
         { npc = 3550, name = "Martine Tramblay", note = "Fishing Supplies", x = 0.6586, y = 0.5964,
           icon = "Interface\\Icons\\Trade_Fishing", verified = true },
