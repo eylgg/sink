@@ -50,9 +50,10 @@ ns.dungeons = {
         verified = true },
     [389] = { name = "Ragefire Chasm", minLevel = 13, maxLevel = 18, entryLevel = 10, map = 1454, x = 0.5302, y = 0.4876,
         verified = true },
-    -- Recorded on the Kalimdor map (1414); MapPins.lua draws it on the zone it lies in, The Barrens.
-    -- Unverified until the converted spot on The Barrens has been checked in game.
-    [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1414, x = 0.5239, y = 0.5521 },
+    -- The cave mouth at the Lushwater Oasis, The Barrens 46, 36, from a comment on
+    -- Wowhead's Wailing Caverns page (Wowhead has no position of its own); the
+    -- portal inside is at 47.7, 35.0. Unverified until checked in game.
+    [43] = { name = "Wailing Caverns", minLevel = 15, maxLevel = 24, map = 1413, x = 0.4600, y = 0.3600 },
     -- Levels from Wowhead's Forever database; neither entrance checked in game yet.
     -- Deadmines: the entrance in Moonbrook, Westfall.
     [36] = { name = "Deadmines", minLevel = 15, maxLevel = 25, map = 1436, x = 0.4250, y = 0.7170 },
