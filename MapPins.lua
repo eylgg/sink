@@ -1128,16 +1128,20 @@ local function QuestPins(mapID)
         if ns.EachObjectiveNPC then
             ns.EachObjectiveNPC(function(npcID, npc)
                 if npc.map then
-                    add(npc.map, { npc = npcID, name = npc.name, note = "Quest Objective", questObjective = true,
-                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = ns.QuestsWithObjective(npcID) })
+                    local questIDs = ns.QuestsWithObjective(npcID)
+                    local note = ns.AnyLeadsToDungeon(questIDs) and "Dungeon Quest" or "Quest Objective"
+                    add(npc.map, { npc = npcID, name = npc.name, note = note, questObjective = true,
+                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = questIDs })
                 end
             end)
         end
         if ns.EachFinishNPC then
             ns.EachFinishNPC(function(npcID, npc)
                 if npc.map then
-                    add(npc.map, { npc = npcID, name = npc.name, note = "Turn In", questFinish = true,
-                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = ns.QuestsFinishedAt(npcID) })
+                    local questIDs = ns.QuestsFinishedAt(npcID)
+                    local note = ns.AnyLeadsToDungeon(questIDs) and "Dungeon Quest" or "Turn In"
+                    add(npc.map, { npc = npcID, name = npc.name, note = note, questFinish = true,
+                        x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = questIDs })
                 end
             end)
         end
@@ -1786,7 +1790,12 @@ function SinkMapPinMixin:OnMouseEnter()
     if pin.entryLevel then
         GameTooltip:AddLine(("Entry from level %d"):format(pin.entryLevel), ns.grey.r, ns.grey.g, ns.grey.b)
     end
-    if pin.questIDs and ns.AddQuestLines then
+    -- A quest NPC: what to do there, "Turn in <quest>", and the dungeon it is for.
+    -- A dungeon: all its quests with their marks.
+    local role = (pin.questGiver and "give") or (pin.questObjective and "objective") or (pin.questFinish and "finish")
+    if role and ns.AddQuestPinLines then
+        ns.AddQuestPinLines(GameTooltip, role, pin.npc)
+    elseif pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)
     end
     GameTooltip:Show()

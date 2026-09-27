@@ -430,6 +430,7 @@ local questsByGiver = {}   -- npcID -> { questID, ... }
 local questsByObjective = {} -- npcID -> { questID, ... } for NPCs a quest sends you to
 local questsByFinish = {}  -- npcID -> { questID, ... } for NPCs who take a quest in
 local stepByQuest = {}     -- questID -> { step, count, uniqueNames } for a quest in a series
+local followUp = {}        -- questID -> the quest that follows it
 
 local function Append(index, key, value)
     index[key] = index[key] or {}
@@ -454,6 +455,7 @@ do
         end
         if start.after then
             nextQuest[start.after] = questID
+            followUp[start.after] = questID
         end
     end
     -- A series starts at a quest something follows but that follows nothing.
@@ -549,15 +551,34 @@ local function LeadsToDungeon(questID)
     return leadsToDungeon[questID] == true
 end
 
--- Whether any quest an NPC gives is for a dungeon, or starts a chain that
--- leads to one: their pin says "Dungeon Quest" then, "Quest" otherwise.
-function ns.GivesDungeonQuest(npcID)
-    for _, questID in ipairs(ns.QuestsFromGiver(npcID)) do
+-- Whether any of these quests is for a dungeon, or starts a chain that leads
+-- to one: a quest NPC's pin says "Dungeon Quest" then.
+function ns.AnyLeadsToDungeon(questIDs)
+    for _, questID in ipairs(questIDs) do
         if LeadsToDungeon(questID) then
             return true
         end
     end
     return false
+end
+
+function ns.GivesDungeonQuest(npcID)
+    return ns.AnyLeadsToDungeon(ns.QuestsFromGiver(npcID))
+end
+
+-- The dungeon quest a quest is, or leads to along its chain, and its dungeon:
+-- Hamuul Runetotem leads to Leaders of the Fang, in Wailing Caverns.
+local function DungeonQuestFor(questID)
+    local step, seen = questID, {}
+    while step and not seen[step] do
+        seen[step] = true
+        local quest = ns.quests[step]
+        if quest and quest.dungeon then
+            return step, ns.dungeons[quest.dungeon]
+        end
+        step = followUp[step]
+    end
+    return nil
 end
 
 -- Calls fn(npcID, npc) for every NPC who gives a quest.
@@ -707,6 +728,37 @@ function ns.IsObjectiveOpen(npcID)
         end
     end
     return false
+end
+
+-- A quest NPC's pin tooltip: for each quest that is theirs right now, what to
+-- do there with the quest name in the yellow of quest links, then the dungeon
+-- it is for in the dungeon teal, or "Leads to <quest> in <dungeon>" when the
+-- dungeon quest has another name. role is "give", "objective" or "finish".
+local ROLES = {
+    give = { verb = "Pick up", list = function(npcID) return ns.QuestsFromGiver(npcID) end },
+    objective = { verb = "Objective of", list = function(npcID) return ns.QuestsWithObjective(npcID) end },
+    finish = { verb = "Turn in", list = function(npcID) return ns.QuestsFinishedAt(npcID) end },
+}
+
+function ns.AddQuestPinLines(tooltip, role, npcID)
+    local spec = ROLES[role]
+    local current = (role == "give" and Available) or (role == "objective" and ObjectiveOpen) or ReadyToTurnIn
+    for _, questID in ipairs(spec.list(npcID)) do
+        if current(questID) then
+            local step = ns.QuestSeriesSuffix(questID)
+            tooltip:AddLine(("%s |cffffff00%s%s|r"):format(spec.verb, QuestTitle(questID), step and (" " .. step) or ""),
+                1, 1, 1)
+            -- The quest name in quest yellow, the dungeon's in the dungeon teal, the rest grey.
+            local target, dungeon = DungeonQuestFor(questID)
+            local place = dungeon and (ns.dungeonColor.hex .. dungeon.name .. "|r")
+            if dungeon and target ~= questID then
+                tooltip:AddLine(("Leads to |cffffff00%s|r in %s"):format(QuestTitle(target), place),
+                    ns.grey.r, ns.grey.g, ns.grey.b)
+            elseif dungeon then
+                tooltip:AddLine(place, ns.grey.r, ns.grey.g, ns.grey.b)
+            end
+        end
+    end
 end
 
 -- Where to go for a quest you have not taken: { questID, title, npcID, npc },
