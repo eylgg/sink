@@ -52,6 +52,7 @@ The built-in tables sit at the top of their files: quest item rules in `QuestIte
 - `/sink dump trainer` at an open trainer window prints the table entry for that weapon master or class. A class's entry has every skill with its level and price; set the window's filter to show everything first, since it only dumps what the window lists.
 - Merchant and weapon master windows are recorded as you visit them, so tooltips fill in without any typing. Class trainers are not: their skills and prices come only from the list in `Trainers.lua`.
 - `/sink dump npc unverified` lists positions that came from Wowhead rather than from the game.
+- Flight masters ("Gryphon Master", "Bat Handler" and so on) go in `MapPins.lua` like any NPC, but are drawn as the taxi node they stand at: that node's icon then targets and pings them on click.
 - IDs: `wowhead.com/forever/npc=<id>` and `/item=<id>`, and map IDs on [wago.tools](https://wago.tools/db2/UiMap?build=1.60.1.69893).
 
 ## Files

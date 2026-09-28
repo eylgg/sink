@@ -29,7 +29,11 @@
 -- Flight masters come from the client, not from a table: C_TaxiMap's nodes
 -- for the map, with their position, name and faction. The client answers
 -- with every node on the continent, so only the ones that fall on the map
--- are drawn, and its unused "zz" test nodes are skipped.
+-- are drawn, and its unused "zz" test nodes are skipped. The NPC is not in
+-- the node, so a node takes the nearest flight master pin of your faction
+-- in ns.mapPins ("Gryphon Master", "Bat Handler" and the like, see
+-- FLIGHT_TITLES), within a few percent of the map, and clicking it targets
+-- and pings them like any NPC. Those pins are never drawn themselves.
 --
 -- Whether you have a flight path has no API away from a flight master: the
 -- nodes' isUndiscovered flag is false for all of them on Forever. So opening
@@ -63,7 +67,7 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- here: they are built from the dungeon, NPC and quest records in Quests.lua.
 -- faction ("Horde", "Alliance" or "Both") says who sees a pin; without it the
 -- map's faction below applies, and on other maps a pin is for both.
--- On the Forever build Durotar is map 1411, Mulgore 1412, Tirisfal Glades 1420, Undercity 1458,
+-- On the Forever build Durotar is map 1411, Mulgore 1412, Tirisfal Glades 1420, Silverpine Forest 1421, Undercity 1458,
 -- Orgrimmar 1454, Thunder Bluff 1456, Zephras Isle (the Skyborne starting island) 2521,
 -- Teldrassil 1438, Darnassus 1457, Stormwind City 1453, Ironforge 1455, Dun Morogh 1426, Westfall 1436
 -- Stranglethorn Vale 1434, Swamp of Sorrows 1435, Feralas 1444, Thousand Needles 1441, Tanaris 1446
@@ -196,6 +200,16 @@ ns.mapPins = {
         { npc = 10356, name = "Bayne", note = "Rare", rare = true, x = 0.4960, y = 0.5123, faction = "Both",
           atlas = "nameplates-icon-elite-silver", verified = true },
     },
+    [1421] = { -- Silverpine Forest: The Sepulcher, Horde; the zone is shared
+        { npc = 6739, name = "Innkeeper Bates", note = "Innkeeper", x = 0.4318, y = 0.4128, faction = "Horde",
+          atlas = "innkeeper", verified = true },
+        { npc = 3557, name = "Guillaume Sorouy", note = "Journeyman Blacksmith", x = 0.4320, y = 0.4108,
+          faction = "Horde", icon = "Interface\\Icons\\Trade_BlackSmithing", verified = true },
+        { npc = 3555, name = "Johan Focht", note = "Miner", x = 0.4341, y = 0.4045, faction = "Horde",
+          icon = "Interface\\Icons\\Trade_Mining", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 2226, name = "Karos Razok", note = "Bat Handler", x = 0.454, y = 0.424, faction = "Horde" },
+    },
     [1458] = { -- Undercity
         { npc = 11870, name = "Archibald", note = "Weapon Master", x = 0.5731, y = 0.3277,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
@@ -287,6 +301,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
         { npc = 14729, name = "Ralston Farnsley", note = "Horde Cloth Quartermaster", x = 0.7166, y = 0.2922,
           icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 4551, name = "Michael Garrett", note = "Bat Handler", x = 0.628, y = 0.472, faction = "Horde" },
     },
     [1454] = { -- Orgrimmar
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
@@ -369,6 +385,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
         { npc = 3352, name = "Ormak Grimshot", note = "Hunter Trainer", x = 0.6605, y = 0.1853,
           icon = "Interface\\Icons\\ClassIcon_Hunter", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 3310, name = "Doras", note = "Wind Rider Master", x = 0.452, y = 0.638, faction = "Horde" },
     },
     [1412] = { -- Mulgore
         { npc = 3060, name = "Gart Mistrunner", note = "Druid Trainer", x = 0.4465, y = 0.7655,
@@ -508,6 +526,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Fishing" },
         { npc = 6736, name = "Innkeeper Keldamyr", note = "Innkeeper", x = 0.5560, y = 0.5980,
           atlas = "innkeeper" },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 3838, name = "Vesprystus", note = "Hippogryph Master", x = 0.584, y = 0.940, faction = "Alliance" },
     },
     [1453] = { -- Stormwind City, from Wowhead's Forever database, not yet checked in game
         { npc = 5520, name = "Spackle Thornberry", note = "Demon Trainer", x = 0.2560, y = 0.7785,
@@ -618,6 +638,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Fishing" },
         { npc = 6740, name = "Innkeeper Allison", note = "Innkeeper", x = 0.5260, y = 0.6553,
           atlas = "innkeeper" },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 352, name = "Dungar Longdrink", note = "Gryphon Master", x = 0.660, y = 0.626, faction = "Alliance" },
     },
     [1455] = { -- Ironforge, from Wowhead's Forever database, not yet checked in game
         { npc = 6382, name = "Jubahl Corpseseeker", note = "Demon Trainer", x = 0.5307, y = 0.0673,
@@ -736,6 +758,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Fishing" },
         { npc = 5111, name = "Innkeeper Firebrew", note = "Innkeeper", x = 0.1850, y = 0.5150,
           atlas = "innkeeper" },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 1573, name = "Gryth Thurden", note = "Gryphon Master", x = 0.554, y = 0.474, faction = "Alliance" },
     },
     [1457] = { -- Darnassus, from Wowhead's Forever database, not yet checked in game
         { npc = 4218, name = "Denatharion", note = "Druid Trainer", x = 0.3460, y = 0.0776,
@@ -844,6 +868,10 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
         { npc = 1385, name = "Brawn", note = "Expert Leatherworker", x = 0.3173, y = 0.2889, faction = "Horde",
           icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 2858, name = "Gringer", note = "Wind Rider Master", x = 0.268, y = 0.770, faction = "Horde" },
+        { npc = 2859, name = "Gyll", note = "Gryphon Master", x = 0.274, y = 0.778, faction = "Alliance" },
+        { npc = 1387, name = "Thysta", note = "Wind Rider Master", x = 0.324, y = 0.292, faction = "Horde" },
     },
     [1435] = { -- Swamp of Sorrows: Stonard, Horde; the zone is shared
         { npc = 987, name = "Ogromm", note = "Hunter Trainer", x = 0.4725, y = 0.5341, faction = "Horde",
@@ -862,6 +890,8 @@ ns.mapPins = {
           atlas = "innkeeper", verified = true },
         { npc = 986, name = "Haromm", note = "Shaman Trainer", x = 0.4817, y = 0.5792, faction = "Horde",
           icon = "Interface\\Icons\\ClassIcon_Shaman", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 6026, name = "Breyk", note = "Wind Rider Master", x = 0.460, y = 0.544, faction = "Horde" },
     },
     [1444] = { -- Feralas: Camp Mojache, Horde; the zone is shared
         -- A goblin teleporter; Wowhead lists a "Teleport to Wirdal Wondergear" spell with it.
@@ -875,10 +905,16 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
         { npc = 11098, name = "Hahrana Ironhide", note = "Master Leatherworker", x = 0.7437, y = 0.4311, faction = "Horde",
           icon = "Interface\\Icons\\Trade_LeatherWorking", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 8019, name = "Fyldren Moonfeather", note = "Hippogryph Master", x = 0.302, y = 0.432, faction = "Alliance" },
+        { npc = 8020, name = "Shyn", note = "Wind Rider Master", x = 0.754, y = 0.442, faction = "Horde" },
+        { npc = 4319, name = "Thyssiana", note = "Hippogryph Master", x = 0.894, y = 0.458, faction = "Alliance" },
     },
     [1441] = { -- Thousand Needles: Freewind Post, Horde; the zone is shared
         { npc = 11117, name = "Awenasa", note = "Stable Master", x = 0.4578, y = 0.5108, faction = "Horde",
           atlas = "stablemaster", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 4317, name = "Nyse", note = "Wind Rider Master", x = 0.450, y = 0.492, faction = "Horde" },
     },
     [1446] = { -- Tanaris: Gadgetzan, neutral, for both factions
         { npc = 8128, name = "Pikkle", note = "Miner", x = 0.5108, y = 0.2810,
@@ -899,6 +935,9 @@ ns.mapPins = {
           atlas = "innkeeper", verified = true },
         { npc = 8126, name = "Nixx Sprocketspring", note = "Master Goblin Engineer", x = 0.5246, y = 0.2731,
           icon = "Interface\\Icons\\Trade_Engineering", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 7823, name = "Bera Stonehammer", note = "Gryphon Master", x = 0.510, y = 0.292, faction = "Alliance" },
+        { npc = 7824, name = "Bulkrek Ragefist", note = "Wind Rider Master", x = 0.516, y = 0.254, faction = "Horde" },
     },
     [2548] = { -- Riverglades: Powderfuse Port, neutral
         { name = "Boat to Steamwheedle Port", x = 0.8033, y = 0.5440,
@@ -927,12 +966,17 @@ ns.mapPins = {
           icon = "Interface\\Icons\\INV_Misc_Food_15", verified = true },
         { npc = 256673, name = "Grik", note = "Stable Master", x = 0.5821, y = 0.4488, faction = "Horde",
           atlas = "stablemaster", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 255993, name = "Grakna", note = "Wind Rider Master", x = 0.596, y = 0.452, faction = "Horde" },
+        { npc = 257087, name = "Gretchen Mayberry", note = "Gryphon Master", x = 0.606, y = 0.814, faction = "Alliance" },
     },
     [1418] = { -- Badlands: Kargath, Horde; the zone is shared
         { npc = 10058, name = "Greth", note = "Stable Master", x = 0.0367, y = 0.4761, faction = "Horde",
           atlas = "stablemaster", verified = true },
         { npc = 9356, name = "Innkeeper Shul'kar", note = "Innkeeper", x = 0.0281, y = 0.4587, faction = "Horde",
           atlas = "innkeeper", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 2861, name = "Gorrik", note = "Wind Rider Master", x = 0.040, y = 0.448, faction = "Horde" },
     },
     [1413] = { -- The Barrens
         -- Books lying in the world; what they are for is not known yet. item is the book's item ID.
@@ -944,6 +988,10 @@ ns.mapPins = {
         -- Sells for reputation with Ratchet.
         { npc = 265574, name = "Winklespark", note = "Ratchet Quartermaster", x = 0.6255, y = 0.3755,
           icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 16227, name = "Bragok", note = "Flight Master", x = 0.630, y = 0.372, faction = "Both" },
+        { npc = 3615, name = "Devrak", note = "Wind Rider Master", x = 0.514, y = 0.302, faction = "Horde" },
+        { npc = 10378, name = "Omusa Thunderhorn", note = "Wind Rider Master", x = 0.444, y = 0.590, faction = "Horde" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -1032,6 +1080,100 @@ ns.mapPins = {
           icon = "Interface\\Icons\\ClassIcon_Mage", verified = true },
         { npc = 246344, name = "Alodan the Hopeful", note = "Paladin Trainer", x = 0.2520, y = 0.1439,
           icon = "Interface\\Icons\\ClassIcon_Paladin", verified = true },
+        -- Flight masters from Wowhead's Forever database, not yet checked in game.
+        { npc = 2995, name = "Tal", note = "Wind Rider Master", x = 0.468, y = 0.494, faction = "Horde" },
+    },
+    [1432] = { -- Loch Modan: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 1572, name = "Thorgrum Borrelson", note = "Gryphon Master", x = 0.338, y = 0.504, faction = "Alliance" },
+    },
+    [1436] = { -- Westfall: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 523, name = "Thor", note = "Gryphon Master", x = 0.564, y = 0.524, faction = "Alliance" },
+    },
+    [1448] = { -- Felwood: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 11900, name = "Brakkar", note = "Wind Rider Master", x = 0.344, y = 0.538, faction = "Horde" },
+        { npc = 12578, name = "Mishellena", note = "Hippogryph Master", x = 0.624, y = 0.242, faction = "Alliance" },
+    },
+    [1424] = { -- Hillsbrad Foothills: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 2432, name = "Darla Harris", note = "Gryphon Master", x = 0.494, y = 0.522, faction = "Alliance" },
+        { npc = 2389, name = "Zarise", note = "Bat Handler", x = 0.602, y = 0.184, faction = "Horde" },
+    },
+    [1449] = { -- Un'Goro Crater: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 10583, name = "Gryfe", note = "Flight Master", x = 0.452, y = 0.058, faction = "Both" },
+    },
+    [1433] = { -- Redridge Mountains: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 931, name = "Ariena Stormfeather", note = "Gryphon Master", x = 0.256, y = 0.594, faction = "Alliance" },
+    },
+    [1422] = { -- Western Plaguelands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 12596, name = "Bibilfaz Featherwhistle", note = "Gryphon Master", x = 0.428, y = 0.850, faction = "Alliance" },
+    },
+    [1440] = { -- Ashenvale: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 11901, name = "Andruk", note = "Wind Rider Master", x = 0.122, y = 0.338, faction = "Horde" },
+        { npc = 4267, name = "Daelyshia", note = "Hippogryph Master", x = 0.344, y = 0.480, faction = "Alliance" },
+        { npc = 12616, name = "Vhulgra", note = "Wind Rider Master", x = 0.732, y = 0.614, faction = "Horde" },
+    },
+    [1437] = { -- Wetlands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 1571, name = "Shellei Brondir", note = "Gryphon Master", x = 0.094, y = 0.594, faction = "Alliance" },
+    },
+    [1442] = { -- Stonetalon Mountains: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 4407, name = "Teloren", note = "Hippogryph Master", x = 0.364, y = 0.072, faction = "Alliance" },
+        { npc = 4312, name = "Tharm", note = "Wind Rider Master", x = 0.452, y = 0.598, faction = "Horde" },
+    },
+    [1439] = { -- Darkshore: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 3841, name = "Caylais Moonfeather", note = "Hippogryph Master", x = 0.364, y = 0.454, faction = "Alliance" },
+    },
+    [1445] = { -- Dustwallow Marsh: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 4321, name = "Baldruc", note = "Gryphon Master", x = 0.674, y = 0.512, faction = "Alliance" },
+        { npc = 11899, name = "Shardi", note = "Wind Rider Master", x = 0.354, y = 0.318, faction = "Horde" },
+    },
+    [1423] = { -- Eastern Plaguelands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 12636, name = "Georgia", note = "Bat Handler", x = 0.802, y = 0.570, faction = "Horde" },
+        { npc = 12617, name = "Khaelyn Steelwing", note = "Gryphon Master", x = 0.814, y = 0.592, faction = "Alliance" },
+    },
+    [1450] = { -- Moonglade: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 12740, name = "Faustron", note = "Wind Rider Master", x = 0.322, y = 0.664, faction = "Horde" },
+        { npc = 10897, name = "Sindrayl", note = "Hippogryph Master", x = 0.480, y = 0.672, faction = "Alliance" },
+    },
+    [1447] = { -- Azshara: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 12577, name = "Jarrodenus", note = "Hippogryph Master", x = 0.118, y = 0.774, faction = "Alliance" },
+        { npc = 8610, name = "Kroum", note = "Wind Rider Master", x = 0.220, y = 0.496, faction = "Horde" },
+    },
+    [1428] = { -- Burning Steppes: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 2299, name = "Borgus Stoutarm", note = "Gryphon Master", x = 0.844, y = 0.682, faction = "Alliance" },
+        { npc = 13177, name = "Vahgruk", note = "Wind Rider Master", x = 0.654, y = 0.240, faction = "Horde" },
+    },
+    [1431] = { -- Duskwood: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 2409, name = "Felicia Maline", note = "Gryphon Master", x = 0.774, y = 0.444, faction = "Alliance" },
+    },
+    [1427] = { -- Searing Gorge: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 3305, name = "Grisha", note = "Wind Rider Master", x = 0.348, y = 0.302, faction = "Horde" },
+        { npc = 2941, name = "Lanie Reed", note = "Gryphon Master", x = 0.378, y = 0.304, faction = "Alliance" },
+    },
+    [1425] = { -- The Hinterlands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 4314, name = "Gorkas", note = "Wind Rider Master", x = 0.816, y = 0.818, faction = "Horde" },
+        { npc = 8018, name = "Guthrum Thunderfist", note = "Gryphon Master", x = 0.110, y = 0.460, faction = "Alliance" },
+    },
+    [2482] = { -- Mount Hyjal: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 260626, name = "Bluebell", note = "Flight Mistress", x = 0.550, y = 0.828, faction = "Both" },
+        { npc = 41861, name = "Fayran Elthas", note = "Flight Master", x = 0.686, y = 0.440, faction = "Alliance" },
+    },
+    [1451] = { -- Silithus: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 15177, name = "Cloud Skydancer", note = "Hippogryph Master", x = 0.506, y = 0.344, faction = "Alliance" },
+        { npc = 15178, name = "Runk Windtamer", note = "Wind Rider Master", x = 0.488, y = 0.366, faction = "Horde" },
+    },
+    [1417] = { -- Arathi Highlands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 2835, name = "Cedrik Prose", note = "Gryphon Master", x = 0.456, y = 0.460, faction = "Alliance" },
+        { npc = 2851, name = "Urda", note = "Wind Rider Master", x = 0.730, y = 0.326, faction = "Horde" },
+    },
+    [1452] = { -- Winterspring: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 11138, name = "Maethrya", note = "Hippogryph Master", x = 0.622, y = 0.364, faction = "Alliance" },
+        { npc = 11139, name = "Yugrek", note = "Wind Rider Master", x = 0.604, y = 0.364, faction = "Horde" },
+    },
+    [1419] = { -- Blasted Lands: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 8609, name = "Alexandra Constantine", note = "Gryphon Master", x = 0.654, y = 0.244, faction = "Alliance" },
+    },
+    [1443] = { -- Desolace: flight masters from Wowhead's Forever database, not yet checked in game
+        { npc = 6706, name = "Baritanas Skyriver", note = "Hippogryph Master", x = 0.646, y = 0.104, faction = "Alliance" },
+        { npc = 6726, name = "Thalon", note = "Wind Rider Master", x = 0.214, y = 0.740, faction = "Horde" },
     },
 }
 
@@ -1417,6 +1559,35 @@ local function RecordDiscoveredFlightPath()
     end
 end
 
+-- The titles flight masters go by; a pin with one of these notes is the NPC
+-- at a taxi node, drawn as that node.
+local FLIGHT_TITLES = {
+    ["Flight Master"] = true, ["Flight Mistress"] = true, ["Gryphon Master"] = true,
+    ["Hippogryph Master"] = true, ["Wind Rider Master"] = true, ["Bat Handler"] = true,
+}
+
+local function IsFlightMaster(pin)
+    return pin.npc ~= nil and not pin.taxiNode and FLIGHT_TITLES[pin.note or ""] == true
+end
+
+-- The flight master pin of your faction nearest to x, y on the map, within
+-- 3% of it: the NPC standing at that taxi node.
+local function FlightMasterNear(mapID, x, y)
+    local nearest, best
+    EachPin(mapID, function(pin)
+        if IsFlightMaster(pin) and ForMyFaction(pin, mapID) then
+            local distance = (pin.x - x) ^ 2 + (pin.y - y) ^ 2
+            if not best or distance < best then
+                nearest, best = pin, distance
+            end
+        end
+    end)
+    if nearest and best < 0.03 ^ 2 then
+        return nearest
+    end
+    return nil
+end
+
 -- Pins for the flight masters on a zone or city map, for your faction.
 local function FlightPins(mapID)
     local pins = {}
@@ -1448,8 +1619,10 @@ local function FlightPins(mapID)
             if checked then
                 discovered = known[node.nodeID] == true
             end
+            local master = FlightMasterNear(mapID, x, y)
             pins[#pins + 1] = { name = node.name, note = "Flight Master", x = x, y = y, atlas = node.atlasName,
-                taxiNode = node.nodeID, discovered = discovered }
+                taxiNode = node.nodeID, discovered = discovered,
+                npc = master and master.npc, npcName = master and master.name }
         end
     end
     return pins
@@ -1533,6 +1706,8 @@ local function PinsToShow(mapID)
         local profession, cap, word = TrainerInfo(pin)
         if not ForMyFaction(pin, mapID) then
             return
+        elseif IsFlightMaster(pin) then
+            return -- drawn as its taxi node, from FlightPins below
         elseif ns.db and ns.db[PinKind(pin, profession)] == false then
             return -- its kind is switched off
         elseif pin.eliteQuest and pin.quest and C_QuestLog.IsQuestFlaggedCompleted(pin.quest) then
@@ -1717,7 +1892,7 @@ function SinkMapPinMixin:OnAcquired(pin) -- pin is the table from ns.mapPins or 
     TintRing(self, false)
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") -- same layer as Blizzard's points of interest
     self:SetPosition(pin.x, pin.y)
-    self:SetClickTarget(pin.npc and pin.name or nil) -- only icons that mark an NPC target on click
+    self:SetClickTarget(pin.npc and (pin.npcName or pin.name) or nil) -- only icons that mark an NPC target on click
 end
 
 -- Clicks go through to the map, so a left click zooms in and a right click
@@ -1826,6 +2001,9 @@ function SinkMapPinMixin:OnMouseEnter()
     end
     if pin.taxiNode then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
+        if pin.npcName then
+            GameTooltip:AddLine(pin.npcName, 1, 1, 1)
+        end
         if pin.discovered == nil then
             GameTooltip:AddLine("Unknown until you open a flight master's map", ns.grey.r, ns.grey.g, ns.grey.b)
         elseif pin.discovered then

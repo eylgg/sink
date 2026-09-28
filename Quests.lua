@@ -19,7 +19,10 @@
 --                  1/5 and, once it is turned in, 2/5)
 -- A quest's objective = { npc = id } is an NPC you go to while the quest is
 -- in your log, such as Neeru Fireblade for Hidden Enemies 2/5; that NPC gets
--- a "Quest Objective" pin until the objective is done. finish = { npc = id }
+-- a "Quest Objective" pin until the objective is done. With item = id as
+-- well, the NPC is where you get that item, and the pin goes once the quest's
+-- objective for that item is done, even while others are not. A quest with
+-- several such NPCs lists them: objective = { { npc = id, item = id }, ... }. finish = { npc = id }
 -- is who takes the quest in; they get a "Turn In" pin once it is ready to
 -- hand in.
 --
@@ -215,6 +218,8 @@ ns.dungeonBosses = {
 ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020, verified = true },
     [250660] = { name = "The Baron", instance = 2999, verified = true },
+    [4585] = { name = "Ezekiel Graves", map = 1458, x = 0.7520, y = 0.5118, verified = true },
+    [4554] = { name = "Tawny Grisette", map = 1458, x = 0.6605, y = 0.3822, verified = true },
     [4949] = { name = "Thrall", map = 1454, x = 0.3174, y = 0.3782, verified = true },
     [3216] = { name = "Neeru Fireblade", map = 1454, x = 0.4948, y = 0.5059, verified = true },
     -- From Wowhead's Forever database, not yet checked in game ("/sink dump npc unverified").
@@ -224,6 +229,7 @@ ns.npcs = {
     [271613] = { name = "Unfinished Abomination", map = 1458, x = 0.460, y = 0.622 },
     [2425] = { name = "Varimathras", map = 1458, x = 0.562, y = 0.924 },
     [7825] = { name = "Oran Snakewrithe", map = 1458, x = 0.734, y = 0.324 },
+    [15991] = { name = "Lady Dena Kennedy", map = 1453, x = 0.640, y = 0.060 }, -- wanders; one of two spots Wowhead has
     [11833] = { name = "Rahauro", map = 1456, x = 0.694, y = 0.288 },
     [5769] = { name = "Arch Druid Hamuul Runetotem", map = 1456, x = 0.784, y = 0.284 },
     [5770] = { name = "Nara Wildmane", map = 1456, x = 0.752, y = 0.304 },
@@ -299,9 +305,14 @@ ns.quests = {
         start = { after = 97288, npc = 2055 }, finish = { npc = 271613 } },
     [97290] = { name = "Unending Torment", faction = "Horde",
         start = { after = 97289, npc = 271613 }, finish = { npc = 2055 } },
-    [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 16,
-        start = { after = 97290, npc = 2055 }, finish = { npc = 2055 } },
-    [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 16,
+    [97291] = { name = "Unending Torment", faction = "Horde", minLevel = 15,
+        start = { after = 97290, npc = 2055 }, finish = { npc = 2055 },
+        -- Blisterweed (281300), the third, lies on the ground near the herbalism trainer.
+        objective = {
+            { npc = 4554, item = 281246 }, -- Toxic Skullcap
+            { npc = 4585, item = 8923 }, -- Essence of Agony
+        } },
+    [97292] = { name = "Unending Torment", faction = "Horde", minLevel = 15,
         start = { after = 97291, npc = 2055 }, finish = { npc = 2055 } },
     -- Hidden Enemies: Thrall gives parts 1 to 3; part 2 sends you to Neeru Fireblade; part 3 is done in Ragefire Chasm.
     [5726] = { name = "Hidden Enemies", faction = "Horde", minLevel = 9,
@@ -374,6 +385,8 @@ ns.quests = {
         start = { npc = 250686 }, finish = { npc = 250686 } },
     [95250] = { name = "Abominable Creatures", faction = "Alliance", minLevel = 15,
         dungeon = 2999, start = {} },
+    [95189] = { name = "Crest of Lordaeron", faction = "Alliance", minLevel = 15, dungeon = 2999,
+        start = { item = 275521 }, finish = { npc = 15991 } },
     [95195] = { name = "Bloodied Insignia", faction = "Alliance", minLevel = 15, dungeon = 2999,
         start = {}, finish = { npc = 466 } },
     [92415] = { name = "Remember That I Love You", faction = "Alliance", minLevel = 15, dungeon = 2999,
@@ -440,6 +453,15 @@ local function Append(index, key, value)
     table.insert(index[key], value)
 end
 
+-- A quest's objective NPCs as a list, whether it names one or several.
+function ns.QuestObjectiveNPCs(quest)
+    local objective = quest.objective
+    if not objective then
+        return {}
+    end
+    return objective.npc and { objective } or objective
+end
+
 do
     local nextQuest = {} -- questID -> the quest that follows it
     for questID, quest in pairs(ns.quests) do
@@ -450,8 +472,8 @@ do
         if start.npc then
             Append(questsByGiver, start.npc, questID)
         end
-        if quest.objective and quest.objective.npc then
-            Append(questsByObjective, quest.objective.npc, questID)
+        for _, objective in ipairs(ns.QuestObjectiveNPCs(quest)) do
+            Append(questsByObjective, objective.npc, questID)
         end
         if quest.finish and quest.finish.npc then
             Append(questsByFinish, quest.finish.npc, questID)
@@ -672,12 +694,44 @@ function ns.HasQuestToGive(npcID)
     return false
 end
 
--- Whether a quest in your log still needs you at its objective NPC. With
--- objectives, until they are complete; a talk-to quest with none is complete
--- as soon as it is taken, and talking to the NPC turns it in, so until then.
-local function ObjectiveOpen(questID)
+-- Whether the quest's objective for an item is still to do: the objective
+-- whose text names the item, "Toxic Skullcap: 0/1". Before the item's name
+-- is cached, whether you have one yet.
+local function ItemStepOpen(questID, itemID)
+    local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)
+    if name then
+        local objectives = C_QuestLog.GetQuestObjectives and C_QuestLog.GetQuestObjectives(questID) or {}
+        for _, objective in ipairs(objectives) do
+            if objective.text and objective.text:find(name, 1, true) then
+                return not objective.finished
+            end
+        end
+    elseif C_Item.RequestLoadItemDataByID then
+        C_Item.RequestLoadItemDataByID(itemID)
+    end
+    return (C_Item.GetItemCount and C_Item.GetItemCount(itemID) or 0) == 0
+end
+
+-- Whether a quest in your log still needs you at an objective NPC, the
+-- given one or any. With an item, until that objective is done; otherwise,
+-- with objectives, until they are complete; a talk-to quest with none is
+-- complete as soon as it is taken, and talking to the NPC turns it in, so
+-- until then.
+local function ObjectiveOpen(questID, npcID)
     local quest = ns.quests[questID]
     if not (quest and ForMyFaction(quest)) or QuestState(questID) ~= IN_LOG then
+        return false
+    end
+    local stepped = false
+    for _, objective in ipairs(ns.QuestObjectiveNPCs(quest)) do
+        if objective.item and (not npcID or objective.npc == npcID) then
+            if ItemStepOpen(questID, objective.item) then
+                return true
+            end
+            stepped = true
+        end
+    end
+    if stepped then
         return false
     end
     local count = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(questID) or 0
@@ -711,7 +765,7 @@ end
 -- Whether an NPC is the objective of a quest you are on now.
 function ns.IsObjectiveOpen(npcID)
     for _, questID in ipairs(ns.QuestsWithObjective(npcID)) do
-        if ObjectiveOpen(questID) then
+        if ObjectiveOpen(questID, npcID) then
             return true
         end
     end
@@ -765,9 +819,15 @@ function ns.QuestNextStep(questID)
     end
     local next = { questID = stepID, title = QuestTitle(stepID) }
     if QuestState(stepID) == IN_LOG then
-        if quest.objective and ObjectiveOpen(stepID) and NPCPlace(quest.objective.npc) then
-            next.action, next.place = "Go to", NPCPlace(quest.objective.npc)
-        elseif ReadyToTurnIn(stepID) and quest.finish and NPCPlace(quest.finish.npc) then
+        for _, objective in ipairs(ns.QuestObjectiveNPCs(quest)) do
+            if not next.place and ObjectiveOpen(stepID, objective.npc) and NPCPlace(objective.npc) then
+                next.action, next.place = "Go to", NPCPlace(objective.npc)
+            end
+        end
+        if next.place then -- an objective NPC to go to comes first
+            return next
+        end
+        if ReadyToTurnIn(stepID) and quest.finish and NPCPlace(quest.finish.npc) then
             next.action, next.place = "Turn in to", NPCPlace(quest.finish.npc)
         elseif quest.dungeon and DungeonPlace(quest.dungeon) then
             next.action, next.place = "Do it in", DungeonPlace(quest.dungeon)
@@ -803,7 +863,7 @@ function ns.AddQuestPinLines(tooltip, role, npcID)
     local spec = ROLES[role]
     local current = (role == "give" and Available) or (role == "objective" and ObjectiveOpen) or ReadyToTurnIn
     for _, questID in ipairs(spec.list(npcID)) do
-        if current(questID) then
+        if current(questID, npcID) then
             local step = ns.QuestSeriesSuffix(questID)
             tooltip:AddLine(("%s |cffffff00%s%s|r"):format(spec.verb, QuestTitle(questID), step and (" " .. step) or ""),
                 1, 1, 1)
