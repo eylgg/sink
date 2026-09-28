@@ -16,7 +16,11 @@
 --                  dungeon it reads "Loot inside"
 --   { after = id } offered once the quest before it is turned in; with npc as
 --                  well, that NPC offers it then (Thrall gives Hidden Enemies
---                  1/5 and, once it is turned in, 2/5)
+--                  1/5 and, once it is turned in, 2/5). Quests linked by
+--                  after are one series, with steps: "(2/5)".
+--   { needs = id } offered once another quest is turned in, one that is not a
+--                  step of the same series: Raptor Horns before Smart Drinks.
+--                  With npc as well, like after.
 -- A quest's objective = { npc = id } is an NPC you go to while the quest is
 -- in your log, such as Neeru Fireblade for Hidden Enemies 2/5; that NPC gets
 -- a "Quest Objective" pin until the objective is done. With item = id as
@@ -359,8 +363,10 @@ ns.quests = {
         start = { npc = 5768 }, finish = { npc = 5768 } },
     [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43,
         start = { npc = 5767 }, finish = { npc = 5767 } },
+    [870] = { name = "The Forgotten Pools", faction = "Horde", minLevel = 10, -- before Hamuul Runetotem
+        start = { npc = 3448 }, finish = { npc = 3448 } },
     [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 13,
-        start = { npc = 3448 }, finish = { npc = 5769 } },
+        start = { needs = 870, npc = 3448 }, finish = { npc = 5769 } },
     [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10,
         start = { after = 1489, npc = 5769 }, finish = { npc = 5770 } },
     [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43,
@@ -370,7 +376,7 @@ ns.quests = {
     [865] = { name = "Raptor Horns", minLevel = 13, -- before Smart Drinks, done outside
         start = { npc = 3446 }, finish = { npc = 3446 } },
     [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43,
-        start = { after = 865, npc = 3446 }, finish = { npc = 3446 } },
+        start = { needs = 865, npc = 3446 }, finish = { npc = 3446 } },
     [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43,
         start = { npc = 3665 }, finish = { npc = 3665 } },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
@@ -469,6 +475,7 @@ local questsByObjective = {} -- npcID -> { questID, ... } for NPCs a quest sends
 local questsByFinish = {}  -- npcID -> { questID, ... } for NPCs who take a quest in
 local stepByQuest = {}     -- questID -> { step, count, uniqueNames } for a quest in a series
 local followUp = {}        -- questID -> the quest that follows it
+local unlocks = {}         -- questID -> the quest that needs it first, outside its series
 
 local function Append(index, key, value)
     index[key] = index[key] or {}
@@ -503,6 +510,9 @@ do
         if start.after then
             nextQuest[start.after] = questID
             followUp[start.after] = questID
+        end
+        if start.needs then
+            unlocks[start.needs] = questID
         end
     end
     -- A series starts at a quest something follows but that follows nothing.
@@ -577,21 +587,25 @@ function ns.EachFinishNPC(fn)
     EachNPCIn(questsByFinish, fn)
 end
 
--- Quests for a dungeon, and the quests before them in their chains: Hamuul
--- Runetotem is not done in Wailing Caverns, but it starts the chain that ends
--- with Leaders of the Fang, which is. Built once.
+-- Quests for a dungeon, and the quests before them in their chains and
+-- the ones they need first: Hamuul Runetotem is not done in Wailing Caverns,
+-- but it starts the chain that ends with Leaders of the Fang, which is, and
+-- The Forgotten Pools comes before it. Built once.
 local leadsToDungeon
 local function LeadsToDungeon(questID)
     if not leadsToDungeon then
         leadsToDungeon = {}
+        local function mark(step)
+            if step and not leadsToDungeon[step] then
+                leadsToDungeon[step] = true
+                local start = ns.quests[step] and ns.quests[step].start or {}
+                mark(start.after)
+                mark(start.needs)
+            end
+        end
         for id, quest in pairs(ns.quests) do
             if quest.dungeon then
-                local step = id
-                while step and not leadsToDungeon[step] do
-                    leadsToDungeon[step] = true
-                    local record = ns.quests[step]
-                    step = record and record.start and record.start.after
-                end
+                mark(id)
             end
         end
     end
@@ -613,8 +627,9 @@ function ns.GivesDungeonQuest(npcID)
     return ns.AnyLeadsToDungeon(ns.QuestsFromGiver(npcID))
 end
 
--- The dungeon quest a quest is, or leads to along its chain, and its dungeon:
--- Hamuul Runetotem leads to Leaders of the Fang, in Wailing Caverns.
+-- The dungeon quest a quest is, or leads to along its chain or as the quest
+-- another needs first, and its dungeon: Hamuul Runetotem leads to Leaders of
+-- the Fang, in Wailing Caverns.
 local function DungeonQuestFor(questID)
     local step, seen = questID, {}
     while step and not seen[step] do
@@ -623,7 +638,7 @@ local function DungeonQuestFor(questID)
         if quest and quest.dungeon then
             return step, ns.dungeons[quest.dungeon]
         end
-        step = followUp[step]
+        step = followUp[step] or unlocks[step]
     end
     return nil
 end
@@ -691,16 +706,18 @@ local function MinLevel(quest)
 end
 
 -- Whether a quest is there for you to pick up now: for your faction, neither
--- in your log nor done, your level is high enough, and the quest before it,
--- if any, is turned in.
+-- in your log nor done, your level is high enough, and the quest before it
+-- and the one it needs, if any, are turned in.
 local function Available(questID)
     local quest = ns.quests[questID]
     if not quest then
         return false
     end
-    local after = quest.start and quest.start.after
-    if after and not C_QuestLog.IsQuestFlaggedCompleted(after) then
-        return false
+    local start = quest.start or {}
+    for _, before in ipairs({ start.after or false, start.needs or false }) do
+        if before and not C_QuestLog.IsQuestFlaggedCompleted(before) then
+            return false
+        end
     end
     local level = UnitLevel and UnitLevel("player") or 0
     return ForMyFaction(quest) and QuestState(questID) == NOT_TAKEN and level >= MinLevel(quest)
@@ -816,16 +833,23 @@ local function DungeonPlace(instanceID)
     return nil
 end
 
+-- The quest to do first: back along the series, and to a quest one needs,
+-- while that one is not turned in and has a record here.
 local function CurrentStep(questID)
     local step, seen = questID, {}
     while not seen[step] do
         seen[step] = true
-        local quest = ns.quests[step]
-        local after = quest and quest.start and quest.start.after
-        if not (after and ns.quests[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)) then
+        local start = ns.quests[step] and ns.quests[step].start or {}
+        local before
+        for _, id in ipairs({ start.after or false, start.needs or false }) do
+            if not before and id and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+                before = id
+            end
+        end
+        if not before then
             break
         end
-        step = after
+        step = before
     end
     return step
 end
@@ -861,8 +885,10 @@ function ns.QuestNextStep(questID)
         if NPCPlace(start.npc) then
             next.action, next.place = "Pick it up from", NPCPlace(start.npc)
             -- An earlier quest Sink has no record of comes first, such as quest 65 before Red Silk Bandanas.
-            if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
-                next.note = "Needs an earlier quest first"
+            for _, id in ipairs({ start.after or false, start.needs or false }) do
+                if id and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+                    next.note = "Needs an earlier quest first"
+                end
             end
         elseif quest.dungeon and DungeonPlace(quest.dungeon) then
             next.action, next.place = "Starts inside", DungeonPlace(quest.dungeon)

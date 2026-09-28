@@ -25,6 +25,7 @@ ns.questItemRules = {
     [5088] = 894,
     [268580] = 92421, -- Intact Limbs, Light's Justice (Ruins of Lordaeron)
     [14544] = 5727, -- Lieutenant's Insignia, Hidden Enemies 2/5 (Orgrimmar)
+    [5059] = 868, -- Digging Claw, Egg Hunt (The Barrens)
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"
