@@ -233,7 +233,7 @@ local PAGES = {
         { header = "Tooltips and Warnings" },
         { key = "questItemWarnings", label = "Quest item warnings",
           tooltip = "Bag slot tint and tracker list for quest items that are safe to delete, and a"
-              .. " \"Needed for\" tooltip line naming the quest on the ones whose quest is not done yet." },
+              .. " tooltip line naming the quest: \"Needed for\" until it is done, \"Done with\" after." },
         { key = "recipeTooltips", label = "Recipe vendor tooltips",
           tooltip = "Vendor tooltips list the recipes sold, with a check for the ones you know." },
         { key = "reagentTooltips", label = "Reagent tooltips",
