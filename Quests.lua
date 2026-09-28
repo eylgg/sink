@@ -367,6 +367,8 @@ ns.quests = {
         start = { after = 1490, npc = 5770 }, finish = { npc = 5770 } },
     [962] = { name = "Serpentbloom", faction = "Horde", minLevel = 14, dungeon = 43,
         start = { npc = 3419 }, finish = { npc = 3419 } },
+    [865] = { name = "Raptor Horns", minLevel = 13, -- before Smart Drinks, done outside
+        start = { npc = 3446 }, finish = { npc = 3446 } },
     [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43,
         start = { after = 865, npc = 3446 }, finish = { npc = 3446 } },
     [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43,
@@ -858,7 +860,7 @@ function ns.QuestNextStep(questID)
         local start = quest.start or {}
         if NPCPlace(start.npc) then
             next.action, next.place = "Pick it up from", NPCPlace(start.npc)
-            -- An earlier quest Sink has no record of comes first, such as quest 865 before Smart Drinks.
+            -- An earlier quest Sink has no record of comes first, such as quest 65 before Red Silk Bandanas.
             if start.after and not C_QuestLog.IsQuestFlaggedCompleted(start.after) then
                 next.note = "Needs an earlier quest first"
             end
