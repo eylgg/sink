@@ -1005,8 +1005,18 @@ local function QuestRows(questIDs)
                 title = title .. " (outside the instance)"
             end
             -- In your log with its objectives done: drawn as done, but still counted
-            -- and sorted as in your log.
-            local ready = QuestState(questID) == IN_LOG and ReadyToTurnIn(questID)
+            -- and sorted as in your log. One with no objectives, as Deathstalkers
+            -- in Shadowfang, stays in progress until it is turned in.
+            local objectives = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(questID) or 0
+            local ready = QuestState(questID) == IN_LOG and objectives > 0 and ReadyToTurnIn(questID)
+            -- One that starts from an item inside, as The Glowing Shard from Mutanus:
+            -- done here once you have the item, or have started it and it asks
+            -- for nothing more.
+            local start = quest.start or {}
+            if drop and start.item then
+                local have = C_Item.GetItemCount and C_Item.GetItemCount(start.item) > 0
+                ready = ready or have or (QuestState(questID) == IN_LOG and objectives == 0)
+            end
             rows[#rows + 1] = { state = state, title = title, questID = questID, ready = ready }
         end
     end
@@ -1021,7 +1031,7 @@ end
 
 -- A row as text with its mark, and its colour: red cross for not taken,
 -- yellow waiting mark for in your log, green check for done or for in your
--- log with its objectives complete; one your level is too low for is grey
+-- log with its objectives complete (one with none stays yellow); one your level is too low for is grey
 -- with no mark and the level it needs in front, "[15]".
 function ns.QuestRowText(row)
     if row.needsLevel then
