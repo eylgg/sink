@@ -292,7 +292,9 @@ end
 -- While you are in a dungeon Sink knows: its name and how many bosses are
 -- dead, each boss ticked off as it dies, then your quests there with their
 -- objectives as your quest log counts them. A rare is not in the count, and
--- is grey until killed, as it may not be there.
+-- is grey until killed, as it may not be there. A quest item found in one of
+-- several spots lists them under its quest: click one once you have looked
+-- there and it goes grey, so the group does not look twice.
 local function CurrentDungeonLines()
     local here = ns.CurrentDungeon and ns.CurrentDungeon()
     if not here then
@@ -309,14 +311,19 @@ local function CurrentDungeonLines()
     end
     local count = total > 0 and (" %s(%d/%d Bosses)|r"):format(ns.grey.hex, dead, total) or ""
     local lines = { { block = true, color = ns.dungeonColor, text = here.name .. count } }
-    for _, boss in ipairs(here.bosses) do
-        local name = boss.rare and (boss.name .. " (Rare)") or boss.name
-        if boss.dead then
-            lines[#lines + 1] = { text = ns.CHECK .. " " .. name, color = ns.known }
-        elseif boss.rare then
-            lines[#lines + 1] = { text = name, color = ns.grey }
-        else
-            lines[#lines + 1] = { text = ns.CROSS .. " " .. name, color = ns.missing }
+    -- The bosses in order, then the rares at the bottom.
+    for _, rares in ipairs({ false, true }) do
+        for _, boss in ipairs(here.bosses) do
+            if (boss.rare == true) == rares then
+                local name = boss.rare and (boss.name .. " (Rare)") or boss.name
+                if boss.dead then
+                    lines[#lines + 1] = { text = ns.CHECK .. " " .. name, color = ns.known }
+                elseif boss.rare then
+                    lines[#lines + 1] = { text = name, color = ns.grey }
+                else
+                    lines[#lines + 1] = { text = ns.CROSS .. " " .. name, color = ns.missing }
+                end
+            end
         end
     end
     for i, quest in ipairs(here.quests) do
@@ -328,6 +335,19 @@ local function CurrentDungeonLines()
                 lines[#lines + 1] = { text = "      " .. objective.text,
                     color = objective.finished and ns.known or { r = 0.8, g = 0.8, b = 0.8 } }
             end
+        end
+        for _, spot in ipairs(quest.spots or {}) do
+            lines[#lines + 1] = { text = "      " .. spot.name,
+                color = spot.searched and ns.grey or { r = 0.8, g = 0.8, b = 0.8 },
+                onClick = function()
+                    ns.ToggleSearchedSpot(spot.index)
+                end,
+                tooltip = function(tooltip)
+                    tooltip:SetText(spot.name, 1, 1, 1)
+                    tooltip:AddLine(spot.where, 0.8, 0.8, 0.8, true)
+                    tooltip:AddLine(spot.searched and "Click if you have not looked here after all"
+                        or "Click once you have looked here", ns.grey.r, ns.grey.g, ns.grey.b)
+                end }
         end
     end
     return lines

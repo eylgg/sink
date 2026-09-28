@@ -255,8 +255,8 @@ ns.npcs = {
     [1646] = { name = "Baros Alexston", map = 1453, x = 0.5330, y = 0.3900 },
     [1719] = { name = "Warden Thelwater", map = 1453, x = 0.4127, y = 0.5773 },
     [1721] = { name = "Nikova Raskol", map = 1453, x = 0.7180, y = 0.4596 },
-    [1938] = { name = "Dalar Dawnweaver", map = 1421, x = 0.4420, y = 0.3980 },
-    [1952] = { name = "High Executor Hadrec", map = 1421, x = 0.4340, y = 0.4080 },
+    [1938] = { name = "Dalar Dawnweaver", map = 1421, x = 0.4422, y = 0.3978, verified = true },
+    [1952] = { name = "High Executor Hadrec", map = 1421, x = 0.4342, y = 0.4086, verified = true },
     [2784] = { name = "King Magni Bronzebeard", map = 1455, x = 0.3960, y = 0.5550 },
     [2786] = { name = "Gerrig Bonegrip", map = 1455, x = 0.5044, y = 0.0600 },
     [2934] = { name = "Keeper Bel'dugur", map = 1458, x = 0.5373, y = 0.5400 },
@@ -280,10 +280,29 @@ ns.npcs = {
     [265003] = { name = "Thom Filch", map = 1455, x = 0.3215, y = 0.4473 },
 }
 
+-- The Crest of Lordaeron hangs in one of these, a different one each run,
+-- from a Wowhead comment that confirmed each. The dungeon has no map
+-- position, so they are words: name for the tracker line, where for its tooltip.
+local CREST_SPOTS = {
+    { name = "East tower, top floor", where = "On the wall left of the top floor doors. The tower is in the SW corner"
+        .. " of Witherfang's courtyard, by the fountain in front of The Baron; its only door is on the alley"
+        .. " you come in by. A window from Witherfang's courtyard is a shortcut to it." },
+    { name = "Crypt by the east tower", where = "On the pitch black wall behind the closed crypt doors in front of"
+        .. " The Baron, by the broken statue SE of the Throne Room. A banshee comes out. A dark square on the"
+        .. " minimap." },
+    { name = "SW tower, top floor", where = "On the wall left of the top floor doors. The tower is in the NW corner"
+        .. " of The Abandoned's courtyard, north of Viktor the Vile; it has two doors." },
+    { name = "NW tower, bottom", where = "In front of the split staircase north of Rath'mael, where Bjork patrols." },
+    { name = "Gazebo, far NW", where = "On the wall of the gazebo-like building in the far NW of the dungeon, where"
+        .. " Bjork patrols. A dark square on the minimap." },
+}
+
 -- Items you loot from the ground that start a quest, by item ID, with the
--- instance ID of the dungeon they are found in.
+-- instance ID of the dungeon they are found in, and spots when it is in one
+-- of several places: the tracker lists them to tick off while you search.
 ns.questItems = {
-    [275521] = { name = "Crest of Lordaeron", instance = 2999 }, -- lies on the ground at random spots
+    [275521] = { name = "Crest of Lordaeron", instance = 2999, spots = CREST_SPOTS }, -- Horde
+    [268579] = { name = "Crest of Lordaeron", instance = 2999, spots = CREST_SPOTS }, -- Alliance
 }
 
 -- Quests by ID. name stands in until the client has the quest cached;
@@ -387,7 +406,7 @@ ns.quests = {
     [95250] = { name = "Abominable Creatures", faction = "Alliance", minLevel = 15,
         dungeon = 2999, start = {} },
     [95189] = { name = "Crest of Lordaeron", faction = "Alliance", minLevel = 15, dungeon = 2999,
-        start = { item = 275521 }, finish = { npc = 15991 } },
+        start = { item = 268579 }, finish = { npc = 15991 } },
     [95195] = { name = "Bloodied Insignia", faction = "Alliance", minLevel = 15, dungeon = 2999,
         start = {}, finish = { npc = 466 } },
     [92415] = { name = "Remember That I Love You", faction = "Alliance", minLevel = 15, dungeon = 2999,
@@ -896,7 +915,7 @@ local function DropText(quest)
     end
     local item = start.item and ns.questItems[start.item]
     if item and item.instance and item.instance == quest.dungeon then
-        return "Loot inside"
+        return item.spots and ("Loot inside, in one of %d spots"):format(#item.spots) or "Loot inside"
     end
     return nil
 end
@@ -973,16 +992,45 @@ end
 --------------------------------------------------------------------------------
 
 local killed = {}       -- encounter ID -> true, for the dungeon below
-local killedIn          -- the instance ID the kills are for
+local searched = {}     -- spot index -> true, for a quest item's spots, marked in the tracker
+local killedIn          -- the instance ID the kills and searched spots are for
 
 -- Bosses die in ENCOUNTER_END. The kills are kept while you are in or return
--- to the same dungeon, as after a corpse run, and start over in another.
+-- to the same dungeon, as after a corpse run, and start over in another; the
+-- searched spots too.
 local function OnEnterWorld()
     local _, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
     if instanceType == "party" and instanceID ~= killedIn then
         killedIn = instanceID
         wipe(killed)
+        wipe(searched)
     end
+end
+
+-- Mark a quest item's spot searched, or not any more; the tracker calls it on a click.
+function ns.ToggleSearchedSpot(index)
+    searched[index] = not searched[index] or nil
+    if ns.RefreshTracker then
+        ns.RefreshTracker()
+    end
+end
+
+-- The spots to search for the item that starts a quest, while you have not
+-- taken the quest or looted the item: { { index, name, where, searched } }, or nil.
+local function SpotsToSearch(questID)
+    local itemID = ns.quests[questID].start and ns.quests[questID].start.item
+    local item = itemID and ns.questItems[itemID]
+    if not (item and item.spots) or QuestState(questID) ~= NOT_TAKEN then
+        return nil
+    end
+    if C_Item.GetItemCount and C_Item.GetItemCount(itemID) > 0 then
+        return nil
+    end
+    local spots = {}
+    for index, spot in ipairs(item.spots) do
+        spots[#spots + 1] = { index = index, name = spot.name, where = spot.where, searched = searched[index] == true }
+    end
+    return spots
 end
 
 local function OnEncounterEnd(encounterID, success)
@@ -992,9 +1040,10 @@ local function OnEncounterEnd(encounterID, success)
 end
 
 -- The dungeon you are in, or nil outside one Sink has bosses or quests for:
--- { name, dungeon, bosses = { { name, dead, rare } }, quests = { { row, objectives } } }.
+-- { name, dungeon, bosses = { { name, dead, rare } }, quests = { { row, objectives, spots } } }.
 -- quests are the dungeon's quests in your log, with the objectives your quest
--- log gives, and the ones that start inside ("Kill "The Baron" inside").
+-- log gives, and the ones that start inside ("Kill "The Baron" inside"),
+-- with the spots to search for one whose item is in one of several.
 function ns.CurrentDungeon()
     local name, instanceType, difficultyID, _, _, _, _, instanceID = GetInstanceInfo()
     if instanceType ~= "party" or not instanceID then
@@ -1016,7 +1065,7 @@ function ns.CurrentDungeon()
             if QuestState(row.questID) == IN_LOG and C_QuestLog.GetQuestObjectives then
                 objectives = C_QuestLog.GetQuestObjectives(row.questID)
             end
-            quests[#quests + 1] = { row = row, objectives = objectives or {} }
+            quests[#quests + 1] = { row = row, objectives = objectives or {}, spots = SpotsToSearch(row.questID) }
         end
     end
     return { name = dungeon and dungeon.name or name, dungeon = dungeon, bosses = bosses, quests = quests }
@@ -1070,8 +1119,7 @@ function ns.DungeonRangeText(dungeon)
         math.floor(color.b * 255 + 0.5), low, high)
 end
 
--- The dungeons you can enter, your level at least their entry level, that still have
--- quests for you, sorted by level: { instanceID, dungeon, rows, have, total }.
+-- The dungeons with a quest you can take or do now, sorted by level: { instanceID, dungeon, rows, have, total }.
 -- rows are the quests not done; ones your level is still too low for come
 -- last, with needsLevel set. A dungeon is left out while every quest it has
 -- left is one of those. total counts the dungeon's quests for your
@@ -1080,43 +1128,44 @@ end
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
+    -- Whether a dungeon shows is up to its quests: once you can take one, even
+    -- below the level the dungeon lets you in at, as Arugal Must Die at 18 for
+    -- Shadowfang Keep. A quest without its own level uses the dungeon's.
     for instanceID, dungeon in pairs(ns.dungeons) do
-        if level >= (dungeon.entryLevel or dungeon.minLevel or 0) then
-            local rows, later, have, total = {}, {}, 0, 0
-            for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
-                if row.state ~= DONE then
-                    total = total + 1
-                    -- One your level is too low for is listed after the rest, with the level it needs.
-                    local needs = MinLevel(ns.quests[row.questID])
-                    -- In your log, or one that starts inside the dungeon: that one is
-                    -- yellow before you have it, and counts as yours as it looks, once
-                    -- your level allows it.
-                    if row.state == IN_LOG and (QuestState(row.questID) == IN_LOG or level >= needs) then
-                        have = have + 1
-                    end
-                    if level >= needs then
-                        rows[#rows + 1] = row
-                    else
-                        row.needsLevel = needs
-                        later[#later + 1] = row
-                    end
+        local rows, later, have, total = {}, {}, 0, 0
+        for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
+            if row.state ~= DONE then
+                total = total + 1
+                -- One your level is too low for is listed after the rest, with the level it needs.
+                local needs = MinLevel(ns.quests[row.questID])
+                -- In your log, or one that starts inside the dungeon: that one is
+                -- yellow before you have it, and counts as yours as it looks, once
+                -- your level allows it.
+                if row.state == IN_LOG and (QuestState(row.questID) == IN_LOG or level >= needs) then
+                    have = have + 1
+                end
+                if level >= needs then
+                    rows[#rows + 1] = row
+                else
+                    row.needsLevel = needs
+                    later[#later + 1] = row
                 end
             end
-            table.sort(later, function(a, b)
-                if a.needsLevel ~= b.needsLevel then
-                    return a.needsLevel < b.needsLevel
-                end
-                return a.title < b.title
-            end)
-            -- Only while there is a quest you can do now; then the ones still
-            -- to come are listed under it.
-            local doable = #rows > 0
-            for _, row in ipairs(later) do
-                rows[#rows + 1] = row
+        end
+        table.sort(later, function(a, b)
+            if a.needsLevel ~= b.needsLevel then
+                return a.needsLevel < b.needsLevel
             end
-            if doable then
-                list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
-            end
+            return a.title < b.title
+        end)
+        -- Only while there is a quest you can do now; then the ones still
+        -- to come are listed under it.
+        local doable = #rows > 0
+        for _, row in ipairs(later) do
+            rows[#rows + 1] = row
+        end
+        if doable then
+            list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
         end
     end
     table.sort(list, function(a, b)
