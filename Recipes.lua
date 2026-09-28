@@ -26,6 +26,9 @@ ns.recipeVendors = {
     [2118] = { name = "Abigail Shiel", location = "Brill, Tirisfal Glades", recipes = { 12226 } },
     [3550] = { name = "Martine Tramblay", location = "Brill, Tirisfal Glades", recipes = { 6325 } },
     [4574] = { name = "Lizbeth Cromwell", location = "Undercity", recipes = { 6328 } },
+    -- Clam Chowder, from Wowhead's Forever database; both Alliance.
+    [4305] = { name = "Kriggon Talsone", location = "Westfall", recipes = { 5528 } },
+    [4307] = { name = "Heldan Galesong", location = "Darkshore", recipes = { 5528 } },
     -- Strider Stew and Crispy Lizard Tail, from Wowhead's Forever database.
     [3482] = { name = "Tari'qa", location = "The Crossroads, The Barrens", recipes = { 5486, 5488 } },
 }
@@ -86,6 +89,7 @@ local function EachVendor(fn)
         fn(npcID, VendorInfo(npcID))
     end
 end
+ns.EachRecipeVendor = EachVendor -- for the Items tab (Items.lua)
 
 local function ItemName(itemID)
     local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)

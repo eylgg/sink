@@ -106,6 +106,11 @@ local function QuestNames(rule, color)
     return table.concat(names, ", ")
 end
 
+-- For the Items tab (Items.lua).
+ns.EachQuestItemRule = EachRule
+ns.QuestItemQuestNames = QuestNames
+ns.QuestItemRuleComplete = QuestsComplete
+
 local function ItemName(itemID, link)
     if link then
         return link

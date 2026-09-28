@@ -14,7 +14,8 @@
 # and Options.lua dispatches /sink items, /sink recipes, /sink weapons, /sink errors,
 # /sink map and /sink dump to the modules; /sink splits and /sink tracker flip the Splits.lua and
 # Tracker.lua switches. Tracker.lua lists dungeons from Quests.lua. MapPins.xml holds the map pin template that
-# MapPins.lua fills in; Dump.lua uses helpers from Recipes.lua, Weapons.lua and MapPins.lua.
+# MapPins.lua fills in; Dump.lua uses helpers from Recipes.lua, Weapons.lua and MapPins.lua. Items.lua
+# gathers the items the other files know for the options window's Items tab.
 Core.lua
 QuestItems.lua
 Recipes.lua
@@ -28,4 +29,5 @@ Tracker.lua
 MapPins.lua
 MapPins.xml
 Dump.lua
+Items.lua
 Options.lua

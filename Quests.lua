@@ -676,6 +676,7 @@ local function QuestTitle(questID)
     local quest = ns.quests[questID]
     return (quest and quest.name) or ("quest #" .. questID)
 end
+ns.QuestTitle = QuestTitle
 
 local NOT_TAKEN, IN_LOG, DONE = 1, 2, 3
 

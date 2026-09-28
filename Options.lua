@@ -225,6 +225,13 @@ local PAGES = {
         end },
     },
     {
+        name = "Items",
+        icon = "Interface\\Icons\\INV_Misc_Book_09",
+        { build = function(page, y)
+            return ns.BuildItemList and ns.BuildItemList(page, y) or 0
+        end },
+    },
+    {
         name = "Tracker",
         icon = "Interface\\Icons\\INV_Scroll_03",
         { key = "tracker", label = "Enable tracker",
@@ -412,6 +419,9 @@ function RefreshWindow()
     end
     if ns.RefreshIgnoredList then
         ns.RefreshIgnoredList()
+    end
+    if ns.RefreshItemList then
+        ns.RefreshItemList()
     end
 end
 

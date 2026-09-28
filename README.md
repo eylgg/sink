@@ -6,6 +6,7 @@ The everything WoW: Forever addon.
 - **Recipe vendors**: vendor tooltips list the recipes sold, checked when you know them; `/sink recipes missing` lists what you still lack.
 - **Weapon skills and class training**: weapon master and class trainer tooltips show what you can still learn and at what level.
 - **Profession recipes**: the Professions tab of the options window lists, for each profession you have, the trainer recipes you do not know yet and the skill each needs. Reagent tooltips list the recipes that use them, checked when you know them.
+- **Items**: the Items tab of the options window lists every item Sink knows, with a search box: reagents and what they make, recipes and who sells them, quest items and the quests they are for or start. Hover one for its tooltip.
 - **Ability errors**: hides the repeating "Not enough energy" text and voice when you spam an ability.
 - **Map icons**: vendors, trainers, flight masters, dungeon entrances and quest NPCs on the world map, filtered to your faction, class and professions. Click one to target and ping the NPC. Each kind (class trainers, profession trainers, innkeepers, auctioneers and so on) can be switched off on the Map Pins tab or in the world map's filter menu.
 - **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.

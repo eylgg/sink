@@ -208,6 +208,10 @@ ns.reagents = {
     [5469] = { -- Strider Meat
         { spell = 6416, profession = "Cooking", recipe = 5486 }, -- Strider Stew
     },
+    [5503] = { -- Clam Meat
+        { spell = 6499, profession = "Cooking" }, -- Boiled Clams, from the trainer
+        { spell = 6501, profession = "Cooking", recipe = 5528 }, -- Clam Chowder
+    },
     [5465] = { -- Small Spider Leg
         { spell = 6412, profession = "Cooking", recipe = 5482, -- Kaldorei Spider Kabob
           quest = 4161, giver = "Zarrin in Dolanaar", faction = "Alliance" }, -- Recipe of the Kaldorei
