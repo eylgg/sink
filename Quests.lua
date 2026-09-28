@@ -363,11 +363,10 @@ ns.quests = {
         start = { npc = 5768 }, finish = { npc = 5768 } },
     [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43,
         start = { npc = 5767 }, finish = { npc = 5767 } },
-    -- The Barrens Oases series comes before Hamuul Runetotem: Altered Beings, its last step, is needed first.
-    [886] = { name = "The Barrens Oases", faction = "Horde", minLevel = 10,
-        start = { npc = 5769 }, finish = { npc = 3448 } },
+    -- Tonga's oasis series comes before Hamuul Runetotem: Altered Beings, its last step, is needed first.
+    -- The Barrens Oases (886), which Wowhead puts first, is not needed for any of it.
     [870] = { name = "The Forgotten Pools", faction = "Horde", minLevel = 10,
-        start = { after = 886, npc = 3448 }, finish = { npc = 3448 } },
+        start = { npc = 3448 }, finish = { npc = 3448 } },
     [877] = { name = "The Stagnant Oasis", faction = "Horde", minLevel = 10,
         start = { after = 870, npc = 3448 }, finish = { npc = 3448 } },
     [880] = { name = "Altered Beings", faction = "Horde", minLevel = 10,
