@@ -1268,6 +1268,20 @@ local function QuestPins(mapID)
             questPins[map] = questPins[map] or {}
             table.insert(questPins[map], pin)
         end
+        -- An NPC's pin at their place, and a copy at each other spot they may
+        -- spawn in, all with the hint for finding them.
+        local function addNPC(npc, pin)
+            pin.hint = npc.hint
+            add(npc.map, pin)
+            for _, spot in ipairs(npc.spots or {}) do
+                local copy = {}
+                for key, value in pairs(pin) do
+                    copy[key] = value
+                end
+                copy.x, copy.y = spot[1], spot[2]
+                add(npc.map, copy)
+            end
+        end
         for instanceID, dungeon in pairs(ns.dungeons or {}) do
             -- A dungeon whose entrance is not recorded yet has no pin.
             if dungeon.map then
@@ -1280,7 +1294,7 @@ local function QuestPins(mapID)
             ns.EachQuestGiver(function(npcID, npc)
                 if npc.map then
                     local note = ns.GivesDungeonQuest(npcID) and "Dungeon Quest" or "Quest"
-                    add(npc.map, { npc = npcID, name = npc.name, note = note, questGiver = true,
+                    addNPC(npc, { npc = npcID, name = npc.name, note = note, questGiver = true,
                         x = npc.x, y = npc.y, atlas = "QuestNormal", questIDs = ns.QuestsFromGiver(npcID) })
                 end
             end)
@@ -1290,7 +1304,7 @@ local function QuestPins(mapID)
                 if npc.map then
                     local questIDs = ns.QuestsWithObjective(npcID)
                     local note = ns.AnyLeadsToDungeon(questIDs) and "Dungeon Quest" or "Quest Objective"
-                    add(npc.map, { npc = npcID, name = npc.name, note = note, questObjective = true,
+                    addNPC(npc, { npc = npcID, name = npc.name, note = note, questObjective = true,
                         x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = questIDs })
                 end
             end)
@@ -1300,7 +1314,7 @@ local function QuestPins(mapID)
                 if npc.map then
                     local questIDs = ns.QuestsFinishedAt(npcID)
                     local note = ns.AnyLeadsToDungeon(questIDs) and "Dungeon Quest" or "Turn In"
-                    add(npc.map, { npc = npcID, name = npc.name, note = note, questFinish = true,
+                    addNPC(npc, { npc = npcID, name = npc.name, note = note, questFinish = true,
                         x = npc.x, y = npc.y, atlas = "QuestTurnin", questIDs = questIDs })
                 end
             end)
@@ -2025,6 +2039,9 @@ function SinkMapPinMixin:OnMouseEnter()
     local role = (pin.questGiver and "give") or (pin.questObjective and "objective") or (pin.questFinish and "finish")
     if role and ns.AddQuestPinLines then
         ns.AddQuestPinLines(GameTooltip, role, pin.npc)
+        if pin.hint then
+            GameTooltip:AddLine(pin.hint, ns.grey.r, ns.grey.g, ns.grey.b, true)
+        end
     elseif pin.questIDs and ns.AddQuestLines then
         ns.AddQuestLines(GameTooltip, pin.questIDs)
     end

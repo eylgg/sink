@@ -219,7 +219,9 @@ ns.dungeonBosses = {
 
 -- NPCs that give or drop quests. One outside has a uiMap map and x, y, and
 -- verified = true once that position was taken in game (see MapPins.lua);
--- one inside a dungeon has its instance ID.
+-- one inside a dungeon has its instance ID. One that spawns in one of
+-- several places lists the others as spots = { { x, y }, ... } on the same
+-- map, each drawn as a pin of its own, and hint says how to find them.
 ns.npcs = {
     [251001] = { name = "Deathguard Kristof", map = 1420, x = 0.6524, y = 0.6020, verified = true },
     [250660] = { name = "The Baron", instance = 2999, verified = true },
@@ -242,6 +244,10 @@ ns.npcs = {
     [3448] = { name = "Tonga Runetotem", map = 1413, x = 0.522, y = 0.318 },
     [3446] = { name = "Mebok Mizzyrix", map = 1413, x = 0.624, y = 0.376 },
     [3665] = { name = "Crane Operator Bigglefuzz", map = 1413, x = 0.630, y = 0.374 },
+    -- In the cave outside Wailing Caverns, not the instance: the three places
+    -- Wowhead's sightings group into.
+    [3655] = { name = "Mad Magglish", map = 1413, x = 0.465, y = 0.354, spots = { { 0.450, 0.352 }, { 0.461, 0.366 } },
+        hint = "Stealthed, in one of 3 spots in the cave outside the instance" },
     [8418] = { name = "Falla Sagewind", map = 1413, x = 0.482, y = 0.328 },
     [11834] = { name = "Maur Grimtotem", instance = 389 }, -- Wowhead has no position; his body lies inside
     -- Outside Wailing Caverns, not in it; the positions were taken on the Kalimdor map.
@@ -314,7 +320,9 @@ ns.questItems = {
 -- faction is "Horde", "Alliance" or "Both" (the default); class, when set, is
 -- the one class that can take it ("PALADIN"); minLevel is the
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
--- is the instance ID of the dungeon the quest is for; start is how you get it.
+-- is the instance ID of the dungeon the quest is for, and outside = true when
+-- it is done in the dungeon's caves but outside the instance, as Smart Drinks
+-- in Wailing Caverns; start is how you get it.
 ns.quests = {
     [92421] = { name = "Light's Justice", faction = "Horde", minLevel = 15, dungeon = 2999,
         start = { npc = 266484 }, finish = { npc = 266484 } },
@@ -382,10 +390,11 @@ ns.quests = {
         start = { npc = 3419 }, finish = { npc = 3419 } },
     [865] = { name = "Raptor Horns", minLevel = 13, -- before Smart Drinks, done outside
         start = { npc = 3446 }, finish = { npc = 3446 } },
-    [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43,
+    [1491] = { name = "Smart Drinks", minLevel = 13, dungeon = 43, outside = true,
         start = { needs = 865, npc = 3446 }, finish = { npc = 3446 } },
-    [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43,
-        start = { npc = 3665 }, finish = { npc = 3665 } },
+    [959] = { name = "Trouble at the Docks", minLevel = 14, dungeon = 43, outside = true,
+        start = { npc = 3665 }, objective = { npc = 3655, item = 5334 }, -- 99-Year-Old Port
+        finish = { npc = 3665 } },
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
     [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43,
         start = { drop = 3654, item = 10441 }, finish = { npc = 8418 } },
@@ -885,6 +894,9 @@ function ns.QuestNextStep(questID)
             next.action, next.place = "Turn in to", NPCPlace(quest.finish.npc)
         elseif quest.dungeon and DungeonPlace(quest.dungeon) then
             next.action, next.place = "Do it in", DungeonPlace(quest.dungeon)
+            if quest.outside then
+                next.note = "Outside the instance, in the caves around it"
+            end
         elseif quest.finish and NPCPlace(quest.finish.npc) then
             next.action, next.place = "Turn in to", NPCPlace(quest.finish.npc)
         end
@@ -988,6 +1000,9 @@ local function QuestRows(questIDs)
                 if state == NOT_TAKEN then
                     state = IN_LOG
                 end
+            end
+            if quest.outside then
+                title = title .. " (outside the instance)"
             end
             rows[#rows + 1] = { state = state, title = title, questID = questID }
         end
@@ -1096,7 +1111,8 @@ function ns.CurrentDungeon()
     end
     local quests = {}
     for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
-        if row.state == IN_LOG then
+        -- One done outside the instance is not done in here.
+        if row.state == IN_LOG and not ns.quests[row.questID].outside then
             local objectives
             if QuestState(row.questID) == IN_LOG and C_QuestLog.GetQuestObjectives then
                 objectives = C_QuestLog.GetQuestObjectives(row.questID)
