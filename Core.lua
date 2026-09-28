@@ -60,8 +60,13 @@ ns.defaults = {
     splitRuns = {},            -- /played when each level was reached: ["Name-Realm"] = { reached = { [level] = seconds } }
     -- splitsPoint: where the splits window was dragged to, { point, relativePoint, x, y }
 
+    -- Scanner.lua
+    scanner = true,            -- watch nameplates, mouseover and target for rares, quest elites and quest NPCs
+    scannerSkull = true,       -- put a skull on each one found, once per spawn
+
     -- Tracker.lua
     tracker = true,            -- show the Sink tracker window
+    trackerNearby = true,      -- the Nearby section, while the scanner has seen something close by
     trackerCollapsed = false,  -- the whole tracker folded to its title
     trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
     trackerCurrentDungeon = true, -- the Current Dungeon section, while you are in a dungeon Sink knows

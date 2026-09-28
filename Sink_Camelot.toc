@@ -28,6 +28,7 @@ Splits.lua
 Tracker.lua
 MapPins.lua
 MapPins.xml
+Scanner.lua
 Dump.lua
 Items.lua
 Options.lua

@@ -7,6 +7,8 @@
 --
 -- Its sections, each folded by clicking its header or its button, and hidden
 -- while it has nothing to list:
+--   Nearby         rares, quest elites and quest NPCs the scanner has seen
+--                  close by (Scanner.lua); click one to target it
 --   Current Dungeon the dungeon you are in, if Sink knows it: each boss ticked
 --                  off as it dies, and your quests there with their objectives
 --   Talents        how many talent points you have not spent, "2 unspent talents"
@@ -94,6 +96,7 @@ local function AnchorTop(frame)
 end
 
 local SECTIONS -- the section definitions, below with what fills them
+local HideTargetButtons -- the Nearby click buttons, below with them
 
 local function Folded(key)
     return ns.db.trackerFolded ~= nil and ns.db.trackerFolded[key] == true
@@ -155,12 +158,16 @@ local function CreateTracker()
     local dragged = false
     header:SetScript("OnDragStart", function()
         dragged = true
+        if not InCombatLockdown() then
+            HideTargetButtons() -- they do not follow; they come back where it lands
+        end
         frame:StartMoving()
     end)
     header:SetScript("OnDragStop", function()
         frame:StopMovingOrSizing()
         frame:SetUserPlaced(false) -- ns.db.trackerPoint is the one saved position
         AnchorTop(frame)
+        ns.RefreshTracker()
     end)
     -- A left click that was not a drag opens the options window.
     header:SetScript("OnMouseUp", function(_, button)
@@ -561,7 +568,29 @@ end
 
 -- option is the setting that puts the section in the tracker, a "Show in
 -- tracker" checkbox on the options window's Tracker tab.
+-- What the scanner has seen nearby (Scanner.lua): the skull and the name in
+-- red, why it is watched in grey. Clicking one targets it, through a secure
+-- button (see PlaceTargetButtons below).
+local SKULL_ICON = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:14:14|t "
+
+local function NearbyLines()
+    local lines = {}
+    for i, npc in ipairs(ns.NearbyWatched and ns.NearbyWatched() or {}) do
+        lines[#lines + 1] = { block = i == 1, color = ns.missing, target = npc.name,
+            text = ("%s%s %s(%s)|r"):format(SKULL_ICON, npc.name, ns.grey.hex, npc.why),
+            tooltip = function(tooltip)
+                tooltip:SetText(npc.name, 1, 1, 1)
+                tooltip:AddLine(npc.why, ns.grey.r, ns.grey.g, ns.grey.b)
+                tooltip:AddLine(npc.here and "In sight now"
+                    or ("Seen %d seconds ago"):format(GetTime() - npc.seen), ns.grey.r, ns.grey.g, ns.grey.b)
+                tooltip:AddLine("Click to target", ns.grey.r, ns.grey.g, ns.grey.b)
+            end }
+    end
+    return lines
+end
+
 SECTIONS = {
+    { key = "nearby", title = "Nearby", option = "trackerNearby", lines = NearbyLines },
     { key = "currentDungeon", title = "Current Dungeon", option = "trackerCurrentDungeon", lines = CurrentDungeonLines },
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
     { key = "tracking", title = "Tracking", option = "trackerTracking", lines = TrackingLines },
@@ -570,6 +599,75 @@ SECTIONS = {
     { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
     { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },
 }
+
+-- Clicking a Nearby name targets that NPC. Targeting needs a secure button,
+-- and addon code may only move or change one out of combat; a frame one is
+-- anchored to is locked in combat as well, which would stop the tracker
+-- laying itself out. So these buttons hang off UIParent, placed over their
+-- lines after each layout out of combat, and go when combat starts
+-- (PLAYER_REGEN_DISABLED comes just before the lockdown). In combat a
+-- Nearby name is not clickable.
+local targetButtons = {}
+local targets = {} -- { { line, entry } } for the lines laid out this refresh
+
+local function TargetButton(n)
+    local button = targetButtons[n]
+    if not button then
+        button = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
+        button:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
+        button:SetAttribute("type", "macro")
+        button:SetScript("OnEnter", function(self)
+            if self.entry and self.entry.tooltip then
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                self.entry.tooltip(GameTooltip)
+                GameTooltip:Show()
+            end
+        end)
+        button:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        button:Hide()
+        targetButtons[n] = button
+    end
+    return button
+end
+
+function HideTargetButtons()
+    for _, button in ipairs(targetButtons) do
+        button:Hide()
+    end
+end
+
+local function PlaceTargetButtons()
+    if InCombatLockdown() then
+        return
+    end
+    for n, target in ipairs(targets) do
+        local button, line = TargetButton(n), target.line
+        local left, top = line:GetLeft(), line:GetTop()
+        if left and top then
+            button.entry = target.entry
+            -- Clearing first makes the previous target the last target, which the
+            -- last line puts back when the NPC is not found.
+            button:SetAttribute("macrotext", table.concat({
+                "/cleartarget",
+                "/targetexact " .. target.entry.target,
+                "/targetlasttarget [@target,noexists]",
+            }, "\n"))
+            button:SetFrameStrata(tracker:GetFrameStrata())
+            button:SetFrameLevel(tracker:GetFrameLevel() + 50)
+            button:ClearAllPoints()
+            button:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left - 4, top + 2)
+            button:SetSize(line:GetWidth() + 4, line:GetStringHeight() + 4)
+            button:Show()
+        else
+            TargetButton(n):Hide()
+        end
+    end
+    for n = #targets + 1, #targetButtons do
+        targetButtons[n]:Hide()
+    end
+end
 
 -- Lays out a section's lines under its header and returns its height.
 local function FillSection(section, lines)
@@ -599,6 +697,9 @@ local function FillSection(section, lines)
             elseif button then
                 button:Hide()
             end
+            if entry.target then
+                targets[#targets + 1] = { line = line, entry = entry }
+            end
             y = y + line:GetStringHeight()
             used = n
         end
@@ -615,7 +716,11 @@ end
 
 local function Refresh()
     pending = false
+    wipe(targets)
     if not tracker or not tracker:IsShown() then
+        if not InCombatLockdown() then
+            HideTargetButtons()
+        end
         return
     end
     local collapsed = ns.db.trackerCollapsed
@@ -639,6 +744,7 @@ local function Refresh()
         end
     end
     tracker:SetHeight(height)
+    PlaceTargetButtons()
 end
 
 -- Refresh on the next frame, once however many events asked for it.
@@ -679,6 +785,8 @@ for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "
     "PLAYER_MONEY",
     -- Reputation, for the discount on weapon skills.
     "UPDATE_FACTION",
+    -- Combat starting and ending, for the Nearby click buttons.
+    "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
     -- Minimap tracking turned on or off.
     "MINIMAP_UPDATE_TRACKING",
     -- Entering or leaving a dungeon, and its bosses dying, for Current Dungeon.
@@ -691,6 +799,8 @@ frame:SetScript("OnEvent", function(_, event)
     end
     if event == "PLAYER_LOGIN" then
         ns.ApplyTracker()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        HideTargetButtons() -- just before the lockdown, while that is still allowed
     elseif event == "PLAYER_LEVEL_UP" then
         -- UnitLevel still has the old level while this event runs.
         C_Timer.After(1, ns.RefreshTracker)

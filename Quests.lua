@@ -1004,7 +1004,10 @@ local function QuestRows(questIDs)
             if quest.outside then
                 title = title .. " (outside the instance)"
             end
-            rows[#rows + 1] = { state = state, title = title, questID = questID }
+            -- In your log with its objectives done: drawn as done, but still counted
+            -- and sorted as in your log.
+            local ready = QuestState(questID) == IN_LOG and ReadyToTurnIn(questID)
+            rows[#rows + 1] = { state = state, title = title, questID = questID, ready = ready }
         end
     end
     table.sort(rows, function(a, b)
@@ -1017,15 +1020,16 @@ local function QuestRows(questIDs)
 end
 
 -- A row as text with its mark, and its colour: red cross for not taken,
--- yellow waiting mark for in your log, green check for done; one your level
--- is too low for is grey with no mark and the level it needs in front, "[15]".
+-- yellow waiting mark for in your log, green check for done or for in your
+-- log with its objectives complete; one your level is too low for is grey
+-- with no mark and the level it needs in front, "[15]".
 function ns.QuestRowText(row)
     if row.needsLevel then
         -- Not for you yet: plain grey, no mark, the level it asks for in front as the quest log has it.
         return ("[%d] %s"):format(row.needsLevel, row.title), ns.grey
     elseif row.state == NOT_TAKEN then
         return ns.CROSS .. " " .. row.title, ns.missing
-    elseif row.state == IN_LOG then
+    elseif row.state == IN_LOG and not row.ready then
         return ns.WAIT .. " " .. row.title, ns.active
     end
     return ns.CHECK .. " " .. row.title, ns.known

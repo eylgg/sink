@@ -58,7 +58,8 @@ local function OnChanged(key)
             ns.ApplyTracker()
         end
     elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
-        or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon" then
+        or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon"
+        or key == "trackerNearby" or key == "scanner" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -188,6 +189,13 @@ local PAGES = {
           tooltip = "Reagent tooltips list the recipes that use them, with a check for the ones you know." },
         { key = "weaponTooltips", label = "Weapon master tooltips",
           tooltip = "Weapon master tooltips and map icons list the skills taught." },
+        { header = "Rare Scanner" },
+        { key = "scanner", label = "Scan for rares and quest mobs",
+          tooltip = "Watch nameplates, your mouseover and your target, out of combat and outside instances, for"
+              .. " rares, quest elites and NPCs a quest still needs you at. What it finds is listed in the"
+              .. " tracker's Nearby section. Enemy nameplates must be shown to see past your mouse." },
+        { key = "scannerSkull", label = "Put a skull on what it finds",
+          tooltip = "Mark each one found with a skull, once per spawn, so taking the skull off keeps it off." },
     },
     {
         name = "Map Pins",
@@ -242,6 +250,9 @@ local PAGES = {
               .. " and weapon skills you can learn now." },
         { header = "Show in the Tracker" },
         { grid = {
+            { key = "trackerNearby", label = "Nearby",
+              tooltip = "Rares, quest elites and NPCs a quest still needs you at, once the scanner has seen them"
+                  .. " close by. Click one to target it." },
             { key = "trackerCurrentDungeon", label = "Current dungeon",
               tooltip = "While you are in a dungeon Sink knows: each boss ticked off as it dies, and your"
                   .. " quests there with their objectives." },
