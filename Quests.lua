@@ -1164,15 +1164,22 @@ function ns.IgnoredDungeons()
     return list
 end
 
+-- How many levels below its recommended range a dungeon joins the tracker's
+-- Dungeons: Blackfathom Deeps, from 24, shows at 21.
+local DUNGEON_LEAD = 3
+
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
     local ignored = IgnoredDungeonIDs()
     local list = {}
     -- Whether a dungeon shows is up to its quests: once you can take one, even
     -- below the level the dungeon lets you in at, as Arugal Must Die at 18 for
-    -- Shadowfang Keep. A quest without its own level uses the dungeon's.
+    -- Shadowfang Keep. A quest without its own level uses the dungeon's. But
+    -- not before you are within DUNGEON_LEAD levels of the dungeon's range,
+    -- unless one of its quests is already in your log.
     for instanceID, dungeon in pairs(ns.dungeons) do
         local rows, later, have, total = {}, {}, 0, 0
+        local near = level >= (dungeon.minLevel or 0) - DUNGEON_LEAD
         for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
             if row.state ~= DONE then
                 total = total + 1
@@ -1183,6 +1190,9 @@ function ns.DungeonsToDo()
                 -- your level allows it.
                 if row.state == IN_LOG and (QuestState(row.questID) == IN_LOG or level >= needs) then
                     have = have + 1
+                end
+                if QuestState(row.questID) == IN_LOG then
+                    near = true
                 end
                 if level >= needs then
                     rows[#rows + 1] = row
@@ -1204,7 +1214,7 @@ function ns.DungeonsToDo()
         for _, row in ipairs(later) do
             rows[#rows + 1] = row
         end
-        if doable and not ignored[instanceID] then
+        if doable and near and not ignored[instanceID] then
             list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
         end
     end

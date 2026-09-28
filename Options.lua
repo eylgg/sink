@@ -2,9 +2,9 @@
 -- Sink / Options.lua
 --
 -- Slash commands (/sink) and the options window: a portrait frame with a
--- General tab and one per module, opened with "/sink" or by clicking
--- Sink in the addon compartment. Everything in this file is optional; Core.lua
--- works without it.
+-- General tab and one per module, opened with "/sink", by clicking Sink in
+-- the addon compartment or by clicking the tracker's title. Everything in
+-- this file is optional; Core.lua works without it.
 --
 -- One write path: Assign(key, value) stores the value, tells the module that
 -- owns it, and refreshes the window if it is open, so the slash commands and
@@ -14,8 +14,6 @@
 local _, ns = ...
 
 local RANGE = {
-    offsetX = { min = -800, max = 800 },
-    offsetY = { min = 0, max = 800 },
     splitsShown = { min = 1, max = 10, step = 1 },
 }
 local SLIDER_STEP = 5 -- the step of a range that does not give its own
@@ -43,15 +41,7 @@ end
 
 -- React to a value that is already stored in ns.db.
 local function OnChanged(key)
-    if key == "enabled" then
-        if ns.db.enabled then
-            ns.Center()
-        else
-            ns.RestoreEditModePosition()
-        end
-    elseif key == "offsetX" or key == "offsetY" then
-        ns.Center()
-    elseif key == "muteErrors" then
+    if key == "muteErrors" then
         if ns.ApplyErrorMute then
             ns.ApplyErrorMute()
         end
@@ -95,21 +85,10 @@ ns.SetOption = Assign
 
 local OpenOptions -- defined with the window below
 
-local function Status()
-    local db = ns.db
-    ns.Print(("centering is %s | x %.0f | y %.0f | version %s"):format(
-        db.enabled and "|cff00ff00on|r" or "|cffff0000off|r", db.offsetX, db.offsetY, ns.Version()))
-end
-
 local function Help()
     ns.Print("commands")
     print("  /sink                 open the options window (also /sink config)")
-    print("  /sink status          whether centering is on, and the offsets")
-    print("  /sink on | off | toggle")
-    print(("  /sink x <n>           horizontal offset from screen center (%d to %d)"):format(RANGE.offsetX.min, RANGE.offsetX.max))
-    print(("  /sink y <n>           height above the bottom of the screen (%d to %d)"):format(RANGE.offsetY.min, RANGE.offsetY.max))
-    print("  /sink reset           back to the defaults")
-    print("  /sink center          re-apply the position now")
+    print("  /sink version         the version you are running")
     print("  /sink items           quest items that are safe to delete (/sink items help)")
     print("  /sink recipes         vendor recipes you know or not (/sink recipes help)")
     print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
@@ -131,32 +110,8 @@ SlashCmdList.SINK = function(msg)
 
     if command == "" or command == "config" or command == "options" then
         OpenOptions()
-    elseif command == "status" then
-        Status()
-    elseif command == "on" then
-        Assign("enabled", true)
-        Status()
-    elseif command == "off" then
-        Assign("enabled", false)
-        Status()
-    elseif command == "toggle" then
-        Assign("enabled", not ns.db.enabled)
-        Status()
-    elseif command == "x" or command == "y" then
-        local n = tonumber(arg)
-        if not n then
-            ns.Print("usage: /sink " .. command .. " <number>")
-            return
-        end
-        Assign(command == "x" and "offsetX" or "offsetY", n)
-        Status()
-    elseif command == "reset" then
-        Assign("offsetX", ns.defaults.offsetX)
-        Assign("offsetY", ns.defaults.offsetY)
-        Status()
-    elseif command == "center" then
-        ns.Center()
-        Status()
+    elseif command == "version" or command == "status" then
+        ns.Print("version " .. ns.Version())
     elseif command == "items" or command == "item" then
         if ns.QuestItemsCommand then
             ns.QuestItemsCommand(arg)
@@ -219,13 +174,6 @@ local PAGES = {
     {
         name = "General",
         icon = "Interface\\Icons\\INV_Misc_Gear_02",
-        { header = "Player Frame" },
-        { key = "enabled", label = "Auto-center the player frame",
-          tooltip = "Keep the player frame horizontally centered, even after Edit Mode moves it." },
-        { key = "offsetX", label = "Horizontal offset", range = RANGE.offsetX,
-          tooltip = "Distance from the center of the screen. Negative moves the frame left." },
-        { key = "offsetY", label = "Height", range = RANGE.offsetY,
-          tooltip = "Distance from the bottom of the screen to the bottom edge of the frame." },
         { header = "Errors" },
         { key = "muteErrors", label = "Mute repeated ability errors",
           tooltip = "Hide \"Not enough energy\" and \"not ready yet\" errors, both the red text and the voice line,"
@@ -555,3 +503,4 @@ function OpenOptions()
     window:Show()
     ShowPage(window.selectedTab or 1)
 end
+ns.OpenOptions = OpenOptions

@@ -1,35 +1,15 @@
 --------------------------------------------------------------------------------
 -- Sink / Core.lua
 --
--- Keeps PlayerFrame horizontally centered on screen in World of Warcraft: Forever.
--- Off by default: nothing is moved until "/sink on" or the checkbox in the
--- options window enables it, and that choice is saved.
---
--- Forever (interface 16001, game type "camelot") runs the Retail/Mainline UI, so
--- PlayerFrame is an Edit Mode "system" frame. Edit Mode re-anchors it whenever a
--- layout is applied: at login, on a layout switch, when Edit Mode closes, on a UI
--- scale change, and so on. It does that through a Lua wrapper
--- (EditModeSystemMixin:SetPointOverride), which is why
--- hooksecurefunc(PlayerFrame, "SetPoint") fires after every Blizzard reposition.
--- Each time it fires we put the frame back where we want it.
---
--- Rules this file follows:
---   * PlayerFrame is a protected frame. Never touch it in combat; retry on
---     PLAYER_REGEN_ENABLED instead.
---   * Stay out of the way while Edit Mode is open so the frame can still be
---     dragged there. Re-center when Edit Mode closes ("EditMode.Exit").
---   * Guard against our own SetPoint re-entering the hook ("applying").
+-- Loads first: the saved variables (SinkDB) with their defaults, and what
+-- the other files share through ns: the colours and marks, printing, the
+-- version, and the helpers for values the game keeps secret.
 --------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 
--- Saved-variable defaults. Offsets are in UIParent units, the same units Edit
--- Mode shows in its own position fields.
+-- Saved-variable defaults.
 ns.defaults = {
-    enabled = false, -- opt in with /sink on; nothing moves until then
-    offsetX = 0,    -- horizontal offset from the center of the screen (negative = left)
-    offsetY = 250,  -- height of the frame's bottom edge above the bottom of the screen
-
     -- QuestItems.lua
     questItemWarnings = true,  -- tooltip line, bag tint and tracker list for quest items that are safe to delete
     questItems = {},           -- rules added in game: [itemID] = questID
@@ -133,9 +113,6 @@ ns.active = { r = 1.0, g = 0.8, b = 0.0, hex = "|cffffcc00" }
 -- (its bright tones are about #4FA6AB), lifted a little to read on dark
 -- backgrounds: #5CBEC4.
 ns.dungeonColor = { r = 0.361, g = 0.745, b = 0.769, hex = "|cff5cbec4" }
-local applying = false          -- true while we are the one calling SetPoint
-local pendingAfterCombat = false
-local hooked = false
 
 -- Whether a value is one the game hides from addons. In combat and in
 -- instances some unit data (GUIDs, names, tooltip text) comes as a secret
@@ -163,94 +140,6 @@ function ns.Print(msg)
     print(PREFIX .. tostring(msg))
 end
 
-local function IsEditModeActive()
-    local manager = EditModeManagerFrame
-    return manager ~= nil and manager.IsEditModeActive ~= nil and manager:IsEditModeActive()
-end
-
-local function FrameScale()
-    local scale = PlayerFrame:GetScale()
-    if not scale or scale <= 0 then
-        return 1
-    end
-    return scale
-end
-
--- Put PlayerFrame at the configured spot. Safe to call at any time.
-function ns.Center()
-    local db = ns.db
-    if not db or not db.enabled or not PlayerFrame then
-        return
-    end
-    if IsEditModeActive() then
-        return
-    end
-    if InCombatLockdown() then
-        pendingAfterCombat = true
-        return
-    end
-
-    -- SetPoint offsets are in the frame's own (scaled) units. Convert from
-    -- UIParent units the same way Edit Mode's ApplySystemAnchor does.
-    local scale = FrameScale()
-
-    applying = true
-    PlayerFrame:ClearAllPoints()
-    PlayerFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", db.offsetX / scale, db.offsetY / scale)
-    applying = false
-end
-
--- Put PlayerFrame back where the active Edit Mode layout says it belongs. Used
--- when the addon is switched off. It reads the anchor Edit Mode stored on the
--- frame; opening and closing Edit Mode, or /reload, does the same thing.
-function ns.RestoreEditModePosition()
-    if not PlayerFrame or InCombatLockdown() or IsEditModeActive() then
-        return
-    end
-    local info = PlayerFrame.systemInfo and PlayerFrame.systemInfo.anchorInfo
-    if not info then
-        return
-    end
-
-    local scale = FrameScale()
-
-    applying = true
-    PlayerFrame:ClearAllPoints()
-    PlayerFrame:SetPoint(info.point, info.relativeTo, info.relativePoint, info.offsetX / scale, info.offsetY / scale)
-    applying = false
-end
-
--- Run fn on the next frame so we act after whatever Blizzard code is mid-way.
-local function Later(fn)
-    if C_Timer and C_Timer.After then
-        C_Timer.After(0, fn)
-    else
-        fn()
-    end
-end
-
-local function InstallHooks()
-    if hooked or not PlayerFrame then
-        return
-    end
-    hooked = true
-
-    -- Fires after every Blizzard call to PlayerFrame:SetPoint (Edit Mode's
-    -- ApplySystemAnchor, scale changes, ...). Our own call is skipped via "applying".
-    hooksecurefunc(PlayerFrame, "SetPoint", function()
-        if not applying then
-            ns.Center()
-        end
-    end)
-
-    -- Edit Mode closed: the frame may have been dragged there, so re-center.
-    if EventRegistry and EventRegistry.RegisterCallback then
-        EventRegistry:RegisterCallback("EditMode.Exit", function()
-            Later(ns.Center)
-        end, ns)
-    end
-end
-
 -- Merge defaults into the saved table without overwriting existing values.
 local function InitSavedVariables()
     SinkDB = SinkDB or {}
@@ -269,6 +158,8 @@ local function InitSavedVariables()
     end
     SinkDB.classSkills = nil -- trainer windows were once recorded here; the lists are in Trainers.lua now
     SinkDB.trackerClassSkills = nil -- renamed trackerClassTraining
+    -- Player frame centering was removed.
+    SinkDB.enabled, SinkDB.offsetX, SinkDB.offsetY = nil, nil, nil
     -- Flight paths were once kept by "Name-Realm"; now by GUID, "Player-...".
     for key in pairs(SinkDB.knownFlightPaths or {}) do
         if not tostring(key):find("^Player%-") then
@@ -278,32 +169,13 @@ local function InitSavedVariables()
     ns.db = SinkDB
 end
 
+-- On the Forever beta, registering an event the client does not know throws and
+-- aborts the rest of the file. Other files wrap anything not guaranteed to
+-- exist in pcall.
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
-frame:RegisterEvent("PLAYER_LOGIN")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("PLAYER_REGEN_ENABLED")
--- On the Forever beta, registering an event the client does not know throws and
--- aborts the rest of the file. Wrap anything not guaranteed to exist in pcall.
-pcall(frame.RegisterEvent, frame, "EDIT_MODE_LAYOUTS_UPDATED")
-
-frame:SetScript("OnEvent", function(_, event, arg1)
-    if event == "ADDON_LOADED" then
-        if arg1 == ADDON_NAME then
-            InitSavedVariables()
-        end
-    elseif event == "PLAYER_LOGIN" then
-        InstallHooks()
-        ns.Center()
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        ns.Center()
-    elseif event == "EDIT_MODE_LAYOUTS_UPDATED" then
-        -- Edit Mode handles this event too; wait a frame so it goes first.
-        Later(ns.Center)
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        if pendingAfterCombat then
-            pendingAfterCombat = false
-            ns.Center()
-        end
+frame:SetScript("OnEvent", function(_, _, name)
+    if name == ADDON_NAME then
+        InitSavedVariables()
     end
 end)

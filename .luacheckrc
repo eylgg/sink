@@ -18,9 +18,7 @@ read_globals = {
     -- frames and widgets
     "ContainerFrameCombinedBags",
     "CreateFrame",
-    "EditModeManagerFrame",
     "GameTooltip",
-    "PlayerFrame",
     "UIErrorsFrame",
     "UIParent",
     "WorldMapFrame",

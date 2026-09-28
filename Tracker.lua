@@ -152,13 +152,23 @@ local function CreateTracker()
     header:SetSize(WIDTH, HEADER_HEIGHT)
     header:EnableMouse(true)
     header:RegisterForDrag("LeftButton")
+    local dragged = false
     header:SetScript("OnDragStart", function()
+        dragged = true
         frame:StartMoving()
     end)
     header:SetScript("OnDragStop", function()
         frame:StopMovingOrSizing()
         frame:SetUserPlaced(false) -- ns.db.trackerPoint is the one saved position
         AnchorTop(frame)
+    end)
+    -- A left click that was not a drag opens the options window.
+    header:SetScript("OnMouseUp", function(_, button)
+        if dragged then
+            dragged = false
+        elseif button == "LeftButton" and ns.OpenOptions then
+            ns.OpenOptions()
+        end
     end)
     local background = header:CreateTexture(nil, "BACKGROUND")
     background:SetAtlas("ui-questtracker-primary-objective-header", true)

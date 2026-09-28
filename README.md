@@ -2,7 +2,6 @@
 
 The everything WoW: Forever addon.
 
-- **Player frame centering**: keeps the player frame centered whatever Edit Mode does. Off by default.
 - **Quest item warnings**: bag slot tint for quest items that are safe to delete, and the tracker lists them; a quest item still needed says until when on its tooltip.
 - **Recipe vendors**: vendor tooltips list the recipes sold, checked when you know them; `/sink recipes missing` lists what you still lack.
 - **Weapon skills and class training**: weapon master and class trainer tooltips show what you can still learn and at what level.
@@ -12,7 +11,7 @@ The everything WoW: Forever addon.
 - **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.
 - **Tracker**: a window styled like the objective tracker, listing the dungeon you are in (its bosses ticked off as they die, and your quests there with their objectives), unspent talent points, gathering tracking that is off (click to turn it on), quest items to delete (click to delete), dungeons with quests left (click a red quest to see its giver on the map, right-click a dungeon to ignore it), class training with its total cost (hover a skill for its tooltip, right-click to ignore it; the Ignored tab brings it back), and weapon skills you can learn.
 
-Type `/sink` or click Sink in the addon compartment to open the options window.
+Type `/sink`, click Sink in the addon compartment, or click the tracker's title to open the options window.
 
 ## Install
 
@@ -29,10 +28,7 @@ The folder name must match the TOC's base name, `Sink/` and `Sink_Camelot.toc`.
 | Command | Effect |
 | --- | --- |
 | `/sink` | Open the options window (`/sink config` works too) |
-| `/sink status` | Centering on or off, the offsets and the version |
-| `/sink on`, `off`, `toggle` | Player frame centering |
-| `/sink x <n>`, `/sink y <n>` | Offset from screen center (-800 to 800) and height above the bottom (0 to 800, default 250) |
-| `/sink reset`, `/sink center` | Default offsets; re-apply the position now |
+| `/sink version` | The version you are running |
 | `/sink items [add <itemID> <questID> \| remove <itemID> \| on \| off]` | Quest item rules and warnings |
 | `/sink recipes [add <itemID> [npcID] \| remove ... \| missing \| on \| off]` | Recipe vendors; `add` uses your target when no NPC ID is given |
 | `/sink weapons [masters \| on \| off]` | Weapon skills you can learn and who teaches them |
@@ -57,7 +53,7 @@ The built-in tables sit at the top of their files: quest item rules in `QuestIte
 
 ## Files
 
-`Core.lua` loads first. It holds the saved variables (`SinkDB`), the shared `ns` table, the identity colour `ns.accent`, and player frame centering. `Options.lua` holds the `/sink` commands and the options window. Every other `.lua` file is one of the features above, and `MapPins.xml` is the map pin template. `scripts/check-globals.sh` flags undeclared globals when `luacheck` is not installed.
+`Core.lua` loads first. It holds the saved variables (`SinkDB`), the shared `ns` table, and the identity colour `ns.accent`. `Options.lua` holds the `/sink` commands and the options window. Every other `.lua` file is one of the features above, and `MapPins.xml` is the map pin template. `scripts/check-globals.sh` flags undeclared globals when `luacheck` is not installed.
 
 ## Releasing
 
