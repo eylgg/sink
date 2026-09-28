@@ -90,7 +90,8 @@ ns.dungeons = {
 -- Each dungeon's bosses in order, from the game's DungeonEncounter table: by
 -- instance ID, then by the difficulty GetInstanceInfo reports (0 is any), a
 -- list of { id, name }. id is the encounter ID ENCOUNTER_END gives when the
--- boss dies. Blackfathom Deeps has three versions.
+-- boss dies; rare = true for one that is not always there, which the
+-- tracker lists apart from the boss count. Blackfathom Deeps has three versions.
 ns.dungeonBosses = {
     [48] = { -- Blackfathom Deeps
         [1] = {
@@ -164,7 +165,7 @@ ns.dungeonBosses = {
             { id = 3357, name = "The Abandoned" },
             { id = 3355, name = "The Butcher" },
             { id = 3354, name = "Rath'mael" },
-            { id = 3408, name = "Lordaeron Captain" },
+            { id = 3408, name = "Lordaeron Captain", rare = true },
             { id = 3411, name = "Viktor the Vile" },
             { id = 3412, name = "Bjork" },
         },
@@ -991,7 +992,7 @@ local function OnEncounterEnd(encounterID, success)
 end
 
 -- The dungeon you are in, or nil outside one Sink has bosses or quests for:
--- { name, dungeon, bosses = { { name, dead } }, quests = { { row, objectives } } }.
+-- { name, dungeon, bosses = { { name, dead, rare } }, quests = { { row, objectives } } }.
 -- quests are the dungeon's quests in your log, with the objectives your quest
 -- log gives, and the ones that start inside ("Kill "The Baron" inside").
 function ns.CurrentDungeon()
@@ -1006,7 +1007,7 @@ function ns.CurrentDungeon()
     local bosses = {}
     local list = lists and (lists[difficultyID] or lists[0] or select(2, next(lists)))
     for _, boss in ipairs(list or {}) do
-        bosses[#bosses + 1] = { name = boss.name, dead = killed[boss.id] == true }
+        bosses[#bosses + 1] = { name = boss.name, dead = killed[boss.id] == true, rare = boss.rare }
     end
     local quests = {}
     for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do

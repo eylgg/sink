@@ -291,23 +291,33 @@ end
 
 -- While you are in a dungeon Sink knows: its name and how many bosses are
 -- dead, each boss ticked off as it dies, then your quests there with their
--- objectives as your quest log counts them.
+-- objectives as your quest log counts them. A rare is not in the count, and
+-- is grey until killed, as it may not be there.
 local function CurrentDungeonLines()
     local here = ns.CurrentDungeon and ns.CurrentDungeon()
     if not here then
         return {}
     end
-    local dead = 0
+    local dead, total = 0, 0
     for _, boss in ipairs(here.bosses) do
-        if boss.dead then
-            dead = dead + 1
+        if not boss.rare then
+            total = total + 1
+            if boss.dead then
+                dead = dead + 1
+            end
         end
     end
-    local count = #here.bosses > 0 and (" %s(%d/%d Bosses)|r"):format(ns.grey.hex, dead, #here.bosses) or ""
+    local count = total > 0 and (" %s(%d/%d Bosses)|r"):format(ns.grey.hex, dead, total) or ""
     local lines = { { block = true, color = ns.dungeonColor, text = here.name .. count } }
     for _, boss in ipairs(here.bosses) do
-        lines[#lines + 1] = boss.dead and { text = ns.CHECK .. " " .. boss.name, color = ns.known }
-            or { text = ns.CROSS .. " " .. boss.name, color = ns.missing }
+        local name = boss.rare and (boss.name .. " (Rare)") or boss.name
+        if boss.dead then
+            lines[#lines + 1] = { text = ns.CHECK .. " " .. name, color = ns.known }
+        elseif boss.rare then
+            lines[#lines + 1] = { text = name, color = ns.grey }
+        else
+            lines[#lines + 1] = { text = ns.CROSS .. " " .. name, color = ns.missing }
+        end
     end
     for i, quest in ipairs(here.quests) do
         local text, color = ns.QuestRowText(quest.row)
