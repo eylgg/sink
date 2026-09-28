@@ -5,7 +5,8 @@
 -- from the tables in the other files, with a search box. A row is the item's
 -- icon and name in its quality colour, with a check or cross for a recipe
 -- you know or not, and under it in grey what Sink knows: what it is used
--- for, what it teaches, who sells it, which quest wants it or it starts.
+-- for, what it teaches, who sells it, which quest wants it or it starts, or
+-- a note on why to keep it.
 -- Hovering a row shows the item's own tooltip, Sink's lines included;
 -- shift-click links it in chat, as from the bags. The search matches the
 -- name, those grey lines or an item ID.
@@ -82,6 +83,11 @@ local function Collect()
             local verb = ns.QuestItemRuleComplete(rule) and "Done with " or "Needed for "
             add(itemID, verb .. ns.QuestItemQuestNames(rule, QUEST))
         end)
+    end
+
+    -- Items to keep, with their note (QuestItems.lua).
+    for itemID, note in pairs(ns.itemNotes or {}) do
+        add(itemID, note)
     end
 
     -- Items that start a quest, and items a quest sends you to an NPC for (Quests.lua).

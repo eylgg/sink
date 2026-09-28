@@ -26,6 +26,13 @@ ns.questItemRules = {
     [268580] = 92421, -- Intact Limbs, Light's Justice (Ruins of Lordaeron)
     [14544] = 5727, -- Lieutenant's Insignia, Hidden Enemies 2/5 (Orgrimmar)
     [5059] = 868, -- Digging Claw, Egg Hunt (The Barrens)
+    [3165] = 430, -- Minor Quinn's Potion, Return to Quinn (Silverpine Forest); may not stay in the bags
+}
+
+-- Items to keep: a grey note on the tooltip instead of a quest, and never
+-- on the delete list. For ones many quests take, or that sell.
+ns.itemNotes = {
+    [5075] = "Used for several quests, and sells on the auction house", -- Blood Shard
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"
@@ -316,6 +323,10 @@ local function AddTooltipLine(tooltip, data)
         return
     end
     local itemID = data and data.id
+    local note = itemID and ns.itemNotes[itemID]
+    if note then
+        tooltip:AddLine(note, 0.7, 0.7, 0.7, true)
+    end
     local rule = itemID and RuleFor(itemID)
     if not rule then
         return
