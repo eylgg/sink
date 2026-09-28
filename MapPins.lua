@@ -307,6 +307,8 @@ ns.mapPins = {
         { npc = 4551, name = "Michael Garrett", note = "Bat Handler", x = 0.628, y = 0.472, faction = "Horde" },
     },
     [1454] = { -- Orgrimmar
+        { npc = 6929, name = "Innkeeper Gryshka", note = "Innkeeper", x = 0.5410, y = 0.6842,
+          atlas = "innkeeper", verified = true },
         { npc = 2704, name = "Hanashi", note = "Weapon Master", x = 0.8153, y = 0.1963,
           icon = "Interface\\Icons\\Ability_DualWield", verified = true },
         { npc = 11868, name = "Sayoc", note = "Weapon Master", x = 0.8170, y = 0.1954,
