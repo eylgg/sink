@@ -2,22 +2,23 @@
 -- Sink / Splits.lua
 --
 -- Leveling splits: how long each level took this character, in /played time.
--- Off by default. The Splits tab of the options window turns it on, sets how
--- many levels the splits window shows, and lists every level recorded. While
--- it is on, a small movable window shows the current level's time ticking and
--- the times of the last few levels. Nothing else: no chat lines, no tooltips.
+-- Always recorded, a number per level, so the times are there whenever you
+-- want them. The Splits tab of the options window lists every level
+-- recorded, and turns on a small movable window, off by default, that shows
+-- the current level's time ticking and the times of the last few levels.
+-- Nothing else: no chat lines, no tooltips.
 --
 -- Time is /played, so time logged out never counts. The server answers
 -- RequestTimePlayed with TIME_PLAYED_MSG: the total, and the time on the
 -- current level, so total - levelTime is exactly when this level started.
--- That is asked when splits turn on or you log in, and again just after each
--- level up; in between the total is carried forward with GetTime().
+-- That is asked when you log in, and again just after each level up; in
+-- between the total is carried forward with GetTime().
 -- Blizzard's chat frames print every answer, so for our own requests they
 -- stop listening to that one event until it arrives; a /played you type
 -- yourself prints as usual.
 --
 -- Levels are kept per character in SinkDB.splitRuns. A level's time needs
--- both its start and the next level's, so levels before splits were turned on
+-- both its start and the next level's, so levels before Sink was installed
 -- stay blank. The current level's start is exact after every login either
 -- way, because it comes from the server.
 --------------------------------------------------------------------------------
@@ -31,6 +32,7 @@ local unmuteTimer
 local window, ticker
 local list                  -- the options page's list: { child, columns }
 
+-- Whether the splits window is shown; the times are recorded either way.
 local function Enabled()
     return ns.db ~= nil and ns.db.splits == true
 end
@@ -235,7 +237,7 @@ local function Unmute()
 end
 
 local function RequestPlayed()
-    if not Enabled() or not RequestTimePlayed then
+    if not ns.db or not RequestTimePlayed then
         return
     end
     for i = 1, NUM_CHAT_WINDOWS or 10 do
@@ -261,7 +263,7 @@ end
 local function OnTimePlayed(total, levelTime)
     -- Every frame's handler for this event has run by the next frame.
     C_Timer.After(0, Unmute)
-    if not Enabled() or not (total and levelTime) or ns.Secret(total) or ns.Secret(levelTime) then
+    if not ns.db or not (total and levelTime) or ns.Secret(total) or ns.Secret(levelTime) then
         return
     end
     playedTotal, playedAt = total, GetTime()
@@ -271,9 +273,6 @@ end
 
 local function OnLevelUp(level)
     expectedLevel = tonumber(level)
-    if not Enabled() then
-        return
-    end
     local now = PlayedNow()
     if now and expectedLevel then
         MyReached()[expectedLevel] = now -- the server's answer below corrects it
@@ -322,9 +321,10 @@ frame:SetScript("OnEvent", function(_, event, arg1, arg2)
             window = CreateWindow()
             window:Show()
             ticker = C_Timer.NewTicker(1, Refresh)
-            -- The server can drop a request sent while the world is still loading.
-            C_Timer.After(3, RequestPlayed)
         end
+        -- Recorded whether the window is shown or not. The server can drop a
+        -- request sent while the world is still loading.
+        C_Timer.After(3, RequestPlayed)
     elseif event == "TIME_PLAYED_MSG" then
         OnTimePlayed(arg1, arg2)
     elseif event == "PLAYER_LEVEL_UP" then

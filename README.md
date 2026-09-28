@@ -10,7 +10,7 @@ The everything WoW: Forever addon.
 - **Rare scanner**: out of combat in the open world, nameplates, mouseover and target are checked for rares, quest elites and NPCs a quest still needs you at. What it finds gets a skull and is listed in the tracker's Nearby section; click a name there to target it. Needs enemy nameplates shown to see past your mouse, and cannot see a stealthed NPC before you do.
 - **Ability errors**: hides the repeating "Not enough energy" text and voice when you spam an ability.
 - **Map icons**: vendors, trainers, flight masters, dungeon entrances and quest NPCs on the world map, filtered to your faction, class and professions. Click one to target and ping the NPC. Each kind (class trainers, profession trainers, innkeepers, auctioneers and so on) can be switched off on the Map Pins tab or in the world map's filter menu.
-- **Level splits**: how long each level took in `/played` time, with a small window for the last few levels. Off by default.
+- **Level splits**: how long each level took in `/played` time, recorded for every character. The Splits tab lists them, and a small window for the last few levels can be turned on there.
 - **Tracker**: a window styled like the objective tracker, listing rares and quest mobs seen nearby, the dungeon you are in (its bosses ticked off as they die, and your quests there with their objectives), unspent talent points, gathering tracking that is off (click to turn it on), quest items to delete (click to delete), dungeons with quests left (click a red quest to see its giver on the map, right-click a dungeon to ignore it), class training with its total cost (hover a skill for its tooltip, right-click to ignore it; the Ignored tab brings it back), and weapon skills you can learn.
 
 Type `/sink`, click Sink in the addon compartment, or click the tracker's title to open the options window.
@@ -36,7 +36,7 @@ The folder name must match the TOC's base name, `Sink/` and `Sink_Camelot.toc`.
 | `/sink weapons [masters \| on \| off]` | Weapon skills you can learn and who teaches them |
 | `/sink errors [on \| off \| toggle \| list]` | The ability error mute |
 | `/sink map [add <name> \| remove <name> \| on \| off \| trainers all\|mine \| classes all\|mine]` | Map icons |
-| `/sink splits` | Turn level splits on or off |
+| `/sink splits` | Show or hide the splits window |
 | `/sink tracker` | Show or hide the tracker |
 | `/sink dump loc \| target \| trainer \| skills \| taxi \| npc [unverified]` | Developer dumps of IDs and coordinates, with a paste line to copy |
 

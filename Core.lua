@@ -55,7 +55,7 @@ ns.defaults = {
     -- Trainers.lua
 
     -- Splits.lua
-    splits = false,            -- record level times and show the splits window
+    splits = false,            -- show the splits window; level times are recorded either way
     splitsShown = 5,           -- finished levels the splits window lists under the current one
     splitRuns = {},            -- /played when each level was reached: ["Name-Realm"] = { reached = { [level] = seconds } }
     -- splitsPoint: where the splits window was dragged to, { point, relativePoint, x, y }

@@ -95,7 +95,7 @@ local function Help()
     print("  /sink weapons         weapon skills you can learn and who teaches them (/sink weapons help)")
     print("  /sink errors          hide \"not enough energy\" errors when spamming (/sink errors help)")
     print("  /sink map             icons with tooltips on the world map (/sink map help)")
-    print("  /sink splits          turn leveling splits on or off (the Splits tab lists them)")
+    print("  /sink splits          show or hide the splits window (the Splits tab lists the times)")
     print("  /sink tracker         show or hide the Sink tracker")
     print("  /sink dump            developer dumps of IDs and coordinates (/sink dump help)")
 end
@@ -135,7 +135,7 @@ SlashCmdList.SINK = function(msg)
         end
     elseif command == "splits" or command == "split" then
         Assign("splits", not ns.db.splits)
-        ns.Print("splits " .. (ns.db.splits and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
+        ns.Print("splits window " .. (ns.db.splits and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
     elseif command == "tracker" then
         Assign("tracker", not ns.db.tracker)
         ns.Print("tracker " .. (ns.db.tracker and "|cff00ff00on|r" or "|cffff0000off|r") .. ".")
@@ -214,9 +214,9 @@ local PAGES = {
     {
         name = "Splits",
         icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
-        { key = "splits", label = "Enable splits",
-          tooltip = "Record how long each level takes this character, in /played time, and show the"
-              .. " last few levels in a small window you can drag anywhere." },
+        { key = "splits", label = "Show the splits window",
+          tooltip = "A small window you can drag anywhere with the current level's /played time and the last"
+              .. " few levels. The times are recorded for every character whether it is shown or not." },
         { key = "splitsShown", label = "Levels in the window", range = RANGE.splitsShown,
           tooltip = "How many finished levels the splits window lists under the current one." },
         { header = "This Character" },
