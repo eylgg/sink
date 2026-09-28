@@ -7,7 +7,7 @@
 --
 -- A quest's start says how you get it:
 --   { npc = id }   an NPC gives it; the NPC's record says where they stand,
---                  and one inside the quest's dungeon reads 'Talk to "Nalpak" inside'
+--                  and one inside the quest's dungeon reads 'Talk to "Ghostly Attendant" inside'
 --   { drop = id }  an NPC drops the item that starts it (item = its ID, for
 --                  reference); when that NPC is in the quest's dungeon it
 --                  reads "Kill "The Baron" inside"
@@ -244,8 +244,9 @@ ns.npcs = {
     [3665] = { name = "Crane Operator Bigglefuzz", map = 1413, x = 0.630, y = 0.374 },
     [8418] = { name = "Falla Sagewind", map = 1413, x = 0.482, y = 0.328 },
     [11834] = { name = "Maur Grimtotem", instance = 389 }, -- Wowhead has no position; his body lies inside
-    [5768] = { name = "Ebru", instance = 43 }, -- beside Nalpak in the cave
-    [5767] = { name = "Nalpak", instance = 43, verified = true },
+    -- Outside Wailing Caverns, not in it; the positions were taken on the Kalimdor map.
+    [5768] = { name = "Ebru", map = 1414, x = 0.5192, y = 0.5544, verified = true },
+    [5767] = { name = "Nalpak", map = 1414, x = 0.5191, y = 0.5542, verified = true },
     [3654] = { name = "Mutanus the Devourer", instance = 43, verified = true },
     -- From Wowhead's Forever database, for the dungeon quests above; not checked in game.
     [234] = { name = "Gryan Stoutmantle", map = 1436, x = 0.5620, y = 0.4750 },
@@ -935,9 +936,9 @@ function ns.AddQuestPinLines(tooltip, role, npcID)
     end
 end
 
--- How to get a quest that starts inside its own dungeon: 'Talk to
--- "Nalpak" inside' from an NPC, 'Kill "The Baron" inside' for a drop, "Loot
--- inside" for an item on the ground. nil for any other quest.
+-- How to get a quest that starts inside its own dungeon: 'Talk to "Ghostly
+-- Attendant" inside' from an NPC, 'Kill "The Baron" inside' for a drop,
+-- "Loot inside" for an item on the ground. nil for any other quest.
 local function DropText(quest)
     local start = quest.start or {}
     local giver = start.npc and ns.npcs[start.npc]
