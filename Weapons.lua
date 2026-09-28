@@ -69,20 +69,30 @@ ns.classWeaponSkills = {
     DRUID   = { 54, 160, 173, 473, 136, 229 },
 }
 
--- Built-in weapon masters: npcID -> { name, location, skills = { skill line ID, ... } },
+-- Built-in weapon masters: npcID -> { name, location, faction, rep, skills = { skill line ID, ... } },
 -- from Wowhead's Forever database and Warcraft Wiki; the Horde ones were
--- checked against what the masters say in game. Masters recorded from the
+-- checked against what the masters say in game. rep is the reputation
+-- faction the master belongs to, which sets your discount there: Archibald
+-- is Undercity, so Honored with Undercity takes 10% off his prices. Masters recorded from the
 -- trainer window live in SinkDB.weaponMasters and are merged with these;
 -- "/sink dump trainer" prints a line for this table.
 ns.weaponMasters = {
-    [11867] = { name = "Woo Ping", location = "Stormwind City", faction = "Alliance", skills = { 226, 173, 43, 55, 229, 136 } },
-    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", faction = "Alliance", skills = { 46, 44, 172, 54, 160, 473 } },
-    [13084] = { name = "Bixi Wobblebonk", location = "Ironforge", faction = "Alliance", skills = { 173, 226, 176 } },
-    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", faction = "Alliance", skills = { 45, 173, 473, 136, 176 } },
-    [2704]  = { name = "Hanashi", location = "Orgrimmar", faction = "Horde", skills = { 45, 44, 172, 136, 176 } },
-    [11868] = { name = "Sayoc", location = "Orgrimmar", faction = "Horde", skills = { 45, 173, 473, 44, 172, 176 } },
-    [11869] = { name = "Ansekhwa", location = "Thunder Bluff", faction = "Horde", skills = { 46, 54, 160, 136 } },
-    [11870] = { name = "Archibald", location = "Undercity", faction = "Horde", skills = { 226, 173, 43, 55, 229 } },
+    [11867] = { name = "Woo Ping", location = "Stormwind City", faction = "Alliance", rep = 72, -- Stormwind
+        skills = { 226, 173, 43, 55, 229, 136 } },
+    [11865] = { name = "Buliwyf Stonehand", location = "Ironforge", faction = "Alliance", rep = 47, -- Ironforge
+        skills = { 46, 44, 172, 54, 160, 473 } },
+    [13084] = { name = "Bixi Wobblebonk", location = "Ironforge", faction = "Alliance", rep = 47, -- Ironforge
+        skills = { 173, 226, 176 } },
+    [11866] = { name = "Ilyenia Moonfire", location = "Darnassus", faction = "Alliance", rep = 69, -- Darnassus
+        skills = { 45, 173, 473, 136, 176 } },
+    [2704]  = { name = "Hanashi", location = "Orgrimmar", faction = "Horde", rep = 530, -- Darkspear Trolls
+        skills = { 45, 44, 172, 136, 176 } },
+    [11868] = { name = "Sayoc", location = "Orgrimmar", faction = "Horde", rep = 76, -- Orgrimmar
+        skills = { 45, 173, 473, 44, 172, 176 } },
+    [11869] = { name = "Ansekhwa", location = "Thunder Bluff", faction = "Horde", rep = 81, -- Thunder Bluff
+        skills = { 46, 54, 160, 136 } },
+    [11870] = { name = "Archibald", location = "Undercity", faction = "Horde", rep = 68, -- Undercity
+        skills = { 226, 173, 43, 55, 229 } },
 }
 
 local CHECK, CROSS = ns.CHECK, ns.CROSS
@@ -209,6 +219,7 @@ local function MasterInfo(npcID)
         name = (builtin and builtin.name) or (custom and custom.name) or ("NPC #" .. npcID),
         location = builtin and builtin.location,
         faction = builtin and builtin.faction,
+        rep = builtin and builtin.rep,
         skills = {},
     }
     local seen = {}
@@ -425,6 +436,28 @@ local function SkillCost(skill)
     return nil
 end
 
+-- What a skill costs you: its price less your discount with the master's
+-- faction, at the cheapest master on your side who teaches it. nil when the
+-- price is not known.
+local function CostForYou(skill)
+    local cost = SkillCost(skill)
+    if not cost or skill.classTrainer or not ns.Discounted then
+        return cost
+    end
+    local best
+    EachMaster(function(_, master)
+        if Reachable(master) then
+            for _, taught in ipairs(master.skills) do
+                if taught == skill then
+                    local price = ns.Discounted(cost, master.rep)
+                    best = (best and best < price) and best or price
+                end
+            end
+        end
+    end)
+    return best or cost
+end
+
 -- Where to learn a skill: "class trainer", or the cities with a master on
 -- your side who teaches it.
 local function WhereToLearn(skill)
@@ -436,13 +469,14 @@ local function WhereToLearn(skill)
 end
 
 -- The weapon skills your class can learn and your level allows now, by
--- level then name: { name, where, cost }. The Sink tracker shows them.
+-- level then name: { name, where, cost }, cost less your reputation discount.
+-- The Sink tracker shows them.
 function ns.WeaponSkillsToLearn()
     local level = UnitLevel and UnitLevel("player") or 0
     local list = {}
     for _, row in ipairs(SortedRows(ns.weaponSkills)) do
         if row.group == MISSING and SkillLevel(row.skill) <= level then
-            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill), cost = SkillCost(row.skill) }
+            list[#list + 1] = { name = row.name, where = WhereToLearn(row.skill), cost = CostForYou(row.skill) }
         end
     end
     return list

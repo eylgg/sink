@@ -677,6 +677,8 @@ for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "
     "PLAYER_TALENT_UPDATE", "TRAIT_CONFIG_UPDATED", "CHARACTER_POINTS_CHANGED",
     -- Whether you can pay for your training.
     "PLAYER_MONEY",
+    -- Reputation, for the discount on weapon skills.
+    "UPDATE_FACTION",
     -- Minimap tracking turned on or off.
     "MINIMAP_UPDATE_TRACKING",
     -- Entering or leaving a dungeon, and its bosses dying, for Current Dungeon.

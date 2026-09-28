@@ -25,6 +25,7 @@ read_globals = {
     -- namespaces and mixins
     "C_AddOns",
     "GetMoneyString",
+    "GetFactionInfoByID",
     "GetTrainerServiceSkillReq",
     "GetMoney",
     "GetTrainerServiceCost",
@@ -37,6 +38,7 @@ read_globals = {
     "C_Map",
     "C_Minimap",
     "C_QuestLog",
+    "C_Reputation",
     "C_SkillInfo",
     "C_Spell",
     "C_Timer",

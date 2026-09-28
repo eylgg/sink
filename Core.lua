@@ -130,6 +130,34 @@ function ns.Readable(value)
     return value
 end
 
+-- Your standing with a reputation faction, 1 (Hated) to 8 (Exalted), or nil.
+local function Standing(factionID)
+    if C_Reputation and C_Reputation.GetFactionDataByID then
+        local ok, data = pcall(C_Reputation.GetFactionDataByID, factionID)
+        if ok and data and data.reaction then
+            return data.reaction
+        end
+    end
+    if GetFactionInfoByID then
+        local ok, _, _, standing = pcall(GetFactionInfoByID, factionID)
+        if ok then
+            return standing
+        end
+    end
+    return nil
+end
+
+-- What an NPC's reputation faction takes off their prices: 5% at Friendly,
+-- 10% at Honored, 15% at Revered and 20% at Exalted.
+local DISCOUNTS = { [5] = 0.05, [6] = 0.10, [7] = 0.15, [8] = 0.20 }
+
+-- A price in copper after your discount with the NPC's faction; the price as
+-- it is without a faction.
+function ns.Discounted(copper, factionID)
+    local discount = factionID and DISCOUNTS[Standing(factionID) or 0] or 0
+    return math.floor(copper * (1 - discount) + 0.5)
+end
+
 -- The version from the TOC's "## Version" line, so it always matches the release.
 function ns.Version()
     local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
