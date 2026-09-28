@@ -25,6 +25,9 @@ local ADDON_NAME, ns = ...
 ns.recipeVendors = {
     [2118] = { name = "Abigail Shiel", location = "Brill, Tirisfal Glades", recipes = { 12226 } },
     [3550] = { name = "Martine Tramblay", location = "Brill, Tirisfal Glades", recipes = { 6325 } },
+    [4574] = { name = "Lizbeth Cromwell", location = "Undercity", recipes = { 6328 } },
+    -- Strider Stew and Crispy Lizard Tail, from Wowhead's Forever database.
+    [3482] = { name = "Tari'qa", location = "The Crossroads, The Barrens", recipes = { 5486, 5488 } },
 }
 
 local CHECK, CROSS, WAIT = ns.CHECK, ns.CROSS, ns.WAIT -- marks defined in Core.lua

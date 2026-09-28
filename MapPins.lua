@@ -301,6 +301,8 @@ ns.mapPins = {
           icon = "Interface\\Icons\\Trade_Alchemy", verified = true },
         { npc = 14729, name = "Ralston Farnsley", note = "Horde Cloth Quartermaster", x = 0.7166, y = 0.2922,
           icon = "Interface\\Icons\\INV_Misc_Coin_02", verified = true },
+        { npc = 4574, name = "Lizbeth Cromwell", note = "Fishing Supplier", x = 0.8105, y = 0.3075,
+          icon = "Interface\\Icons\\Trade_Fishing", verified = true },
         -- Flight masters from Wowhead's Forever database, not yet checked in game.
         { npc = 4551, name = "Michael Garrett", note = "Bat Handler", x = 0.628, y = 0.472, faction = "Horde" },
     },

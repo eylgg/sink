@@ -91,6 +91,7 @@ ns.defaults = {
     trackerClassTraining = true, -- the Class Training section is in the tracker
     trackerWeaponSkills = true, -- the Weapon Skills section is in the tracker
     ignoredTraining = {},      -- skills kept out of the tracker's Class Training: [class][name] = true, all ranks
+    ignoredDungeons = {},      -- dungeons kept out of the tracker's Dungeons: [player GUID] = { [instanceID] = true }
     trackerFolded = {},        -- sections folded to their header: [key] = true, key "dungeons", "classTraining", ...;
                                -- and dungeons folded to their name, key "dungeon" .. instance ID
     -- trackerPoint: where the tracker was dragged to, { point, relativePoint, x, y }

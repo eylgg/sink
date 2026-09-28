@@ -1125,8 +1125,48 @@ end
 -- left is one of those. total counts the dungeon's quests for your
 -- faction you have not finished yet, and have the ones of them in your log or
 -- that start inside the dungeon.
+-- Dungeons this character keeps out of the tracker's Dungeons section:
+-- SinkDB.ignoredDungeons[player GUID] = { [instanceID] = true }. Per
+-- character, as one may skip a dungeon another still wants.
+local function IgnoredDungeonIDs(create)
+    local key = ns.db and ns.Readable(UnitGUID("player"))
+    if not key then
+        return {}
+    end
+    if create then
+        ns.db.ignoredDungeons = ns.db.ignoredDungeons or {}
+        ns.db.ignoredDungeons[key] = ns.db.ignoredDungeons[key] or {}
+    end
+    return ns.db.ignoredDungeons and ns.db.ignoredDungeons[key] or {}
+end
+
+-- Ignore a dungeon, or stop ignoring it; the tracker and the Ignored tab follow.
+function ns.SetDungeonIgnored(instanceID, ignored)
+    IgnoredDungeonIDs(true)[instanceID] = ignored or nil
+    if ns.RefreshTracker then
+        ns.RefreshTracker()
+    end
+    if ns.RefreshIgnoredList then
+        ns.RefreshIgnoredList()
+    end
+end
+
+-- The dungeons you ignore, by name: { { instanceID, name }, ... }.
+function ns.IgnoredDungeons()
+    local list = {}
+    for instanceID in pairs(IgnoredDungeonIDs()) do
+        local dungeon = ns.dungeons[instanceID]
+        list[#list + 1] = { instanceID = instanceID, name = dungeon and dungeon.name or tostring(instanceID) }
+    end
+    table.sort(list, function(a, b)
+        return a.name < b.name
+    end)
+    return list
+end
+
 function ns.DungeonsToDo()
     local level = UnitLevel and UnitLevel("player") or 0
+    local ignored = IgnoredDungeonIDs()
     local list = {}
     -- Whether a dungeon shows is up to its quests: once you can take one, even
     -- below the level the dungeon lets you in at, as Arugal Must Die at 18 for
@@ -1164,7 +1204,7 @@ function ns.DungeonsToDo()
         for _, row in ipairs(later) do
             rows[#rows + 1] = row
         end
-        if doable then
+        if doable and not ignored[instanceID] then
             list[#list + 1] = { instanceID = instanceID, dungeon = dungeon, rows = rows, have = have, total = total }
         end
     end

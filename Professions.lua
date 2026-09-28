@@ -195,10 +195,22 @@ end
 -- Reagent itemID -> the recipes that use it: { { spell, profession, recipe }, ... }.
 -- spell is the craft's spell (whether you know it is asked of it), profession
 -- the name as in SKILL_LINES, recipe the item that teaches it when a trainer
--- does not. The recipe's name comes from its spell.
+-- does not. The recipe's name comes from its spell. quest and giver, for a
+-- recipe item that is a quest reward, say where to get it; faction, for one
+-- only a faction can get, makes it grey for the other.
 ns.reagents = {
     [6289] = { -- Raw Longjaw Mud Snapper
         { spell = 7753, profession = "Cooking", recipe = 6328 }, -- Longjaw Mud Snapper
+    },
+    [12223] = { -- Meaty Bat Wing
+        { spell = 15935, profession = "Cooking", recipe = 12226 }, -- Crispy Bat Wing
+    },
+    [5469] = { -- Strider Meat
+        { spell = 6416, profession = "Cooking", recipe = 5486 }, -- Strider Stew
+    },
+    [5465] = { -- Small Spider Leg
+        { spell = 6412, profession = "Cooking", recipe = 5482, -- Kaldorei Spider Kabob
+          quest = 4161, giver = "Zarrin in Dolanaar", faction = "Alliance" }, -- Recipe of the Kaldorei
     },
 }
 
@@ -223,7 +235,8 @@ local function AddReagentLines(tooltip, data)
     end
     for _, use in ipairs(uses) do
         local name = ("%s (%s)"):format(SpellName(use.spell), use.profession)
-        if not Skill(use.profession) then
+        local faction = UnitFactionGroup and UnitFactionGroup("player")
+        if not Skill(use.profession) or (use.faction and faction and use.faction ~= faction) then
             tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
         elseif Known(use) then
             tooltip:AddLine(ns.CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
@@ -234,6 +247,18 @@ local function AddReagentLines(tooltip, data)
             end
             tooltip:AddLine(ns.CROSS .. " " .. name .. (teach and (", " .. ns.grey.hex .. teach .. "|r") or ""),
                 ns.missing.r, ns.missing.g, ns.missing.b)
+            -- A quest reward: the quest in the yellow of quest links, and who gives it.
+            if use.quest then
+                local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(use.quest)
+                if not title or title == "" then
+                    title = "quest #" .. use.quest
+                    if C_QuestLog.RequestLoadQuestByID then
+                        C_QuestLog.RequestLoadQuestByID(use.quest)
+                    end
+                end
+                tooltip:AddLine(("    from |cffffff00%s|r%s"):format(title,
+                    use.giver and (", " .. use.giver) or ""), ns.grey.r, ns.grey.g, ns.grey.b)
+            end
         end
     end
 end

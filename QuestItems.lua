@@ -23,6 +23,8 @@ ns.questItemRules = {
     [279023] = 97891, -- Inert Potion, Prompt Potion Runner (Undercity)
     [5165] = 905,
     [5088] = 894,
+    [268580] = 92421, -- Intact Limbs, Light's Justice (Ruins of Lordaeron)
+    [14544] = 5727, -- Lieutenant's Insignia, Hidden Enemies 2/5 (Orgrimmar)
 }
 
 local POPUP = "SINK_QUEST_ITEM_SAFE_TO_DELETE"
@@ -78,16 +80,19 @@ local function QuestsComplete(rule)
     return true
 end
 
+-- The quest's title, with its step when Quests.lua has it in a series:
+-- "Hidden Enemies (2/5)".
 local function QuestName(questID)
     local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
-    if title and title ~= "" then
-        return title
+    if not title or title == "" then
+        -- Not cached yet; ask the server so the next call has it.
+        if C_QuestLog.RequestLoadQuestByID then
+            C_QuestLog.RequestLoadQuestByID(questID)
+        end
+        title = "quest #" .. questID
     end
-    -- Not cached yet; ask the server so the next call has it.
-    if C_QuestLog.RequestLoadQuestByID then
-        C_QuestLog.RequestLoadQuestByID(questID)
-    end
-    return "quest #" .. questID
+    local step = ns.QuestSeriesSuffix and ns.QuestSeriesSuffix(questID)
+    return step and (title .. " " .. step) or title
 end
 
 -- The rule's quest names joined with commas; with color, each wrapped in it.

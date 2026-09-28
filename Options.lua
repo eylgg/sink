@@ -308,8 +308,7 @@ local PAGES = {
     {
         name = "Ignored",
         icon = "Interface\\Icons\\INV_Misc_Note_01",
-        { header = "Class Training" },
-        { build = function(page, y)
+        { build = function(page, y) -- its own Class Training and Dungeons headings
             return ns.BuildIgnoredList and ns.BuildIgnoredList(page, y) or 0
         end },
     },

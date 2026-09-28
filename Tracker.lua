@@ -418,6 +418,19 @@ local function DungeonLines()
                 tooltip:SetText(dungeon.name, ns.dungeonColor.r, ns.dungeonColor.g, ns.dungeonColor.b)
                 tooltip:AddLine(folded and "Click to show its quests" or "Click to hide its quests",
                     ns.grey.r, ns.grey.g, ns.grey.b)
+                tooltip:AddLine("Right-click to ignore", ns.grey.r, ns.grey.g, ns.grey.b)
+            end,
+            -- Leave it out of the section; the Ignored tab of the options window brings it back.
+            onRightClick = function(owner)
+                if not (MenuUtil and MenuUtil.CreateContextMenu) then
+                    return
+                end
+                MenuUtil.CreateContextMenu(owner, function(_, root)
+                    root:CreateTitle(dungeon.name)
+                    root:CreateButton("Ignore", function()
+                        ns.SetDungeonIgnored(entry.instanceID, true)
+                    end)
+                end)
             end }
         for _, row in ipairs(folded and {} or entry.rows) do
             local text, color = ns.QuestRowText(row)

@@ -1606,8 +1606,9 @@ local ignoredList -- { child, rows, empty }
 local ROW_HEIGHT = 24
 
 -- Builds the list at y on the page and returns the height it takes: a
--- scrolling frame filling the rest of the page, one row per ignored skill
--- with a button that brings it back.
+-- scrolling frame filling the rest of the page, with a heading for ignored
+-- class training and one for ignored dungeons (Quests.lua), and under each
+-- a row per ignored skill or dungeon with a button that brings it back.
 function ns.BuildIgnoredList(page, y)
     local scroll = CreateFrame("ScrollFrame", nil, page, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 0, -y)
@@ -1622,7 +1623,8 @@ function ns.BuildIgnoredList(page, y)
     empty:SetPoint("TOPLEFT", 4, 0)
     empty:SetPoint("RIGHT", -4, 0)
     empty:SetJustifyH("LEFT")
-    empty:SetText("Nothing ignored. Right-click a skill in the tracker's Class Training to ignore it.")
+    empty:SetText("Nothing ignored. Right-click a skill in the tracker's Class Training, or a dungeon in its"
+        .. " Dungeons, to ignore it.")
     ignoredList = { child = child, rows = {}, empty = empty }
     ns.RefreshIgnoredList()
     return 0 -- it fills the rest of the page
@@ -1641,7 +1643,7 @@ local function IgnoredRow(n)
         row.button:SetPoint("RIGHT", -4, 0)
         row.button:SetText("Unignore")
         row.button:SetScript("OnClick", function(self)
-            ns.SetTrainingIgnored(self:GetParent().name, false)
+            self:GetParent().unignore()
         end)
         row.text = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         row.text:SetPoint("LEFT", 4, 0)
@@ -1656,16 +1658,39 @@ function ns.RefreshIgnoredList()
     if not ignoredList or not ignoredList.child:IsVisible() then
         return
     end
-    local names = ns.IgnoredTraining()
-    for n, name in ipairs(names) do
+    -- Rows in order: a heading (no unignore), then its entries.
+    local entries = {}
+    local function add(heading, list, name, unignore)
+        if #list > 0 then
+            entries[#entries + 1] = { text = heading }
+            for _, item in ipairs(list) do
+                entries[#entries + 1] = { text = name(item), unignore = function()
+                    unignore(item)
+                end }
+            end
+        end
+    end
+    add("Class Training", ns.IgnoredTraining(), function(name)
+        return name
+    end, function(name)
+        ns.SetTrainingIgnored(name, false)
+    end)
+    add("Dungeons", ns.IgnoredDungeons and ns.IgnoredDungeons() or {}, function(dungeon)
+        return ns.dungeonColor.hex .. dungeon.name .. "|r"
+    end, function(dungeon)
+        ns.SetDungeonIgnored(dungeon.instanceID, false)
+    end)
+    for n, entry in ipairs(entries) do
         local row = IgnoredRow(n)
-        row.name = name
-        row.text:SetText(name)
+        row.unignore = entry.unignore
+        row.button:SetShown(entry.unignore ~= nil)
+        row.text:SetFontObject(entry.unignore and "GameFontHighlight" or "GameFontNormal")
+        row.text:SetText(entry.text)
         row:Show()
     end
-    for n = #names + 1, #ignoredList.rows do
+    for n = #entries + 1, #ignoredList.rows do
         ignoredList.rows[n]:Hide()
     end
-    ignoredList.empty:SetShown(#names == 0)
-    ignoredList.child:SetHeight(math.max(#names * ROW_HEIGHT, ignoredList.empty:GetStringHeight()) + 4)
+    ignoredList.empty:SetShown(#entries == 0)
+    ignoredList.child:SetHeight(math.max(#entries * ROW_HEIGHT, ignoredList.empty:GetStringHeight()) + 4)
 end
