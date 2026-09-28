@@ -363,10 +363,13 @@ ns.quests = {
         start = { npc = 5768 }, finish = { npc = 5768 } },
     [1486] = { name = "Deviate Hides", minLevel = 13, dungeon = 43,
         start = { npc = 5767 }, finish = { npc = 5767 } },
-    [870] = { name = "The Forgotten Pools", faction = "Horde", minLevel = 10, -- before Hamuul Runetotem
+    -- The Forgotten Pools, then The Stagnant Oasis, come before Hamuul Runetotem.
+    [870] = { name = "The Forgotten Pools", faction = "Horde", minLevel = 10,
         start = { npc = 3448 }, finish = { npc = 3448 } },
+    [877] = { name = "The Stagnant Oasis", faction = "Horde", minLevel = 10,
+        start = { needs = 870, npc = 3448 }, finish = { npc = 3448 } },
     [1489] = { name = "Hamuul Runetotem", faction = "Horde", minLevel = 13,
-        start = { needs = 870, npc = 3448 }, finish = { npc = 5769 } },
+        start = { needs = 877, npc = 3448 }, finish = { npc = 5769 } },
     [1490] = { name = "Nara Wildmane", faction = "Horde", minLevel = 10,
         start = { after = 1489, npc = 5769 }, finish = { npc = 5770 } },
     [914] = { name = "Leaders of the Fang", faction = "Horde", minLevel = 10, dungeon = 43,
