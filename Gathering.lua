@@ -4,8 +4,8 @@
 -- Mining and herb nodes on the minimap: hovering one found with Find
 -- Minerals or Find Herbs shows the game's tooltip, its node names one to a
 -- line. Sink adds a red line under it for each node your skill is too low
--- to gather, with the skill it needs and yours: "Iron Deposit: needs Mining
--- 125 (you have 98)". Nodes you can gather add nothing.
+-- to gather, with the skill it needs and yours: "Mining 125 (Current: 105)".
+-- Nodes you can gather add nothing.
 --
 -- What each node needs has no API, so it is the table below, the vanilla
 -- values; a node not in it adds nothing.
@@ -78,9 +78,11 @@ local function AddNodeLines(tooltip)
                 if node and not seen[name] then
                     seen[name] = true
                     local have = ns.ProfessionSkill and ns.ProfessionSkill(node.profession)
-                    if not have or have < node.skill then
-                        lines[#lines + 1] = ("%s: needs %s %d%s"):format(name, node.profession, node.skill,
-                            have and (" (you have " .. have .. ")") or "")
+                    local line = ("%s %d%s"):format(node.profession, node.skill,
+                        have and (" (Current: " .. have .. ")") or "")
+                    if (not have or have < node.skill) and not seen[line] then
+                        seen[line] = true -- two nodes needing the same say it once
+                        lines[#lines + 1] = line
                     end
                 end
             end
