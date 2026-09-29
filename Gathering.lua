@@ -56,8 +56,14 @@ local adding = false -- true while Sink's own Show re-runs the hook
 -- tooltip that already has the lines; clearing it, as SetText does, unmarks it.
 local added = false
 
+-- Whether the tooltip is the minimap's. Forever gives it UIParent as its
+-- owner, not the minimap, so the mouse being over the minimap is what says so.
+local function OnMinimap(tooltip)
+    return tooltip:GetOwner() == Minimap or (Minimap.IsMouseOver ~= nil and Minimap:IsMouseOver())
+end
+
 local function AddNodeLines(tooltip)
-    if adding or added or not Enabled() or tooltip:GetOwner() ~= Minimap then
+    if adding or added or not Enabled() or not OnMinimap(tooltip) then
         return
     end
     local lines, seen = {}, {}
