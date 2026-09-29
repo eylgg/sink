@@ -49,21 +49,21 @@ local function Plain(text)
     return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", ""):gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
-local adding = false -- true while Sink's own Show re-runs the hook
-
--- The minimap sets the tooltip's text when you hover and again as you move
--- onto other nodes, so this runs after both Show and SetText. added marks a
--- tooltip that already has the lines; clearing it, as SetText does, unmarks it.
+-- Blizzard's minimap, while the mouse is over it, sets the tooltip afresh
+-- every frame (Minimap_OnUpdate: SetOwner to UIParent, then the client's
+-- SetMinimapMouseover), which wipes any line added before. So the lines are
+-- added right after SetMinimapMouseover, each frame. added marks a tooltip
+-- that already has them; SetOwner clears it, which unmarks it.
 local added = false
 
--- Whether the tooltip is the minimap's. Forever gives it UIParent as its
--- owner, not the minimap, so the mouse being over the minimap is what says so.
+-- Whether the tooltip is the minimap's. Its owner is UIParent, not the
+-- minimap, so the mouse being over the minimap is what says so.
 local function OnMinimap(tooltip)
     return tooltip:GetOwner() == Minimap or (Minimap.IsMouseOver ~= nil and Minimap:IsMouseOver())
 end
 
 local function AddNodeLines(tooltip)
-    if adding or added or not Enabled() or not OnMinimap(tooltip) then
+    if added or not Enabled() or not OnMinimap(tooltip) then
         return
     end
     local lines, seen = {}, {}
@@ -93,9 +93,7 @@ local function AddNodeLines(tooltip)
         tooltip:AddLine(ns.CROSS .. " " .. line, ns.missing.r, ns.missing.g, ns.missing.b)
     end
     added = true
-    adding = true
     tooltip:Show() -- resize to the new lines
-    adding = false
 end
 
 -- What "/sink dump tooltip" prints about the node lines: whether this file
@@ -122,18 +120,9 @@ function ns.GatheringReport(tooltip)
     return report
 end
 
-GameTooltip:HookScript("OnShow", AddNodeLines)
--- The game may fill the minimap's tooltip from its own code, which runs no
--- hook, and after it is shown: so look again while it is up, a few times a second.
-local elapsedSince = 0
-GameTooltip:HookScript("OnUpdate", function(tooltip, elapsed)
-    elapsedSince = elapsedSince + elapsed
-    if elapsedSince >= 0.2 then
-        elapsedSince = 0
-        AddNodeLines(tooltip)
-    end
-end)
 GameTooltip:HookScript("OnTooltipCleared", function()
     added = false
 end)
-hooksecurefunc(GameTooltip, "SetText", AddNodeLines)
+if GameTooltip.SetMinimapMouseover then
+    hooksecurefunc(GameTooltip, "SetMinimapMouseover", AddNodeLines)
+end

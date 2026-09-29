@@ -65,7 +65,7 @@ local function Skill(profession)
     end
     local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, line)
     if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
-        return info.skillRank or 0
+        return info.rank or 0
     end
     return nil
 end
