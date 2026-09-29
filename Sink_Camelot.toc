@@ -22,12 +22,14 @@ Recipes.lua
 Weapons.lua
 Trainers.lua
 Professions.lua
+Gathering.lua
 Errors.lua
 Quests.lua
 Splits.lua
 Tracker.lua
 MapPins.lua
 MapPins.xml
+Library.lua
 Scanner.lua
 Dump.lua
 Items.lua

@@ -19,6 +19,7 @@ read_globals = {
     "ContainerFrameCombinedBags",
     "CreateFrame",
     "GameTooltip",
+    "Minimap",
     "UIErrorsFrame",
     "UIParent",
     "WorldMapFrame",

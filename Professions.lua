@@ -70,6 +70,8 @@ local function Skill(profession)
     return nil
 end
 
+ns.ProfessionSkill = Skill -- for the minimap node lines (Gathering.lua)
+
 -- Whether your skill and level are enough for a recipe now.
 local function CanLearnNow(recipe, skill)
     local level = UnitLevel and UnitLevel("player") or 0

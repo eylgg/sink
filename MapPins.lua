@@ -983,9 +983,6 @@ ns.mapPins = {
         { npc = 2861, name = "Gorrik", note = "Wind Rider Master", x = 0.040, y = 0.448, faction = "Horde" },
     },
     [1413] = { -- The Barrens
-        -- Books lying in the world; what they are for is not known yet. item is the book's item ID.
-        { name = "Baxtan: On Destructive Magics", note = "Book", item = 208800, x = 0.6266, y = 0.3622,
-          icon = "Interface\\Icons\\INV_Misc_Book_09", verified = true },
         -- Ratchet's shipmaster: the note is where the boat goes, the name the NPC, so clicking targets him.
         { npc = 9558, name = "Grimble", note = "Boat to Booty Bay", x = 0.6354, y = 0.3861,
           atlas = "flightmasterferry", verified = true },
@@ -1323,10 +1320,47 @@ local function QuestPins(mapID)
     return questPins[mapID] or {}
 end
 
+-- Built-in pins listed under a continent map, as "/sink dump loc" gives in a
+-- cave the client puts on no zone (the Cavern of Mists by Wailing Caverns
+-- reads as Kalimdor): each is drawn on the zone its point falls in instead,
+-- worked out once. moved holds the originals, which the continent map
+-- then leaves out.
+local movedPins, moved
+local function MovedPins(mapID)
+    if not movedPins then
+        movedPins, moved = {}, {}
+        for map, pins in pairs(ns.mapPins) do
+            local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+            if info and Enum.UIMapType and info.mapType == Enum.UIMapType.Continent then
+                for _, pin in ipairs(pins) do
+                    local zone, x, y = ZonePosition(map, pin.x, pin.y)
+                    if zone ~= map then
+                        local copy = {}
+                        for key, value in pairs(pin) do
+                            copy[key] = value
+                        end
+                        copy.x, copy.y = x, y
+                        movedPins[zone] = movedPins[zone] or {}
+                        table.insert(movedPins[zone], copy)
+                        moved[pin] = true
+                    end
+                end
+            end
+        end
+    end
+    return movedPins[mapID] or {}
+end
+
 -- Calls fn(pin) for every icon on mapID: built-in first, then the ones built
 -- from Quests.lua, then those added in game.
 local function EachPin(mapID, fn)
+    local here = MovedPins(mapID)
     for _, pin in ipairs(ns.mapPins[mapID] or {}) do
+        if not moved[pin] then
+            fn(pin)
+        end
+    end
+    for _, pin in ipairs(here) do
         fn(pin)
     end
     for _, pin in ipairs(QuestPins(mapID)) do
@@ -1732,6 +1766,8 @@ local function PinsToShow(mapID)
             return -- an elite whose quest you have done
         elseif pin.teachesUpTo and level > pin.teachesUpTo then
             return -- a starting area's trainer with nothing left for your level
+        elseif pin.book and ns.LibraryBookCollected and ns.LibraryBookCollected(pin.book) then
+            return -- a library book handed in or in your bags (Library.lua)
         elseif pin.dungeon then
             shown[#shown + 1] = pin
         elseif pin.questGiver then
@@ -1969,7 +2005,8 @@ local function ShowPlace(place)
     C_Timer.After(0.1, function()
         for pinFrame in map:EnumeratePinsByTemplate(TEMPLATE) do
             local pin = pinFrame.pin
-            if pin and ((place.npcID and pin.npc == place.npcID) or (place.dungeonID and pin.dungeonID == place.dungeonID)) then
+            if pin and ((place.npcID and pin.npc == place.npcID) or (place.dungeonID and pin.dungeonID == place.dungeonID)
+                or (place.itemID and pin.item == place.itemID)) then
                 Pulse(pinFrame)
             end
         end
@@ -2002,6 +2039,12 @@ function SinkMapPinMixin:OnMouseEnter()
     -- A rare: its name under the "Rare" title.
     if pin.rare then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
+    end
+    -- A library book, and a librarian with how many you have handed in (Library.lua).
+    if pin.book and ns.AddLibraryBookLines then
+        ns.AddLibraryBookLines(GameTooltip, pin.book)
+    elseif pin.librarian and ns.AddLibrarianLines then
+        ns.AddLibrarianLines(GameTooltip)
     end
     if pin.eliteQuest then
         GameTooltip:AddLine(pin.name, 1, 1, 1)

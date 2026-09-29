@@ -18,6 +18,9 @@ ns.defaults = {
     recipeTooltips = true,     -- vendor tooltips list their recipes with a check or a cross
     recipeVendors = {},        -- vendors added in game: [npcID] = { name = ..., recipes = { itemID, ... } }
 
+    -- Gathering.lua
+    gatherTooltips = true,     -- minimap node tooltips say when your mining or herbalism is too low for one
+
     -- Errors.lua
     muteErrors = true,         -- hide "Not enough energy" and "not ready yet" errors, text and voice, when spamming
 
@@ -67,6 +70,7 @@ ns.defaults = {
     -- Tracker.lua
     tracker = true,            -- show the Sink tracker window
     trackerNearby = true,      -- the Nearby section, while the scanner has seen something close by
+    trackerBooks = false,      -- the Library Books section: the library books still to find (Library.lua)
     trackerCollapsed = false,  -- the whole tracker folded to its title
     trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
     trackerCurrentDungeon = true, -- the Current Dungeon section, while you are in a dungeon Sink knows

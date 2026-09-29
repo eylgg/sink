@@ -85,6 +85,13 @@ local function Collect()
         end)
     end
 
+    -- Library books (Library.lua).
+    for _, book in ipairs(ns.libraryBooks or {}) do
+        if ForMyFaction(book.faction) then
+            add(book.item, "Library book: " .. book.where)
+        end
+    end
+
     -- Items to keep, with their note (QuestItems.lua).
     for itemID, note in pairs(ns.itemNotes or {}) do
         add(itemID, note)

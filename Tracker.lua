@@ -28,6 +28,9 @@
 --                  and all its ranks
 --   Weapon Skills  what a weapon master can teach you now, and in which
 --                  city, and the cost as for Class Training (Weapons.lua)
+--   Library Books  off by default: the library books in your bags to hand in
+--                  and the ones still to find (Library.lua); click one to see
+--                  it on the map
 -- The title's button folds the whole window. What is folded is saved. Each
 -- section has a "Show in tracker" checkbox on the options window's Tracker tab.
 --
@@ -598,6 +601,9 @@ SECTIONS = {
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
     { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
     { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },
+    { key = "library", title = "Library Books", option = "trackerBooks", lines = function()
+        return ns.LibraryLines and ns.LibraryLines() or {}
+    end },
 }
 
 -- Clicking a Nearby name targets that NPC. Targeting needs a secure button,

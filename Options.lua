@@ -59,7 +59,7 @@ local function OnChanged(key)
         end
     elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
         or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon"
-        or key == "trackerNearby" or key == "scanner" then
+        or key == "trackerNearby" or key == "scanner" or key == "trackerBooks" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -189,6 +189,10 @@ local PAGES = {
           tooltip = "Reagent tooltips list the recipes that use them, with a check for the ones you know." },
         { key = "weaponTooltips", label = "Weapon master tooltips",
           tooltip = "Weapon master tooltips and map icons list the skills taught." },
+        { key = "gatherTooltips", label = "Mining and herb skill on the minimap",
+          tooltip = "Hovering a node on the minimap found with Find Minerals or Find Herbs: a red line for each"
+              .. " one your skill is too low to gather, with the skill it needs, such as Iron Deposit at"
+              .. " Mining 125." },
         { header = "Rare Scanner" },
         { key = "scanner", label = "Scan for rares and quest mobs",
           tooltip = "Watch nameplates, your mouseover and your target, out of combat and outside instances, for"
@@ -233,6 +237,13 @@ local PAGES = {
         end },
     },
     {
+        name = "Library",
+        icon = "Interface\\Icons\\INV_Misc_Book_05",
+        { build = function(page, y)
+            return ns.BuildLibraryList and ns.BuildLibraryList(page, y) or 0
+        end },
+    },
+    {
         name = "Items",
         icon = "Interface\\Icons\\INV_Misc_Book_09",
         { build = function(page, y)
@@ -267,6 +278,9 @@ local PAGES = {
               tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
             { key = "trackerClassTraining", label = "Class training",
               tooltip = "The skills your class trainer can teach you now, and what they cost together." },
+            { key = "trackerBooks", label = "Library books",
+              tooltip = "The library books in your bags to hand in, and the ones still to find. Off at first;"
+                  .. " the Library tab lists them all either way." },
             { key = "trackerWeaponSkills", label = "Weapon skills",
               tooltip = "The weapon skills your class can learn now, and the cities that teach them." },
         } },
@@ -351,7 +365,8 @@ local KIND_TOOLTIPS = {
     showBankers = "Bankers.",
     showAuctioneers = "Auctioneers.",
     showStableMasters = "Stable masters.",
-    showBooks = "Books lying in the world, such as Baxtan: On Destructive Magics.",
+    showBooks = "Library books you have not collected yet, and the librarians who take them. The Library"
+        .. " tab lists them all.",
     showFlightMasters = "Flight masters for your faction on zone and city maps, grey until you have discovered"
         .. " them. Which you have is known once you open any flight master's map.",
     showDungeons = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
@@ -433,6 +448,9 @@ function RefreshWindow()
     end
     if ns.RefreshItemList then
         ns.RefreshItemList()
+    end
+    if ns.RefreshLibraryList then
+        ns.RefreshLibraryList()
     end
 end
 
