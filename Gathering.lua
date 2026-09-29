@@ -98,6 +98,30 @@ local function AddNodeLines(tooltip)
     adding = false
 end
 
+-- What "/sink dump tooltip" prints about the node lines: whether this file
+-- sees the tooltip as the minimap's, your skills, and each line's node.
+function ns.GatheringReport(tooltip)
+    local report = {
+        ("gathering: loaded, on %s, owner is minimap %s, mouse over minimap %s, lines added %s"):format(
+            Enabled() and "yes" or "no (switched off)", tostring(tooltip:GetOwner() == Minimap),
+            tostring(Minimap.IsMouseOver ~= nil and Minimap:IsMouseOver()), tostring(added)),
+        ("gathering: Mining %s, Herbalism %s"):format(tostring(ns.ProfessionSkill and ns.ProfessionSkill("Mining")),
+            tostring(ns.ProfessionSkill and ns.ProfessionSkill("Herbalism"))),
+    }
+    for i = 1, tooltip:NumLines() do
+        local region = _G[tooltip:GetName() .. "TextLeft" .. i]
+        local text = region and region:GetText()
+        if text and not ns.Secret(text) then
+            for part in text:gmatch("[^\n]+") do
+                local node = NODES[Plain(part)]
+                report[#report + 1] = ("gathering: %q is %s"):format(Plain(part),
+                    node and (node.profession .. " " .. node.skill) or "not a node in the table")
+            end
+        end
+    end
+    return report
+end
+
 GameTooltip:HookScript("OnShow", AddNodeLines)
 -- The game may fill the minimap's tooltip from its own code, which runs no
 -- hook, and after it is shown: so look again while it is up, a few times a second.

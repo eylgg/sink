@@ -474,6 +474,15 @@ local function DumpTooltip()
                     print(("  %d: %s"):format(i, (text:gsub("|", "||"):gsub("\n", "\\n"))))
                 end
             end
+            if name == "GameTooltip" then
+                if ns.GatheringReport then
+                    for _, line in ipairs(ns.GatheringReport(tooltip)) do
+                        print("  " .. line)
+                    end
+                else
+                    print("  gathering: Gathering.lua is not loaded; restart the game to pick up new files")
+                end
+            end
         end
     end
     if not any then
