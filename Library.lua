@@ -56,7 +56,7 @@ ns.libraryBooks = {
     { item = 209851, quest = 78149, name = "Fury of the Land", map = 1442, x = 0.744, y = 0.857,
       where = "Scrolls, Grimtotem Post" },
     { item = 207972, quest = 79094, name = "The Lessons of Ta'zo", map = 1454, x = 0.387, y = 0.784,
-      where = "Ta'zo Mural", faction = "Horde" },
+      where = "Mural of Ta'zo", faction = "Horde" },
     { item = 213165, quest = 79535, name = "Basilisks: Should Petrification be Feared?", map = 1434, x = 0.414,
       y = 0.509, where = "Research Notes, on the platform right of Crystalvein Mine", level = 35 },
     { item = 215683, quest = 79947, name = "Geomancy: The Stone-Cold Truth", map = 1441, x = 0.344, y = 0.401,
@@ -174,17 +174,11 @@ for _, librarian in ipairs(LIBRARIANS) do
         y = librarian.y, faction = librarian.faction, librarian = true, icon = "Interface\\Icons\\INV_Misc_Book_05" })
 end
 
--- A book pin's tooltip, under its "Book" title: the book, where it lies, and
--- whose it is to hand in.
+-- A book pin's tooltip, under its "Book" title: the book and where it lies.
+-- The pin only shows while you do not have it.
 function ns.AddLibraryBookLines(tooltip, book)
     tooltip:AddLine(book.name, 1, 1, 1)
     tooltip:AddLine(book.where, ns.grey.r, ns.grey.g, ns.grey.b, true)
-    local librarian = Librarian()
-    tooltip:AddLine(("%s Not collected: hand it in to %s"):format(ns.CROSS, librarian.name),
-        ns.missing.r, ns.missing.g, ns.missing.b, true)
-    if book.level then
-        tooltip:AddLine(("Its quest is level %d"):format(book.level), ns.grey.r, ns.grey.g, ns.grey.b)
-    end
 end
 
 -- A librarian pin's tooltip: how far along you are, and the books in your
