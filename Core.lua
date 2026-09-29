@@ -71,6 +71,7 @@ ns.defaults = {
     tracker = true,            -- show the Sink tracker window
     trackerNearby = true,      -- the Nearby section, while the scanner has seen something close by
     trackerBooks = false,      -- the Library Books section: the library books still to find (Library.lua)
+    libraryBooksHad = {},      -- library books a character has had: [player GUID] = { [itemID] = true }
     trackerCollapsed = false,  -- the whole tracker folded to its title
     trackerTalents = true,     -- the Talents section is in the tracker, while you have points to spend
     trackerCurrentDungeon = true, -- the Current Dungeon section, while you are in a dungeon Sink knows

@@ -5,11 +5,13 @@
 -- Stormwind and Undercity take, one quest each. Ten different ones handed in
 -- give a necklace (Friend of the Library), twenty a ring.
 --
--- A book counts as collected once its quest is turned in or the book is in
--- your bags. Each book not yet collected gets a map pin (the Books kind),
+-- A book counts as collected once its quest is turned in, or once this
+-- character has had it: in the bags or the bank, remembered in
+-- SinkDB.libraryBooksHad, so putting it in the bank, or anywhere else, does
+-- not bring its pin back. Each book not yet collected gets a map pin (the Books kind),
 -- and the librarians have one too, with how many you have handed in. The
 -- options window's Library tab lists every book with its mark: green check
--- handed in, yellow in your bags, red cross still to find. The tracker's
+-- handed in, yellow collected but not handed in, red cross still to find. The tracker's
 -- Library Books section, off by default, lists the ones still to find.
 --
 -- Books, quests and containers from Wowhead's Forever database; positions
@@ -83,7 +85,45 @@ local LIBRARIANS = {
       where = "Magic Quarter, Undercity" },
 }
 
-local HANDED_IN, IN_BAGS, MISSING = 1, 2, 3
+local HANDED_IN, HAVE, MISSING = 1, 2, 3
+
+-- The books this character has had: SinkDB.libraryBooksHad[player GUID] = { [itemID] = true }.
+local function Had(create)
+    local key = ns.db and ns.Readable(UnitGUID("player"))
+    if not key then
+        return {}
+    end
+    if create then
+        ns.db.libraryBooksHad = ns.db.libraryBooksHad or {}
+        ns.db.libraryBooksHad[key] = ns.db.libraryBooksHad[key] or {}
+    end
+    return ns.db.libraryBooksHad and ns.db.libraryBooksHad[key] or {}
+end
+
+-- How many of a book you carry, and with the bank as far as the client knows it.
+local function Counts(book)
+    if not C_Item.GetItemCount then
+        return 0, 0
+    end
+    return C_Item.GetItemCount(book.item), C_Item.GetItemCount(book.item, true)
+end
+
+-- Note every book in the bags or bank as had.
+local function Remember()
+    for _, book in ipairs(ns.libraryBooks) do
+        local _, total = Counts(book)
+        if total > 0 then
+            Had(true)[book.item] = true
+        end
+    end
+end
+
+-- Where a book you have but have not handed in is: "in your bags", "in your
+-- bank", or just "collected" once it has gone from both.
+local function WhereItIs(book)
+    local bags, total = Counts(book)
+    return (bags > 0 and "in your bags") or (total > 0 and "in your bank") or "collected"
+end
 
 local function ForMyFaction(book)
     local mine = UnitFactionGroup and UnitFactionGroup("player")
@@ -94,8 +134,9 @@ local function State(book)
     if C_QuestLog.IsQuestFlaggedCompleted(book.quest) then
         return HANDED_IN
     end
-    if C_Item.GetItemCount and C_Item.GetItemCount(book.item) > 0 then
-        return IN_BAGS
+    local _, total = Counts(book)
+    if total > 0 or Had()[book.item] then
+        return HAVE
     end
     return MISSING
 end
@@ -121,7 +162,7 @@ local function Librarian()
 end
 
 -- The books for your faction, each with its state, in the table's order, and
--- how many are handed in and in your bags.
+-- how many are handed in and collected but not handed in.
 local function Books()
     local list, handed, bags = {}, 0, 0
     for _, book in ipairs(ns.libraryBooks) do
@@ -130,7 +171,7 @@ local function Books()
             list[#list + 1] = { book = book, state = state }
             if state == HANDED_IN then
                 handed = handed + 1
-            elseif state == IN_BAGS then
+            elseif state == HAVE then
                 bags = bags + 1
             end
         end
@@ -187,7 +228,7 @@ function ns.AddLibrarianLines(tooltip)
     local list, handed = Books()
     tooltip:AddLine("Handed in " .. Progress(handed), 1, 1, 1, true)
     for _, entry in ipairs(list) do
-        if entry.state == IN_BAGS then
+        if entry.state == HAVE then
             tooltip:AddLine(ns.WAIT .. " " .. entry.book.name, ns.active.r, ns.active.g, ns.active.b)
         end
     end
@@ -197,7 +238,7 @@ end
 -- The tracker's Library Books section, off by default
 --------------------------------------------------------------------------------
 
--- A count line, the books in your bags to hand in, then the ones still to
+-- A count line, the books you have to hand in, then the ones still to
 -- find, with their zone; clicking one shows it on the map.
 function ns.LibraryLines()
     local list, handed, bags = Books()
@@ -205,14 +246,16 @@ function ns.LibraryLines()
         return {}
     end
     local lines = { { block = true, color = { r = 1, g = 1, b = 1 },
-        text = ("Handed in %d, %d in your bags"):format(handed, bags) } }
+        text = ("Handed in %d, %d to hand in"):format(handed, bags) } }
     for _, entry in ipairs(list) do
         local book = entry.book
-        if entry.state == IN_BAGS then
+        if entry.state == HAVE then
             lines[#lines + 1] = { color = ns.active, text = ns.WAIT .. " " .. book.name,
                 tooltip = function(tooltip)
                     tooltip:SetText(book.name, 1, 1, 1)
-                    tooltip:AddLine("In your bags: hand it in to " .. Librarian().name, ns.grey.r, ns.grey.g, ns.grey.b)
+                    local where = WhereItIs(book)
+                    tooltip:AddLine(("%s%s: hand it in to %s"):format(where:sub(1, 1):upper(), where:sub(2),
+                        Librarian().name), ns.grey.r, ns.grey.g, ns.grey.b)
                 end }
         end
     end
@@ -274,7 +317,7 @@ function ns.RefreshLibraryList()
         ("%sHand them in to %s, %s.|r"):format(ns.grey.hex, librarian.name, librarian.where),
     }
     if bags > 0 then
-        lines[#lines + 1] = ("%s%d in your bags to hand in.|r"):format(ns.active.hex, bags)
+        lines[#lines + 1] = ("%s%d to hand in.|r"):format(ns.active.hex, bags)
     end
     for _, entry in ipairs(list) do
         local book = entry.book
@@ -282,8 +325,8 @@ function ns.RefreshLibraryList()
         local line
         if entry.state == HANDED_IN then
             line = ("%s %s%s|r"):format(ns.CHECK, ns.known.hex, book.name)
-        elseif entry.state == IN_BAGS then
-            line = ("%s %s%s|r  %sin your bags|r"):format(ns.WAIT, ns.active.hex, book.name, ns.grey.hex)
+        elseif entry.state == HAVE then
+            line = ("%s %s%s|r  %s%s|r"):format(ns.WAIT, ns.active.hex, book.name, ns.grey.hex, WhereItIs(book))
         else
             line = ("%s %s%s|r  %s"):format(ns.CROSS, ns.missing.hex, book.name, zone)
         end
@@ -297,7 +340,11 @@ end
 local frame = CreateFrame("Frame")
 pcall(frame.RegisterEvent, frame, "BAG_UPDATE_DELAYED") -- see Core.lua
 pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
+pcall(frame.RegisterEvent, frame, "PLAYER_ENTERING_WORLD")
+pcall(frame.RegisterEvent, frame, "BANKFRAME_OPENED")
+pcall(frame.RegisterEvent, frame, "PLAYERBANKSLOTS_CHANGED")
 frame:SetScript("OnEvent", function()
+    Remember()
     if ns.RefreshMapPins then
         ns.RefreshMapPins()
     end
