@@ -108,6 +108,8 @@ local function DumpHelp()
     print("  /sink dump skills   every skill line the client lists, then each weapon skill's two signals")
     print("  /sink dump npc [unverified]  every NPC and place position in the tables, or only those not taken in game")
     print("  /sink dump taxi     the flight points on your map as the client reports them, and the open flight map's")
+    print("  /sink dump tooltip  in 3 seconds, the tooltip that is showing: its owner and each line, as the")
+    print("                      client gives them; hover a minimap node before then")
 end
 
 -- The flight points on the map you are on, as C_TaxiMap reports them, next
@@ -448,6 +450,37 @@ local function DumpTrainer()
     CopyWindow("Trainer dump", lines)
 end
 
+-- Every tooltip that is showing: its name, its owner and each line with its
+-- codes made visible, and whether the text is secret. For finding out what
+-- a tooltip the game fills in itself, such as a minimap node's, looks like.
+local function DumpTooltip()
+    local any = false
+    for _, name in ipairs({ "GameTooltip", "ItemRefTooltip", "EmbeddedItemTooltip" }) do
+        local tooltip = _G[name]
+        if tooltip and tooltip:IsShown() then
+            any = true
+            local owner = tooltip:GetOwner()
+            local ownerName = owner and owner.GetName and owner:GetName() or tostring(owner)
+            ns.Print(("%s, owner %s%s, %d lines"):format(name, tostring(ownerName),
+                owner == Minimap and " (the minimap)" or "", tooltip:NumLines()))
+            for i = 1, tooltip:NumLines() do
+                local region = _G[name .. "TextLeft" .. i]
+                local text = region and region:GetText()
+                if text == nil then
+                    print(("  %d: nil"):format(i))
+                elseif ns.Secret(text) then
+                    print(("  %d: secret"):format(i))
+                else
+                    print(("  %d: %s"):format(i, (text:gsub("|", "||"):gsub("\n", "\\n"))))
+                end
+            end
+        end
+    end
+    if not any then
+        ns.Print("no tooltip was showing.")
+    end
+end
+
 function ns.DumpCommand(arg)
     if not ns.UnitMapPosition or not ns.MapPinLine then
         ns.Print("MapPins.lua is not loaded.")
@@ -465,6 +498,9 @@ function ns.DumpCommand(arg)
         DumpSkills()
     elseif sub == "taxi" or sub == "flight" then
         DumpTaxi()
+    elseif sub == "tooltip" or sub == "tip" then
+        ns.Print("hover what you want dumped; the tooltip is read in 3 seconds.")
+        C_Timer.After(3, DumpTooltip)
     elseif sub == "npc" or sub == "npcs" then
         local filter = ((arg or ""):match("^%S+%s+(%S+)") or ""):lower()
         DumpNPCs(filter == "unverified")

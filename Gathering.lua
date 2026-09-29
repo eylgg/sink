@@ -93,6 +93,16 @@ local function AddNodeLines(tooltip)
 end
 
 GameTooltip:HookScript("OnShow", AddNodeLines)
+-- The game may fill the minimap's tooltip from its own code, which runs no
+-- hook, and after it is shown: so look again while it is up, a few times a second.
+local elapsedSince = 0
+GameTooltip:HookScript("OnUpdate", function(tooltip, elapsed)
+    elapsedSince = elapsedSince + elapsed
+    if elapsedSince >= 0.2 then
+        elapsedSince = 0
+        AddNodeLines(tooltip)
+    end
+end)
 GameTooltip:HookScript("OnTooltipCleared", function()
     added = false
 end)
