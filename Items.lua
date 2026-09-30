@@ -80,8 +80,7 @@ local function Collect()
     -- Quest items to keep and then delete (QuestItems.lua).
     if ns.EachQuestItemRule then
         ns.EachQuestItemRule(function(itemID, rule)
-            local verb = ns.QuestItemRuleComplete(rule) and "Done with " or "Needed for "
-            add(itemID, verb .. ns.QuestItemQuestNames(rule, QUEST))
+            add(itemID, ns.QuestItemRuleLine(rule, QUEST))
         end)
     end
 

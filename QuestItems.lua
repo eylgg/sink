@@ -16,7 +16,8 @@
 local ADDON_NAME, ns = ...
 
 -- Built-in rules: itemID -> questID, or itemID -> { questID, questID, ... } when
--- every listed quest must be complete. Rules added with "/sink items add" live
+-- every listed quest must be complete, or itemID -> a note for an item that
+-- is safe to delete from the start, which the tooltip gives as the reason. Rules added with "/sink items add" live
 -- in SinkDB.questItems and take priority over these.
 ns.questItemRules = {
     [286176] = 99134,
@@ -28,6 +29,7 @@ ns.questItemRules = {
     [5059] = 868, -- Digging Claw, Egg Hunt (The Barrens)
     [3165] = 430, -- Minor Quinn's Potion, Return to Quinn (Silverpine Forest); may not stay in the bags
     [10414] = 3301, -- Sample Snapjaw Shell, Mura Runetotem (The Barrens)
+    [285357] = "a guide to the Skyborne start, nothing needs it", -- Advisor Nazgrel's Instructions
     [3468] = 493, -- Renferrel's Findings, Journey to Hillsbrad Foothills (Silverpine Forest)
 }
 
@@ -74,11 +76,14 @@ local function EachRule(fn)
     end
 end
 
+-- The quests a rule waits for; none for a note, which is safe to delete now.
 local function QuestIDs(rule)
     if type(rule) == "table" then
         return rule
+    elseif type(rule) == "number" then
+        return { rule }
     end
-    return { rule }
+    return {}
 end
 
 local function QuestsComplete(rule)
@@ -107,6 +112,9 @@ end
 
 -- The rule's quest names joined with commas; with color, each wrapped in it.
 local function QuestNames(rule, color)
+    if type(rule) == "string" then
+        return rule
+    end
     local names = {}
     for _, questID in ipairs(QuestIDs(rule)) do
         local name = QuestName(questID)
@@ -115,10 +123,18 @@ local function QuestNames(rule, color)
     return table.concat(names, ", ")
 end
 
+-- The tooltip line for a rule: "Needed for" its quests, "Done with" them once
+-- they are complete, or "Safe to delete" and the note; quest names in color.
+local function RuleLine(rule, color)
+    if type(rule) == "string" then
+        return "Safe to delete: " .. rule
+    end
+    return (QuestsComplete(rule) and "Done with " or "Needed for ") .. QuestNames(rule, color)
+end
+
 -- For the Items tab (Items.lua).
 ns.EachQuestItemRule = EachRule
-ns.QuestItemQuestNames = QuestNames
-ns.QuestItemRuleComplete = QuestsComplete
+ns.QuestItemRuleLine = RuleLine
 
 local function ItemName(itemID, link)
     if link then
@@ -168,7 +184,7 @@ local function DeleteItem(itemID)
 end
 
 StaticPopupDialogs[POPUP] = {
-    text = "Delete %s?\n\nYou finished %s and no longer need it.",
+    text = "Delete %s?\n\n%s",
     button1 = DELETE or "Delete",
     button2 = "Keep",
     OnAccept = function(_, data)
@@ -276,8 +292,10 @@ function ns.ConfirmDeleteQuestItem(itemID)
     local rule = RuleFor(itemID)
     local _, _, link = FindInBags(itemID)
     if rule and link then
-        -- Quest names in the yellow of quest links.
-        StaticPopup_Show(POPUP, ItemName(itemID, link), QuestNames(rule, "|cffffff00"), { itemID = itemID })
+        -- Quest names in the yellow of quest links; a note as it is.
+        local why = type(rule) == "string" and ("It is " .. rule .. ".")
+            or ("You finished " .. QuestNames(rule, "|cffffff00") .. " and no longer need it.")
+        StaticPopup_Show(POPUP, ItemName(itemID, link), why, { itemID = itemID })
     end
 end
 
@@ -333,10 +351,8 @@ local function AddTooltipLine(tooltip, data)
     if not rule then
         return
     end
-    -- "Needed for", or "Done with" once the quest is complete, in grey; the
-    -- quest names in the yellow of quest links.
-    local verb = QuestsComplete(rule) and "Done with " or "Needed for "
-    tooltip:AddLine(verb .. QuestNames(rule, "|cffffff00"), 0.7, 0.7, 0.7, true)
+    -- In grey, the quest names in the yellow of quest links.
+    tooltip:AddLine(RuleLine(rule, "|cffffff00"), 0.7, 0.7, 0.7, true)
 end
 
 if TooltipDataProcessor and Enum and Enum.TooltipDataType and Enum.TooltipDataType.Item then
@@ -362,7 +378,8 @@ local function ListRules()
         local bag, _, link, count = FindInBags(itemID)
         print(("  %s (%d): %s | %s"):format(
             ItemName(itemID, link), itemID,
-            QuestsComplete(rule) and "|cff00ff00quest complete|r" or "|cffffcc00quest not complete|r",
+            (type(rule) == "string" and "|cff00ff00safe to delete|r")
+                or (QuestsComplete(rule) and "|cff00ff00quest complete|r" or "|cffffcc00quest not complete|r"),
             bag and ("in bags x" .. tostring(count or 1)) or "not in bags"))
     end)
     if not any then
