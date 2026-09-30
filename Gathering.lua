@@ -50,10 +50,13 @@ local function Plain(text)
 end
 
 -- Blizzard's minimap, while the mouse is over it, sets the tooltip afresh
--- every frame (Minimap_OnUpdate: SetOwner to UIParent, then the client's
+-- every frame (Minimap_OnUpdate: SetOwner to UIParent, then
 -- SetMinimapMouseover), which wipes any line added before. So the lines are
--- added right after SetMinimapMouseover, each frame. added marks a tooltip
--- that already has them; SetOwner clears it, which unmarks it.
+-- added after each fill, through TooltipDataProcessor's post call for the
+-- minimap type. SetMinimapMouseover itself is left alone: on Forever it is a
+-- secure delegate, and hooking it broke Blizzard's call to it ("attempt to
+-- call a nil value" in Minimap_OnUpdate). added marks a tooltip that
+-- already has the lines; SetOwner clears it, which unmarks it.
 local added = false
 
 -- Whether the tooltip is the minimap's. Its owner is UIParent, not the
@@ -63,7 +66,7 @@ local function OnMinimap(tooltip)
 end
 
 local function AddNodeLines(tooltip)
-    if added or not Enabled() or not OnMinimap(tooltip) then
+    if added or not Enabled() or tooltip ~= GameTooltip or not OnMinimap(tooltip) then
         return
     end
     local lines, seen = {}, {}
@@ -125,6 +128,6 @@ end
 GameTooltip:HookScript("OnTooltipCleared", function()
     added = false
 end)
-if GameTooltip.SetMinimapMouseover then
-    hooksecurefunc(GameTooltip, "SetMinimapMouseover", AddNodeLines)
+if TooltipDataProcessor and Enum and Enum.TooltipDataType and Enum.TooltipDataType.MinimapMouseover then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.MinimapMouseover, AddNodeLines)
 end
