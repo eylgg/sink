@@ -30,6 +30,7 @@ ns.questItemRules = {
     [3165] = 430, -- Minor Quinn's Potion, Return to Quinn (Silverpine Forest); may not stay in the bags
     [10414] = 3301, -- Sample Snapjaw Shell, Mura Runetotem (The Barrens)
     [285357] = "a guide to the Skyborne start, nothing needs it", -- Advisor Nazgrel's Instructions
+    [268535] = 95195, -- Bloodied Insignia, Bloodied Insignia (Ruins of Lordaeron, Alliance)
     [3468] = 493, -- Renferrel's Findings, Journey to Hillsbrad Foothills (Silverpine Forest)
 }
 
