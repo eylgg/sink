@@ -283,6 +283,8 @@ ns.npcs = {
     [9087] = { name = "Bashana Runetotem", map = 1456, x = 0.7067, y = 0.3340 },
     [12736] = { name = "Je'neu Sancrea", map = 1440, x = 0.1160, y = 0.3420 },
     [12876] = { name = "Baron Aquanis", instance = 48 },
+    -- Many of them, outside the instance on the Zoram Strand by the entrance; the middle of where Wowhead has them.
+    [4802] = { name = "Blackfathom Tide Priestess", map = 1440, x = 0.140, y = 0.105 },
     [14450] = { name = "Orphan Matron Nightingale", map = 1453, x = 0.4960, y = 0.4255 },
     [250686] = { name = "Tabitha Heartweaver", map = 1421, x = 0.4450, y = 0.4290 },
     [264936] = { name = "Earthseer Farsen", map = 1426, x = 0.6480, y = 0.5840 },
@@ -453,8 +455,10 @@ ns.quests = {
         start = { npc = 12736 }, finish = { npc = 12736 } },
     [6922] = { name = "Baron Aquanis", faction = "Horde", minLevel = 21, dungeon = 48,
         start = { drop = 12876 }, finish = { npc = 12736 } },
+    [6564] = { name = "Allegiance to the Old Gods", faction = "Horde", minLevel = 17, dungeon = 48,
+        start = { drop = 4802, item = 16790 }, finish = { npc = 12736 } }, -- the Damp Note
     [6565] = { name = "Allegiance to the Old Gods", faction = "Horde", minLevel = 17, dungeon = 48,
-        start = { npc = 12736 }, finish = { npc = 12736 } },
+        start = { after = 6564, npc = 12736 }, finish = { npc = 12736 } },
     [971] = { name = "Knowledge in the Deeps", faction = "Alliance", minLevel = 10, dungeon = 48,
         start = { npc = 2786 }, finish = { npc = 2786 } },
     [1275] = { name = "Researching the Corruption", faction = "Alliance", minLevel = 18, dungeon = 48,
@@ -910,6 +914,11 @@ function ns.QuestNextStep(questID)
                     next.note = "Needs an earlier quest first"
                 end
             end
+        elseif start.drop and NPCPlace(start.drop) then
+            -- Dropped by NPCs outside, as the Damp Note by the Blackfathom Tide Priestesses.
+            next.action, next.place = "Kill", NPCPlace(start.drop)
+            local item = start.item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(start.item)
+            next.note = item and ("For the " .. item .. " it drops") or "For the item that starts it"
         elseif quest.dungeon and DungeonPlace(quest.dungeon) then
             next.action, next.place = "Starts inside", DungeonPlace(quest.dungeon)
         end
