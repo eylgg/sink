@@ -990,9 +990,17 @@ end
 -- taken, with how to get it after the name.
 local function QuestRows(questIDs)
     local rows = {}
+    -- A chain's later step is left out while the step before it, in the same
+    -- list, is not done: Allegiance to the Old Gods shows 1/2, then 2/2.
+    local listed = {}
+    for _, questID in ipairs(questIDs) do
+        listed[questID] = true
+    end
     for _, questID in ipairs(questIDs) do
         local quest = ns.quests[questID]
-        if quest and ForMyFaction(quest) then
+        local after = quest and quest.start and quest.start.after
+        local waiting = after and listed[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)
+        if quest and ForMyFaction(quest) and not waiting then
             local state = QuestState(questID)
             local title = QuestTitle(questID)
             local drop = DropText(quest)
