@@ -28,6 +28,7 @@ ns.questItemRules = {
     [14544] = 5727, -- Lieutenant's Insignia, Hidden Enemies 2/5 (Orgrimmar)
     [5059] = 868, -- Digging Claw, Egg Hunt (The Barrens)
     [5058] = 868, -- Silithid Egg, Egg Hunt (The Barrens)
+    [5570] = 1069, -- Deepmoss Egg, Deepmoss Spider Eggs (Mebok Mizzyrix, Ratchet)
     [3165] = 430, -- Minor Quinn's Potion, Return to Quinn (Silverpine Forest); may not stay in the bags
     [10414] = 3301, -- Sample Snapjaw Shell, Mura Runetotem (The Barrens)
     [285357] = "a guide to the Skyborne start, nothing needs it", -- Advisor Nazgrel's Instructions
