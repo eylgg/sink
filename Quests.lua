@@ -77,9 +77,9 @@ ns.dungeons = {
     [33] = { name = "Shadowfang Keep", minLevel = 20, maxLevel = 30, map = 1421, x = 0.4472, y = 0.6777 },
     [34] = { name = "Stormwind Stockade", minLevel = 22, maxLevel = 30, map = 1453, x = 0.5035, y = 0.6618 },
     [48] = { name = "Blackfathom Deeps", minLevel = 24, maxLevel = 32, map = 1440, x = 0.1650, y = 0.1103 },
-    -- Excavation Site: Wetlands is new in Forever: neither the game data nor
-    -- Wowhead has its entrance yet, so it has no map pin until one is recorded.
-    [2998] = { name = "Excavation Site: Wetlands", minLevel = 24, maxLevel = 29 },
+    -- Excavation Site: Wetlands, new in Forever: the portal at the top of the hill on the new road,
+    -- from Wowhead's dungeon guide. Not checked in game yet.
+    [2998] = { name = "Excavation Site: Wetlands", minLevel = 26, maxLevel = 33, map = 1437, x = 0.478, y = 0.563 },
     -- Taken in game on the Kalimdor map; the Map table's corpse point converts to
     -- the same spot. Levels from Wowhead's Forever dungeon overview.
     [47] = { name = "Razorfen Kraul", minLevel = 30, maxLevel = 40, map = 1414, x = 0.5090, y = 0.7037,
@@ -288,6 +288,16 @@ ns.npcs = {
     [14450] = { name = "Orphan Matron Nightingale", map = 1453, x = 0.4960, y = 0.4255 },
     [250686] = { name = "Tabitha Heartweaver", map = 1421, x = 0.4450, y = 0.4290 },
     [264936] = { name = "Earthseer Farsen", map = 1426, x = 0.6480, y = 0.5840 },
+    -- Excavation Site: Wetlands, from Wowhead's Forever database.
+    [13155] = { name = "Deathstalker Agent", map = 1437, x = 0.514, y = 0.592 }, -- in the hills by the entrance
+    [2787] = { name = "Zaruk", map = 1417, x = 0.744, y = 0.355 },
+    [3368] = { name = "Borstan", map = 1454, x = 0.575, y = 0.535 },
+    [259118] = { name = "Muln Earthfury", map = 1412, x = 0.334, y = 0.225 },
+    [1244] = { name = "Rethiel the Greenwarden", map = 1437, x = 0.562, y = 0.405 },
+    [1480] = { name = "Caitlin Grassman", map = 1437, x = 0.117, y = 0.585 },
+    [1077] = { name = "Prospector Whelgar", map = 1437, x = 0.388, y = 0.522 },
+    [5387] = { name = "High Explorer Magellas", map = 1455, x = 0.696, y = 0.186 },
+    [260326] = { name = "Relic Guardian", instance = 2998 },
     [264943] = { name = "Afadra Dunwall", map = 1455, x = 0.3331, y = 0.4774 },
     [265002] = { name = "Ghostly Attendant", instance = 3065 },
     [265003] = { name = "Thom Filch", map = 1455, x = 0.3215, y = 0.4473 },
@@ -400,6 +410,26 @@ ns.quests = {
     -- Mutanus drops the Glowing Shard (item 10441) that starts it.
     [6981] = { name = "The Glowing Shard", minLevel = 15, dungeon = 43,
         start = { drop = 3654, item = 10441 }, finish = { npc = 8418 } },
+    -- Excavation Site: Wetlands, from Wowhead's Forever database and dungeon guide. The Titan Relic
+    -- from the Relic Guardian starts a quest for each side, each with a follow-up outside.
+    [95663] = { name = "Dragonmaw Rumors", minLevel = 24, dungeon = 2998,
+        start = { npc = 2787 }, finish = { npc = 13155 } },
+    [95682] = { name = "Open the Maw", minLevel = 24, dungeon = 2998,
+        start = { after = 95663, npc = 13155 }, finish = { npc = 13155 } },
+    [95697] = { name = "Changing Tastes", faction = "Horde", minLevel = 24, dungeon = 2998,
+        start = { npc = 3368 }, finish = { npc = 3368 } },
+    [95664] = { name = "Elder Knowledge", faction = "Horde", minLevel = 24, dungeon = 2998,
+        start = { drop = 260326, item = 270866 }, finish = { npc = 9087 } },
+    [98823] = { name = "Earthen Echo", faction = "Horde", minLevel = 24,
+        start = { after = 95664, npc = 9087 }, finish = { npc = 259118 } },
+    [95646] = { name = "Horrors in the Highland", faction = "Alliance", minLevel = 24, dungeon = 2998,
+        start = { npc = 1244 }, finish = { npc = 1244 } },
+    [95647] = { name = "Lost in the Thicket Things", faction = "Alliance", minLevel = 24, dungeon = 2998,
+        start = { npc = 1480 } }, -- ends with Ardin Grassman, inside
+    [95810] = { name = "Lost Relic Carry", faction = "Alliance", minLevel = 24, dungeon = 2998,
+        start = { drop = 260326, item = 270865 }, finish = { npc = 1077 } },
+    [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
+        start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
     -- The Hall of Thanes, from Wowhead's Forever database and dungeon quest guide.
     [96403] = { name = "Important Heirlooms", faction = "Alliance", minLevel = 10, dungeon = 3065,
         start = { npc = 265003 }, finish = { npc = 265003 } },
@@ -1000,6 +1030,7 @@ local function QuestRows(questIDs)
         local quest = ns.quests[questID]
         local after = quest and quest.start and quest.start.after
         local waiting = after and listed[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)
+            and QuestState(questID) == NOT_TAKEN
         if quest and ForMyFaction(quest) and not waiting then
             local state = QuestState(questID)
             local title = QuestTitle(questID)

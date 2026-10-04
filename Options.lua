@@ -371,8 +371,8 @@ local KIND_TOOLTIPS = {
         .. " them. Which you have is known once you open any flight master's map.",
     showDungeons = "Dungeon entrances with their level range, and the quests for each dungeon marked done,"
         .. " in your log or not taken.",
-    showQuestNPCs = "Quest givers while they have a quest for you, and the NPCs a quest sends you to or"
-        .. " that take it in.",
+    showQuestNPCs = "Quest givers while they have a quest for you, the NPCs a quest sends you to or"
+        .. " that take it in, and the next stop of a treasure hunt such as the Cozy Sleeping Bag.",
     showTravel = "Zeppelins, boats and teleporters, titled for where they take you.",
     showEntrances = "Cave and crypt entrances, such as the Entrance to Crypts in Tirisfal Glades.",
     showEliteQuests = "Elites that drop an item starting a quest, shown until you have done that quest. Gold dragon.",

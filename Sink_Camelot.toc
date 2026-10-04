@@ -30,6 +30,7 @@ Tracker.lua
 MapPins.lua
 MapPins.xml
 Library.lua
+Hunts.lua
 Scanner.lua
 Dump.lua
 Items.lua

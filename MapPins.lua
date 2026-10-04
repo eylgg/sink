@@ -1366,6 +1366,10 @@ local function EachPin(mapID, fn)
     for _, pin in ipairs(QuestPins(mapID)) do
         fn(pin)
     end
+    -- Treasure hunts' next stops (Hunts.lua).
+    for _, pin in ipairs(ns.HuntPins and ns.HuntPins(mapID) or {}) do
+        fn(pin)
+    end
     local custom = CustomPins()
     for _, pin in ipairs(custom and custom[mapID] or {}) do
         fn(pin)
@@ -1719,7 +1723,7 @@ local function PinKind(pin, profession)
         return "showEliteQuests"
     elseif pin.rare then
         return "showRares"
-    elseif pin.questGiver or pin.questObjective or pin.questFinish then
+    elseif pin.questGiver or pin.questObjective or pin.questFinish or pin.hunt then
         return "showQuestNPCs"
     elseif profession then
         return profession.class and "showClassTrainers" or "showProfessionTrainers"
@@ -2039,6 +2043,10 @@ function SinkMapPinMixin:OnMouseEnter()
     -- A rare: its name under the "Rare" title.
     if pin.rare then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
+    end
+    -- A treasure hunt's next stop (Hunts.lua).
+    if pin.hunt and ns.AddHuntLines then
+        ns.AddHuntLines(GameTooltip, pin)
     end
     -- A library book, and a librarian with how many you have handed in (Library.lua).
     if pin.book and ns.AddLibraryBookLines then
