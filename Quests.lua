@@ -80,9 +80,12 @@ ns.dungeons = {
     -- Excavation Site: Wetlands, new in Forever: the portal at the top of the hill on the new road,
     -- from Wowhead's dungeon guide. Not checked in game yet.
     [2998] = { name = "Excavation Site: Wetlands", minLevel = 26, maxLevel = 33, map = 1437, x = 0.478, y = 0.563 },
+    -- Gnomeregan: the way in on the surface, west of Kharanos, from Wowhead's Forever dungeon
+    -- guide; the portal itself is underground in the Train Depot. Not checked in game yet.
+    [90] = { name = "Gnomeregan", minLevel = 29, maxLevel = 38, map = 1426, x = 0.240, y = 0.380 },
     -- Taken in game on the Kalimdor map; the Map table's corpse point converts to
-    -- the same spot. Levels from Wowhead's Forever dungeon overview.
-    [47] = { name = "Razorfen Kraul", minLevel = 30, maxLevel = 40, map = 1414, x = 0.5090, y = 0.7037,
+    -- the same spot.
+    [47] = { name = "Razorfen Kraul", minLevel = 29, maxLevel = 38, map = 1414, x = 0.5090, y = 0.7037,
         verified = true },
     -- New in Forever and not in this client's Map table yet, so it has no
     -- instance ID: keyed by name until it does. Levels from Wowhead's Forever
@@ -151,6 +154,25 @@ ns.dungeonBosses = {
             { id = 2733, name = "Taragaman the Hungerer" },
             { id = 2734, name = "Jergosh the Invoker" },
             { id = 2735, name = "Bazzalan" },
+        },
+    },
+    -- The game has Gnomeregan's bosses only under difficulty 201 and 198 (the
+    -- Season of Discovery raid); 201's are under 0 so any other ID gets them.
+    [90] = { -- Gnomeregan
+        [0] = {
+            { id = 2768, name = "Grubbis" },
+            { id = 2769, name = "Viscous Fallout" },
+            { id = 2770, name = "Electrocutioner 6000" },
+            { id = 2771, name = "Crowd Pummeler 9-60" },
+            { id = 2772, name = "Mekgineer Thermaplugg" },
+        },
+        [198] = {
+            { id = 2925, name = "Grubbis" },
+            { id = 2928, name = "Viscous Fallout" },
+            { id = 2899, name = "Crowd Pummeler 9-60" },
+            { id = 2927, name = "Electrocutioner 6000" },
+            { id = 2935, name = "Mechanical Menagerie" },
+            { id = 2940, name = "Mekgineer Thermaplugg" },
         },
     },
     [47] = { -- Razorfen Kraul
@@ -301,6 +323,30 @@ ns.npcs = {
     [264943] = { name = "Afadra Dunwall", map = 1455, x = 0.3331, y = 0.4774 },
     [265002] = { name = "Ghostly Attendant", instance = 3065 },
     [265003] = { name = "Thom Filch", map = 1455, x = 0.3215, y = 0.4473 },
+    -- Gnomeregan, from Wowhead's Forever database; not checked in game.
+    [3412] = { name = "Nogg", map = 1454, x = 0.756, y = 0.250 },
+    [3413] = { name = "Sovik", map = 1454, x = 0.754, y = 0.250 },
+    [7853] = { name = "Scooty", map = 1434, x = 0.275, y = 0.774 },
+    [7850] = { name = "Kernobee", instance = 90 },
+    [7944] = { name = "Tinkmaster Overspark", map = 1455, x = 0.695, y = 0.505 },
+    [7917] = { name = "Brother Sarno", map = 1453, x = 0.405, y = 0.305 },
+    [6169] = { name = "Klockmort Spannerspan", map = 1455, x = 0.683, y = 0.465 },
+    [6142] = { name = "Mathiel", map = 1457, x = 0.592, y = 0.455 },
+    [7950] = { name = "Master Mechanic Castpipe", map = 1455, x = 0.698, y = 0.485 },
+    [4077] = { name = "Gaxim Rustfizzle", map = 1442, x = 0.595, y = 0.671 },
+    [7937] = { name = "High Tinker Mekkatorque", map = 1455, x = 0.690, y = 0.490 },
+    [1268] = { name = "Ozzie Togglevolt", map = 1426, x = 0.458, y = 0.492 },
+    [6569] = { name = "Gnoarn", map = 1455, x = 0.695, y = 0.505 },
+    [6212] = { name = "Dark Iron Agent", instance = 90 },
+    [6826] = { name = "Talvash del Kissel", map = 1455, x = 0.360, y = 0.040 },
+    -- Razorfen Kraul, from Wowhead's Forever database; not checked in game.
+    [4451] = { name = "Auld Stonespire", map = 1456, x = 0.364, y = 0.596 },
+    [4048] = { name = "Falfindel Waywarder", map = 1444, x = 0.896, y = 0.464 },
+    [4510] = { name = "Heralath Fallowbrook", instance = 47 },
+    [4521] = { name = "Treshala Fallowbrook", map = 1457, x = 0.694, y = 0.674 },
+    [4508] = { name = "Willix the Importer", instance = 47 },
+    [4421] = { name = "Charlga Razorflank", instance = 47 },
+    [4722] = { name = "Rau Cliffrunner", map = 1441, x = 0.460, y = 0.515 },
 }
 
 -- The Crest of Lordaeron hangs in one of these, a different one each run,
@@ -513,6 +559,68 @@ ns.quests = {
     -- Its line is The Unsent Letter (373), Bazil Thredd (389), then this.
     [391] = { name = "The Stockade Riots", faction = "Alliance", minLevel = 16, dungeon = 34,
         start = { after = 389, npc = 1719 }, finish = { npc = 1719 } },
+    -- Gnomeregan, from Wowhead's Forever database and dungeon quest guide. Tinkmaster
+    -- Overspark, Klockmort's Essentials, Castpipe's Task and The Day After only send
+    -- you to the giver of the next, who offers it without them, so they are not linked.
+    [2841] = { name = "Rig Wars", faction = "Horde", minLevel = 25, dungeon = 90,
+        start = { npc = 3412 }, finish = { npc = 3412 } },
+    [2842] = { name = "Chief Engineer Scooty", faction = "Horde", minLevel = 20, dungeon = 90,
+        start = { npc = 3413 }, finish = { npc = 7853 } },
+    [2843] = { name = "Gnomer-gooooone!", faction = "Horde", minLevel = 20, dungeon = 90,
+        start = { after = 2842, npc = 7853 }, finish = { npc = 7853 } },
+    [2904] = { name = "A Fine Mess", minLevel = 20, dungeon = 90,
+        start = { npc = 7850 }, finish = { npc = 7853 } }, -- an escort
+    [2923] = { name = "Tinkmaster Overspark", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { npc = 7917 }, finish = { npc = 7944 } },
+    [2922] = { name = "Save Techbot's Brain!", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { npc = 7944 }, finish = { npc = 7944 } },
+    [2925] = { name = "Klockmort's Essentials", faction = "Alliance", minLevel = 24, dungeon = 90,
+        start = { npc = 6142 }, finish = { npc = 6169 } },
+    [2924] = { name = "Essential Artificials", faction = "Alliance", minLevel = 24, dungeon = 90,
+        start = { npc = 6169 }, finish = { npc = 6169 } },
+    [2931] = { name = "Castpipe's Task", faction = "Alliance", minLevel = 25, dungeon = 90,
+        start = { npc = 4077 }, finish = { npc = 7950 } },
+    [2930] = { name = "Data Rescue", faction = "Alliance", minLevel = 25, dungeon = 90,
+        start = { npc = 7950 }, finish = { npc = 7950 } },
+    [2929] = { name = "The Grand Betrayal", faction = "Alliance", minLevel = 25, dungeon = 90,
+        start = { npc = 7937 }, finish = { npc = 7937 } },
+    [2928] = { name = "Gyrodrillmatic Excavationators", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { npc = 6579 }, finish = { npc = 6579 } },
+    [2927] = { name = "The Day After", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { npc = 6569 }, finish = { npc = 1268 } },
+    [2926] = { name = "Gnogaine", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { npc = 1268 }, finish = { npc = 1268 } },
+    [2962] = { name = "The Only Cure is More Green Glow", faction = "Alliance", minLevel = 20, dungeon = 90,
+        start = { needs = 2926, npc = 1268 }, finish = { npc = 1268 } },
+    -- Taken and handed in at the Sparklematic 5200 in the Clean Room, with a Grime-Covered Hooked Note.
+    [2951] = { name = "The Sparklematic 5200!", minLevel = 25, dungeon = 90 },
+    -- The ring is cleaned at the Sparklematic 5200, which then offers Return of the Ring.
+    [2945] = { name = "Grime-Encrusted Ring", minLevel = 28, dungeon = 90,
+        start = { drop = 6212, item = 9326 } },
+    [2947] = { name = "Return of the Ring", faction = "Alliance", minLevel = 28, dungeon = 90,
+        start = { after = 2945 }, finish = { npc = 6826 } },
+    [2949] = { name = "Return of the Ring", faction = "Horde", minLevel = 28, dungeon = 90,
+        start = { after = 2945 }, finish = { npc = 3412 } },
+    -- Razorfen Kraul, from Wowhead's Forever database and dungeon quest guide.
+    [1102] = { name = "A Vengeful Fate", faction = "Horde", minLevel = 29, dungeon = 47,
+        start = { npc = 4451 }, finish = { npc = 4451 } },
+    [1109] = { name = "Going, Going, Guano!", faction = "Horde", minLevel = 30, dungeon = 47,
+        start = { npc = 2055 }, finish = { npc = 2055 } },
+    [6522] = { name = "An Unholy Alliance", faction = "Horde", minLevel = 28, dungeon = 47,
+        start = { drop = 4421, item = 17008 }, finish = { npc = 2425 } }, -- the Small Scroll
+    -- Its first step, Lonebrow's Journal (1100), starts from the journal on the
+    -- dead dwarf at the foot of the Great Lift.
+    [1101] = { name = "The Crone of the Kraul", faction = "Alliance", minLevel = 29, dungeon = 47,
+        start = { after = 1100, npc = 4048 }, finish = { npc = 4048 } },
+    [1142] = { name = "Mortality Wanes", faction = "Alliance", minLevel = 25, dungeon = 47,
+        start = { npc = 4510 }, finish = { npc = 4521 } },
+    [1221] = { name = "Blueleaf Tubers", minLevel = 20, dungeon = 47,
+        start = { npc = 3446 }, finish = { npc = 3446 } },
+    [1144] = { name = "Willix the Importer", minLevel = 22, dungeon = 47,
+        start = { npc = 4508 }, finish = { npc = 4508 } }, -- an escort
+    -- New in Forever: the Tattered Note, which a Razorfen Battleguard in Thousand Needles drops too.
+    [79358] = { name = "Storm, Earth, and Fire", faction = "Horde", class = "SHAMAN", minLevel = 30, dungeon = 47,
+        start = { drop = 4421, item = 212748 }, finish = { npc = 4722 } },
 }
 
 --------------------------------------------------------------------------------
@@ -542,7 +650,7 @@ function ns.QuestObjectiveNPCs(quest)
 end
 
 do
-    local nextQuest = {} -- questID -> the quest that follows it
+    local nextQuest = {} -- questID -> { the quests that follow it }, one per faction where it branches
     for questID, quest in pairs(ns.quests) do
         local start = quest.start or {}
         if quest.dungeon then
@@ -558,7 +666,7 @@ do
             Append(questsByFinish, quest.finish.npc, questID)
         end
         if start.after then
-            nextQuest[start.after] = questID
+            Append(nextQuest, start.after, questID)
             followUp[start.after] = questID
         end
         if start.needs then
@@ -567,26 +675,37 @@ do
     end
     -- A series starts at a quest something follows but that follows nothing.
     -- A prerequisite with no record here (Red Silk Bandanas' chain starts with
-    -- quest 65) is not a series: only its last step is known.
+    -- quest 65) is not a series: only its last step is known. A series that
+    -- branches, as Return of the Ring does by faction, is one chain per branch.
+    local function Number(chain)
+        -- Whether every part has its own name (the Lost Satchel); the map
+        -- tooltips leave the first step off those.
+        local names, unique = {}, true
+        for _, id in ipairs(chain) do
+            local name = ns.quests[id] and ns.quests[id].name or id
+            unique = unique and not names[name]
+            names[name] = true
+        end
+        for step, id in ipairs(chain) do
+            stepByQuest[id] = { step = step, count = #chain, uniqueNames = unique }
+        end
+    end
+    local function Walk(chain, questID)
+        chain[#chain + 1] = questID
+        local branches = nextQuest[questID]
+        if not branches or #chain > 20 then -- 20: a guard against a loop in the records
+            Number({ unpack(chain) })
+        else
+            for _, nextID in ipairs(branches) do
+                Walk(chain, nextID)
+            end
+        end
+        chain[#chain] = nil
+    end
     for first in pairs(nextQuest) do
         local quest = ns.quests[first]
         if quest and not (quest.start and quest.start.after) then
-            local chain, questID = {}, first
-            while questID do
-                chain[#chain + 1] = questID
-                questID = nextQuest[questID]
-            end
-            -- Whether every part has its own name (the Lost Satchel); the map
-            -- tooltips leave the first step off those.
-            local names, unique = {}, true
-            for _, id in ipairs(chain) do
-                local name = ns.quests[id] and ns.quests[id].name or id
-                unique = unique and not names[name]
-                names[name] = true
-            end
-            for step, id in ipairs(chain) do
-                stepByQuest[id] = { step = step, count = #chain, uniqueNames = unique }
-            end
+            Walk({}, first)
         end
     end
     for _, index in ipairs({ questsByDungeon, questsByGiver, questsByObjective, questsByFinish }) do
