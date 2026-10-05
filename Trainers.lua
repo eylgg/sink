@@ -1417,8 +1417,56 @@ local function BaseName(skill)
     return (skill.name:gsub("%s+[IVX]+$", ""))
 end
 
+-- The names in your spellbook, whichever rank of each you have.
+local function SpellbookNames()
+    local names = {}
+    local book = C_SpellBook
+    local bank = Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
+    if not (bank and book and book.GetNumSpellBookSkillLines and book.GetSpellBookSkillLineInfo
+            and book.GetSpellBookItemName) then
+        return names
+    end
+    for line = 1, book.GetNumSpellBookSkillLines() do
+        local info = book.GetSpellBookSkillLineInfo(line)
+        if info then
+            for index = info.itemIndexOffset + 1, info.itemIndexOffset + info.numSpellBookItems do
+                local name = book.GetSpellBookItemName(index, bank)
+                if name then
+                    names[name] = true
+                end
+            end
+        end
+    end
+    return names
+end
+
+-- The skills you cannot train any rank of: those whose first rank the
+-- trainer does not teach, while no rank is in your spellbook. Seal of
+-- Command's first rank is a talent, so the trainer's Rank 2 needs it;
+-- Redemption's comes from a quest. Holy Light's Rank 1 you start with, so
+-- it is in the book and Rank 2 is listed. By base name -> true.
+local function Locked(skills)
+    local lowest = {} -- base name -> the lowest rank number the trainer teaches
+    for _, skill in ipairs(skills) do
+        local rank = tonumber(skill.rank and skill.rank:match("^Rank (%d+)$")) or 1
+        local base = BaseName(skill)
+        lowest[base] = math.min(lowest[base] or rank, rank)
+    end
+    local book, locked = nil, {}
+    for base, rank in pairs(lowest) do
+        if rank > 1 then
+            book = book or SpellbookNames()
+            -- An empty book means the API is missing: lock nothing rather than everything.
+            if next(book) and not book[base] then
+                locked[base] = true
+            end
+        end
+    end
+    return locked
+end
+
 -- The skills you can learn now, in list order, and the next level that has
--- any you cannot yet. Of each skill, only the highest rank you could learn;
+-- any you cannot yet. A locked one (see Locked) is left out of both. Of each skill, only the highest rank you could learn;
 -- the list is by level, so a later one replaces an earlier one of the same name.
 -- A rank below one you know is not missing: learning Devotion Aura Rank 2
 -- takes Rank 1 out of the spellbook, so it reads as unknown again.
@@ -1431,9 +1479,10 @@ local function Learnable(skills)
             knownUpTo[base] = math.max(knownUpTo[base] or 0, skill.level)
         end
     end
+    local locked = Locked(skills)
     local byName, order, nextLevel = {}, {}, nil
     for _, skill in ipairs(skills) do
-        if not Known(skill) and skill.level > (knownUpTo[BaseName(skill)] or -1) then
+        if not Known(skill) and not locked[BaseName(skill)] and skill.level > (knownUpTo[BaseName(skill)] or -1) then
             if skill.level <= level then
                 local base = BaseName(skill)
                 if not byName[base] then
@@ -1449,7 +1498,7 @@ local function Learnable(skills)
     for _, name in ipairs(order) do
         list[#list + 1] = byName[name]
     end
-    return list, nextLevel
+    return list, nextLevel, locked
 end
 
 --------------------------------------------------------------------------------
@@ -1541,7 +1590,7 @@ local function AddClassTrainingLines(tooltip, class)
     if #skills == 0 then
         return false -- no list for this class in ns.classTraining yet
     end
-    local learnable, nextLevel = Learnable(skills)
+    local learnable, nextLevel, locked = Learnable(skills)
     for _, skill in ipairs(learnable) do
         tooltip:AddLine(CROSS .. " " .. SkillText(skill), ns.missing.r, ns.missing.g, ns.missing.b)
     end
@@ -1549,7 +1598,7 @@ local function AddClassTrainingLines(tooltip, class)
         tooltip:AddLine(" ")
         tooltip:AddLine(("Next Skills (Level %d)"):format(nextLevel), ns.accent.r, ns.accent.g, ns.accent.b)
         for _, skill in ipairs(skills) do
-            if skill.level == nextLevel and not Known(skill) then
+            if skill.level == nextLevel and not Known(skill) and not locked[BaseName(skill)] then
                 tooltip:AddLine(SkillText(skill), 1, 1, 1)
             end
         end

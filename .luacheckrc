@@ -43,6 +43,7 @@ read_globals = {
     "C_Reputation",
     "C_SkillInfo",
     "C_Spell",
+    "C_SpellBook",
     "C_Timer",
     "C_TooltipInfo",
     "CampaignQuestObjectiveTracker",
