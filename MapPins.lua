@@ -1389,9 +1389,10 @@ end
 -- with one gets that cap: "Journeyman Blacksmith (150)". Other notes stay as
 -- they are.
 -- Junior is Forever's, on the Razor Hill trainers, and teaches as far as Apprentice.
--- Master and Superior are the titles some Artisan trainers carry instead,
--- such as Rogvar, "Master Alchemist" in Stonard.
-local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 225, Artisan = 300, Master = 300,
+-- On Forever an Expert trainer only teaches as far as 150, and the Expert
+-- rank, to 225, takes an Artisan trainer, as seen in game.
+-- Master and Superior teach as far as 300, such as Rogvar, "Master Alchemist" in Stonard.
+local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 150, Artisan = 225, Master = 300,
     Superior = 300 }
 
 
