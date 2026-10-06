@@ -1386,13 +1386,14 @@ local function Coords(x, y)
 end
 
 -- A profession trainer's rank says how far they teach. A note that starts
--- with one gets that cap: "Journeyman Blacksmith (150)". Other notes stay as
+-- with one gets that cap: "Journeyman Blacksmith (75)". Other notes stay as
 -- they are.
--- Junior is Forever's, on the Razor Hill trainers, and teaches as far as Apprentice.
--- On Forever an Expert trainer only teaches as far as 150, and the Expert
--- rank, to 225, takes an Artisan trainer, as seen in game.
--- Master and Superior teach as far as 300, such as Rogvar, "Master Alchemist" in Stonard.
-local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 150, Expert = 150, Artisan = 225, Master = 300,
+-- On Forever a trainer's title is a rank above what they teach: a Journeyman
+-- trainer teaches as far as 75, an Expert as far as 150 and an Artisan as far
+-- as 225, as seen in game. Junior is Forever's, on the Razor Hill trainers,
+-- and teaches as far as Apprentice, 75. Master and Superior teach as far as
+-- 300, such as Rogvar, "Master Alchemist" in Stonard.
+local RANK_CAPS = { Junior = 75, Apprentice = 75, Journeyman = 75, Expert = 150, Artisan = 225, Master = 300,
     Superior = 300 }
 
 
@@ -1515,6 +1516,43 @@ local function ProfessionMax(profession)
         return info.maxRank
     end
     return nil
+end
+
+-- Your current skill in a profession, or nil without it.
+local function ProfessionRank(profession)
+    if not (profession and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+        return nil
+    end
+    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, profession.line)
+    if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
+        return info.rank or 0
+    end
+    return nil
+end
+
+-- A rank can be trained once your skill is within 100 of its cap: 150 from
+-- 50, 225 from 125, 300 from 200; 75 from the start.
+local RANK_SPAN = 100
+
+-- A ranked profession trainer's tooltip line, when you have the profession:
+-- a red cross when you can train their rank now, grey with the skill it
+-- needs when not yet, a green check when you are past it.
+local function AddTrainingRankLine(tooltip, profession, cap)
+    local max, rank = ProfessionMax(profession), ProfessionRank(profession)
+    if not (max and rank) then
+        return
+    end
+    if max >= cap then
+        tooltip:AddLine(("%s Trained to %d"):format(ns.CHECK, max), ns.known.r, ns.known.g, ns.known.b)
+        return
+    end
+    local need = math.max(0, cap - RANK_SPAN)
+    if rank >= need then
+        tooltip:AddLine(("%s Train to %d now (Current: %d)"):format(ns.CROSS, cap, rank),
+            ns.missing.r, ns.missing.g, ns.missing.b)
+    else
+        tooltip:AddLine(("Train to %d at %d (Current: %d)"):format(cap, need, rank), ns.grey.r, ns.grey.g, ns.grey.b)
+    end
 end
 
 -- How many primary professions the character has taken.
@@ -2037,6 +2075,13 @@ function SinkMapPinMixin:OnMouseEnter()
         local profession = TrainerInfo(pin)
         if profession and profession.class and not profession.specialty then
             ns.AddClassTrainingLines(GameTooltip, profession.class)
+        end
+    end
+    -- A ranked profession trainer: whether you can train their rank yet.
+    if pin.npc then
+        local profession, cap = TrainerInfo(pin)
+        if profession and not profession.class and profession.line and cap then
+            AddTrainingRankLine(GameTooltip, profession, cap)
         end
     end
     -- An elite with a quest: where to look, then what it drops and the quest
