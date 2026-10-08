@@ -2,8 +2,9 @@
 -- Sink / Fishing.lua
 --
 -- The Fishing skill each zone needs for no fish to get away. While a fishing
--- pole is in your hands and your skill is below the zone's, the tracker's
--- Fishing section says so in yellow, as some fish still bite, with an
+-- pole is in your hands, the tracker's Fishing section shows the zone's and
+-- yours: green when no fish get away, "Tirisfal Glades: 100% catch (Fishing
+-- 25, Current: 45)", and yellow when some do, as some still bite, with an
 -- estimate of how many: "Westfall: ~55% catch (Fishing 150, Current: 105)".
 -- Your skill counts the bonus from your pole and lure, as the skill window
 -- shows it after the +. A zone not in the table adds nothing.
@@ -132,16 +133,26 @@ local function CatchChance(have, need)
     return math.max(0, math.min(100, have - need + 100))
 end
 
--- The tracker's Fishing section: a yellow line while a pole is equipped and
--- your skill is below the zone's, with the estimated catch chance.
+-- The tracker's Fishing section while a pole is equipped: green when your
+-- skill is enough for the zone, yellow with the estimated catch chance when
+-- it is not.
 function ns.FishingLines()
     if not Enabled() or not PoleEquipped() then
         return {}
     end
     local zone, need = Zone()
     local have = Skill()
-    if not zone or not have or have >= need then
+    if not zone or not have then
         return {}
+    end
+    if have >= need then
+        return { { block = true, color = ns.known,
+            text = ("%s %s: 100%% catch (Fishing %d, Current: %d)"):format(ns.CHECK, zone, need, have),
+            tooltip = function(tooltip)
+                tooltip:SetText(zone)
+                tooltip:AddLine(("From Fishing %d, no fish here get away."):format(need), 1, 1, 1, true)
+                tooltip:AddLine("Your pole and lure count toward it.", ns.grey.r, ns.grey.g, ns.grey.b, true)
+            end } }
     end
     local chance = CatchChance(have, need)
     return { { block = true, color = ns.active,
