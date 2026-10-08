@@ -14,6 +14,8 @@
 --   Talents        how many talent points you have not spent, "2 unspent talents"
 --   Tracking       Find Minerals and Find Herbs, while you know one and no
 --                  tracking is on; click one to turn it on
+--   Fishing        while a fishing pole is equipped and your skill is below
+--                  what the zone needs for no fish to get away (Fishing.lua)
 --   Items to Delete quest items in your bags whose quests are complete
 --                  (QuestItems.lua); click one to delete it, after a Delete /
 --                  Keep question
@@ -597,6 +599,9 @@ SECTIONS = {
     { key = "currentDungeon", title = "Current Dungeon", option = "trackerCurrentDungeon", lines = CurrentDungeonLines },
     { key = "talents", title = "Talents", option = "trackerTalents", lines = TalentLines },
     { key = "tracking", title = "Tracking", option = "trackerTracking", lines = TrackingLines },
+    { key = "fishing", title = "Fishing", option = "trackerFishing", lines = function()
+        return ns.FishingLines and ns.FishingLines() or {}
+    end },
     { key = "questItems", title = "Items to Delete", option = "trackerQuestItems", lines = QuestItemLines },
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
     { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
@@ -795,6 +800,8 @@ for _, event in ipairs({ "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "
     "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
     -- Minimap tracking turned on or off.
     "MINIMAP_UPDATE_TRACKING",
+    -- A fishing pole equipped or a lure put on, and moving between zones, for Fishing.
+    "PLAYER_EQUIPMENT_CHANGED", "UNIT_INVENTORY_CHANGED", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS",
     -- Entering or leaving a dungeon, and its bosses dying, for Current Dungeon.
     "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "ENCOUNTER_END" }) do
     pcall(frame.RegisterEvent, frame, event)

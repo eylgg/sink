@@ -58,6 +58,10 @@ read_globals = {
     "TooltipDataProcessor",
     -- functions
     "ButtonFrameTemplate_HideAttic",
+    "GetInventoryItemID",
+    "GetItemInfoInstant",
+    "GetNumSkillLines",
+    "GetSkillLineInfo",
     "ButtonFrameTemplate_HideButtonBar",
     "ButtonFrameTemplate_HidePortrait",
     "ClearCursor",

@@ -59,7 +59,7 @@ local function OnChanged(key)
         end
     elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
         or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon"
-        or key == "trackerNearby" or key == "scanner" or key == "trackerBooks" then
+        or key == "trackerNearby" or key == "scanner" or key == "trackerBooks" or key == "trackerFishing" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -271,6 +271,9 @@ local PAGES = {
               tooltip = "How many talent points you have not spent. Hidden while there are none." },
             { key = "trackerTracking", label = "Tracking",
               tooltip = "Find Minerals or Find Herbs while you know it and no tracking is on. Click it to turn it on." },
+            { key = "trackerFishing", label = "Fishing",
+              tooltip = "While a fishing pole is equipped, the Fishing skill this zone needs for no fish to get"
+                  .. " away, when yours with your pole and lure is lower." },
             { key = "trackerQuestItems", label = "Items to delete",
               tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked"
                   .. " first." },
