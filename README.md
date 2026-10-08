@@ -42,7 +42,7 @@ The folder name must match the TOC's base name, `Sink/` and `Sink_Camelot.toc`.
 | `/sink map [add <name> \| remove <name> \| on \| off \| trainers all\|mine \| classes all\|mine]` | Map icons |
 | `/sink splits` | Show or hide the splits window |
 | `/sink tracker` | Show or hide the tracker |
-| `/sink dump loc \| target \| trainer \| skills \| taxi \| npc [unverified]` | Developer dumps of IDs and coordinates, with a paste line to copy |
+| `/sink dump loc \| target \| trainer \| skills \| taxi \| fishing \| npc [unverified]` | Developer dumps of IDs and coordinates, with a paste line to copy |
 
 Each group also answers `help`, for example `/sink map help`.
 

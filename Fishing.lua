@@ -154,3 +154,26 @@ function ns.FishingLines()
                 ns.grey.r, ns.grey.g, ns.grey.b, true)
         end } }
 end
+
+-- What "/sink dump fishing" prints: each thing the Fishing section checks.
+function ns.FishingReport()
+    local itemID = GetInventoryItemID and GetInventoryItemID("player", MAIN_HAND)
+    local getInfo = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+    local classID, subclassID
+    if itemID and getInfo then
+        classID, subclassID = select(6, getInfo(itemID))
+    end
+    local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    local zone, need = Zone()
+    local have = Skill()
+    return {
+        ("fishing: section %s, tracker %s"):format(Enabled() and "on" or "off (switched off)",
+            ns.db and ns.db.tracker and "on" or "off"),
+        ("fishing: main hand item %s, class %s, subclass %s, pole %s"):format(tostring(itemID), tostring(classID),
+            tostring(subclassID), PoleEquipped() and "yes" or "no"),
+        ("fishing: skill %s (with bonus), base %s"):format(tostring(have),
+            tostring(ns.ProfessionSkill and ns.ProfessionSkill("Fishing"))),
+        ("fishing: map %s, zone %s needs %s"):format(tostring(mapID), tostring(zone), tostring(need)),
+        ("fishing: %d line(s) for the tracker"):format(#ns.FishingLines()),
+    }
+end

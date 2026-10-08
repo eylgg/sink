@@ -110,6 +110,7 @@ local function DumpHelp()
     print("  /sink dump taxi     the flight points on your map as the client reports them, and the open flight map's")
     print("  /sink dump tooltip  in 3 seconds, the tooltip that is showing: its owner and each line, as the")
     print("                      client gives them; hover a minimap node before then")
+    print("  /sink dump fishing  what the tracker's Fishing section sees: pole, skill, zone and setting")
 end
 
 -- The flight points on the map you are on, as C_TaxiMap reports them, next
@@ -510,6 +511,10 @@ function ns.DumpCommand(arg)
     elseif sub == "tooltip" or sub == "tip" then
         ns.Print("hover what you want dumped; the tooltip is read in 3 seconds.")
         C_Timer.After(3, DumpTooltip)
+    elseif sub == "fishing" or sub == "fish" then
+        for _, line in ipairs(ns.FishingReport and ns.FishingReport() or { "fishing: Fishing.lua is not loaded" }) do
+            print(line)
+        end
     elseif sub == "npc" or sub == "npcs" then
         local filter = ((arg or ""):match("^%S+%s+(%S+)") or ""):lower()
         DumpNPCs(filter == "unverified")
