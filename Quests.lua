@@ -384,7 +384,7 @@ ns.questItems = {
 ns.quests = {
     [92421] = { name = "Light's Justice", faction = "Horde", minLevel = 15, dungeon = 2999,
         start = { npc = 266484 }, finish = { npc = 266484 } },
-    [95216] = { name = "The New Plague", faction = "Horde", minLevel = 15, dungeon = 2999,
+    [95216] = { name = "The New Plague", faction = "Horde", minLevel = 16, dungeon = 2999,
         start = { npc = 11835 }, finish = { npc = 11835 } },
     [92422] = { name = "The Wrath of Rath'mael", faction = "Horde", minLevel = 15, dungeon = 2999,
         start = { npc = 251001 }, finish = { npc = 251001 } },
