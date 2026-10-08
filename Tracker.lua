@@ -14,9 +14,9 @@
 --   Talents        how many talent points you have not spent, "2 unspent talents"
 --   Tracking       Find Minerals and Find Herbs, while you know one and no
 --                  tracking is on; click one to turn it on
---   Fishing        while a fishing pole is equipped, what the zone needs for
---                  no fish to get away and your skill, green when it is
---                  enough (Fishing.lua)
+--   Fishing        while a fishing pole is equipped: your skill, how often a
+--                  catch raises it, and what the zone needs for no fish to
+--                  get away, green when yours is enough (Fishing.lua)
 --   Items to Delete quest items in your bags whose quests are complete
 --                  (QuestItems.lua); click one to delete it, after a Delete /
 --                  Keep question

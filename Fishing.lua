@@ -1,13 +1,13 @@
 --------------------------------------------------------------------------------
 -- Sink / Fishing.lua
 --
--- The Fishing skill each zone needs for no fish to get away. While a fishing
--- pole is in your hands, the tracker's Fishing section shows the zone's and
--- yours: green when no fish get away, "Tirisfal Glades: 100% catch (Fishing
--- 25, Current: 45)", and yellow when some do, as some still bite, with an
--- estimate of how many: "Westfall: ~55% catch (Fishing 150, Current: 105)".
--- Your skill counts the bonus from your pole and lure, as the skill window
--- shows it after the +. A zone not in the table adds nothing.
+-- While a fishing pole is in your hands, the tracker's Fishing section shows
+-- your Fishing skill, how often a catch raises it, and the zone's catch
+-- rate: the skill the zone needs for no fish to get away, in brackets, green
+-- when yours is enough, yellow with an estimate of how many you land when it
+-- is not. Your skill for the catch rate counts the bonus from your pole and
+-- lure, as the skill window shows it after the +. A zone not in the table
+-- has no zone line.
 --
 -- The skill for each tier is from play; which zone is in which tier is not
 -- yet checked in game.
@@ -94,18 +94,23 @@ local function PoleEquipped()
     return classID == 2 and subclassID == FISHING_POLE
 end
 
--- Your Fishing skill with the pole and lure bonus, or nil without Fishing.
--- The skill window's list has the bonus; C_SkillInfo only the base.
+-- Your Fishing skill: the base, the bonus from your pole and lure, and the
+-- most your rank allows (75 for Apprentice); nil without Fishing. The skill
+-- window's list has the bonus and the cap; C_SkillInfo only the base.
 local function Skill()
     if GetNumSkillLines and GetSkillLineInfo then
         for i = 1, GetNumSkillLines() do
-            local name, isHeader, _, rank, _, modifier = GetSkillLineInfo(i)
+            local name, isHeader, _, rank, _, modifier, maxRank = GetSkillLineInfo(i)
             if not isHeader and name == "Fishing" then
-                return (rank or 0) + (modifier or 0)
+                return rank or 0, modifier or 0, maxRank
             end
         end
     end
-    return ns.ProfessionSkill and ns.ProfessionSkill("Fishing")
+    local base = ns.ProfessionSkill and ns.ProfessionSkill("Fishing")
+    if base then
+        return base, 0, nil
+    end
+    return nil
 end
 
 -- The zone you are in that has a requirement: its name and skill. A cave or
@@ -133,37 +138,75 @@ local function CatchChance(have, need)
     return math.max(0, math.min(100, have - need + 100))
 end
 
--- The tracker's Fishing section while a pole is equipped: green when your
--- skill is enough for the zone, yellow with the estimated catch chance when
--- it is not.
+-- The chance a fish you land raises your skill a point, in percent, by the
+-- same formula source: every catch below 75, then 2500 / (skill - 50).
+-- It goes by your base skill; the zone and your bonus do not change it.
+local function SkillUpChance(base)
+    if base < 75 then
+        return 100
+    end
+    return math.min(100, 2500 / (base - 50))
+end
+
+-- The tracker's text colour for plain lines, the objective tracker's grey-white.
+local TEXT = { r = 0.8, g = 0.8, b = 0.8 }
+
+-- The tracker's Fishing section while a pole is equipped:
+--   Fishing Skill: 70 (45 + 25)
+--   Skill-up Chance: 100%
+--   [25] Tirisfal Glades: 100% catch
+-- The zone line is green when no fish get away, yellow with the estimated
+-- catch chance when some do, and left out in a zone not in the table.
 function ns.FishingLines()
     if not Enabled() or not PoleEquipped() then
         return {}
     end
-    local zone, need = Zone()
-    local have = Skill()
-    if not zone or not have then
+    local base, bonus, maxRank = Skill()
+    if not base then
         return {}
     end
-    if have >= need then
-        return { { block = true, color = ns.known,
-            text = ("%s %s: 100%% catch (Fishing %d, Current: %d)"):format(ns.CHECK, zone, need, have),
+    local lines = {}
+    lines[1] = { block = true, color = TEXT,
+        text = bonus > 0 and ("Fishing Skill: %d (%d + %d)"):format(base + bonus, base, bonus)
+            or ("Fishing Skill: %d"):format(base) }
+
+    if maxRank and base >= maxRank then
+        lines[2] = { color = ns.missing,
+            text = maxRank >= 300 and "Skill-up Chance: none, at the most there is"
+                or ("Skill-up Chance: none until you train past %d"):format(maxRank) }
+    else
+        local chance = SkillUpChance(base)
+        lines[2] = { color = TEXT,
+            text = chance >= 100 and "Skill-up Chance: 100%"
+                or ("Skill-up Chance: ~%d%%"):format(math.floor(chance + 0.5)),
+            tooltip = function(tooltip)
+                tooltip:SetText("Skill-up Chance")
+                tooltip:AddLine("How often a fish you land raises your Fishing a point. Fish that get away"
+                    .. " give nothing.", 1, 1, 1, true)
+                tooltip:AddLine("It goes by your skill without your pole and lure, and is the same in every"
+                    .. " zone. An estimate, as the formula is not published.", ns.grey.r, ns.grey.g, ns.grey.b, true)
+            end }
+    end
+
+    local zone, need = Zone()
+    if zone then
+        local have = base + bonus
+        local chance = CatchChance(have, need)
+        lines[3] = { color = chance >= 100 and ns.known or ns.active,
+            text = chance >= 100 and ("[%d] %s: 100%% catch"):format(need, zone)
+                or ("[%d] %s: ~%d%% catch"):format(need, zone, chance),
             tooltip = function(tooltip)
                 tooltip:SetText(zone)
-                tooltip:AddLine(("From Fishing %d, no fish here get away."):format(need), 1, 1, 1, true)
+                tooltip:AddLine(("From Fishing %d, no fish here get away; yours is %d."):format(need, have),
+                    1, 1, 1, true)
                 tooltip:AddLine("Your pole and lure count toward it.", ns.grey.r, ns.grey.g, ns.grey.b, true)
-            end } }
+                if chance < 100 then
+                    tooltip:AddLine(("About %d%% of fish caught: an estimate, as the formula is not published.")
+                        :format(chance), ns.grey.r, ns.grey.g, ns.grey.b, true)
+                end
+            end }
     end
-    local chance = CatchChance(have, need)
-    return { { block = true, color = ns.active,
-        text = ("%s %s: ~%d%% catch (Fishing %d, Current: %d)"):format(ns.WAIT, zone, chance, need, have),
-        tooltip = function(tooltip)
-            tooltip:SetText(zone)
-            tooltip:AddLine(("Below Fishing %d, some fish here get away."):format(need), 1, 1, 1, true)
-            tooltip:AddLine("Your pole and lure count toward it.", ns.grey.r, ns.grey.g, ns.grey.b, true)
-            tooltip:AddLine(("About %d%% of fish caught: an estimate, as the formula is not published."):format(chance),
-                ns.grey.r, ns.grey.g, ns.grey.b, true)
-        end } }
+    return lines
 end
 
 -- What "/sink dump fishing" prints: each thing the Fishing section checks.
@@ -176,14 +219,14 @@ function ns.FishingReport()
     end
     local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
     local zone, need = Zone()
-    local have = Skill()
+    local base, bonus, maxRank = Skill()
     return {
         ("fishing: section %s, tracker %s"):format(Enabled() and "on" or "off (switched off)",
             ns.db and ns.db.tracker and "on" or "off"),
         ("fishing: main hand item %s, class %s, subclass %s, pole %s"):format(tostring(itemID), tostring(classID),
             tostring(subclassID), PoleEquipped() and "yes" or "no"),
-        ("fishing: skill %s (with bonus), base %s"):format(tostring(have),
-            tostring(ns.ProfessionSkill and ns.ProfessionSkill("Fishing"))),
+        ("fishing: skill %s, bonus %s, rank cap %s; C_SkillInfo says %s"):format(tostring(base), tostring(bonus),
+            tostring(maxRank), tostring(ns.ProfessionSkill and ns.ProfessionSkill("Fishing"))),
         ("fishing: map %s, zone %s needs %s"):format(tostring(mapID), tostring(zone), tostring(need)),
         ("fishing: %d line(s) for the tracker"):format(#ns.FishingLines()),
     }

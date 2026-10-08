@@ -272,9 +272,9 @@ local PAGES = {
             { key = "trackerTracking", label = "Tracking",
               tooltip = "Find Minerals or Find Herbs while you know it and no tracking is on. Click it to turn it on." },
             { key = "trackerFishing", label = "Fishing",
-              tooltip = "While a fishing pole is equipped, the Fishing skill this zone needs for no fish to get"
-                  .. " away and yours with your pole and lure: green when it is enough, yellow with an estimated"
-                  .. " catch chance when it is not." },
+              tooltip = "While a fishing pole is equipped: your Fishing skill, how often a catch raises it, and"
+                  .. " the skill this zone needs for no fish to get away, green when yours is enough, yellow with"
+                  .. " an estimated catch chance when it is not." },
             { key = "trackerQuestItems", label = "Items to delete",
               tooltip = "Quest items in your bags whose quests are complete. Click one to delete it; you are asked"
                   .. " first." },
