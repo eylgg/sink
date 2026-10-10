@@ -61,7 +61,10 @@ local DEFAULT_ICON = "Interface\\Icons\\INV_Misc_Map_01"
 -- for one whose note is a title such as "High Priest". atlas draws a map
 -- atlas instead of an icon texture. teachesUpTo is the highest level a
 -- trainer teaches, for a starting area's class trainer; the pin is hidden
--- once you are past it. untilQuest hides a pin once that quest is done.
+-- once you are past it. untilQuest hides a pin once that quest is done;
+-- whileQuest shows one only while that quest is in your log and its
+-- objectives are not done. Both name the quest on the tooltip, "For Lost in
+-- Battle".
 --
 -- Dungeon entrances and "Dungeon Quest" pins on quest givers are not listed
 -- here: they are built from the dungeon, NPC and quest records in Quests.lua.
@@ -999,9 +1002,9 @@ ns.mapPins = {
         { npc = 16227, name = "Bragok", note = "Flight Master", x = 0.630, y = 0.372, faction = "Both" },
         { npc = 3615, name = "Devrak", note = "Wind Rider Master", x = 0.514, y = 0.302, faction = "Horde" },
         { npc = 10378, name = "Omusa Thunderhorn", note = "Wind Rider Master", x = 0.444, y = 0.590, faction = "Horde" },
-        -- Lost in Battle: where Mankrik's wife lies, until the quest is done.
+        -- Lost in Battle: where Mankrik's wife lies, while you are on the quest.
         { name = "Mankrik's Wife", note = "Quest Objective", x = 0.4933, y = 0.5032, faction = "Horde",
-          untilQuest = 4921, atlas = "QuestTurnin" },
+          whileQuest = 4921, atlas = "QuestTurnin" },
     },
     [1456] = { -- Thunder Bluff
         { npc = 11869, name = "Ansekhwa", note = "Weapon Master", x = 0.4095, y = 0.6273,
@@ -1771,7 +1774,7 @@ local function PinKind(pin, profession)
         return "showEliteQuests"
     elseif pin.rare then
         return "showRares"
-    elseif pin.questGiver or pin.questObjective or pin.questFinish or pin.hunt or pin.untilQuest then
+    elseif pin.questGiver or pin.questObjective or pin.questFinish or pin.hunt or pin.untilQuest or pin.whileQuest then
         return "showQuestNPCs"
     elseif profession then
         return profession.class and "showClassTrainers" or "showProfessionTrainers"
@@ -1794,7 +1797,8 @@ end
 -- objective NPC only while you still need to go there, and a turn-in NPC only
 -- while a quest for them is ready (Quests.lua); a starting area's class
 -- trainer only until you are past the level they teach up to; a pin with
--- untilQuest only until that quest is done. Trainers are
+-- untilQuest only until that quest is done, and one with whileQuest only
+-- while that quest is in your log, not yet complete. Trainers are
 -- filtered first: a class trainer only for your class unless "show all class
 -- trainers" is on; with "show all profession trainers" off, secondary
 -- professions and your own primary ones always, other primary ones only while
@@ -1819,6 +1823,9 @@ local function PinsToShow(mapID)
             return -- an elite whose quest you have done
         elseif pin.untilQuest and C_QuestLog.IsQuestFlaggedCompleted(pin.untilQuest) then
             return -- a quest spot whose quest you have done
+        elseif pin.whileQuest and not (C_QuestLog.GetLogIndexForQuestID(pin.whileQuest)
+            and not (C_QuestLog.IsComplete and C_QuestLog.IsComplete(pin.whileQuest))) then
+            return -- a quest spot for a quest you are not on, or have finished there
         elseif pin.teachesUpTo and level > pin.teachesUpTo then
             return -- a starting area's trainer with nothing left for your level
         elseif pin.book and ns.LibraryBookCollected and ns.LibraryBookCollected(pin.book) then
@@ -2099,6 +2106,12 @@ function SinkMapPinMixin:OnMouseEnter()
     -- An elite with a quest: where to look, then what it drops and the quest
     -- that starts, its name in the yellow of quest links.
     -- A rare: its name under the "Rare" title.
+    -- A quest spot: the quest it is for, in the yellow of quest links.
+    local forQuest = pin.whileQuest or pin.untilQuest
+    if forQuest then
+        local title = ns.QuestTitle and ns.QuestTitle(forQuest) or ("quest #" .. forQuest)
+        GameTooltip:AddLine(("For |cffffff00%s|r"):format(title), ns.grey.r, ns.grey.g, ns.grey.b)
+    end
     if pin.rare then
         GameTooltip:AddLine(pin.name, 1, 1, 1)
     end
