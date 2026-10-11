@@ -201,9 +201,6 @@ end
 -- recipe item that is a quest reward, say where to get it; faction, for one
 -- only a faction can get, makes it grey for the other.
 ns.reagents = {
-    [6289] = { -- Raw Longjaw Mud Snapper
-        { spell = 7753, profession = "Cooking", skill = 50, recipe = 6328 }, -- Longjaw Mud Snapper
-    },
     -- Fish, from Wowhead's Forever database: every cooking recipe up to 300 that takes them. Specklefin
     -- Feast and Grand Lobster Banquet come from Carrie's Cookbook; Spinefin Halibut from the trainer.
     [6291] = { -- Raw Brilliant Smallfish
@@ -211,6 +208,9 @@ ns.reagents = {
     },
     [6303] = { -- Raw Slitherskin Mackerel
         { spell = 7752, profession = "Cooking", skill = 1, recipe = 6326 }, -- Slitherskin Mackerel
+    },
+    [6289] = { -- Raw Longjaw Mud Snapper
+        { spell = 7753, profession = "Cooking", skill = 50, recipe = 6328 }, -- Longjaw Mud Snapper
     },
     [6317] = { -- Raw Loch Frenzy
         { spell = 7754, profession = "Cooking", skill = 50, recipe = 6329 }, -- Loch Frenzy Delight
@@ -301,7 +301,7 @@ local function SpellName(spellID)
     return name or ("spell #" .. spellID)
 end
 
--- Under the item: each profession that uses it as a header, then its
+-- Under the item: each profession that uses it as a header in Sink's colour, then its
 -- recipes as "[50] Longjaw Mud Snapper", the skill it needs first. Green
 -- when you know it, yellow when you do not but your skill would let you
 -- learn it, red when it would not (or you lack the profession). Grey for one
@@ -328,7 +328,7 @@ local function AddReagentLines(tooltip, data)
         table.insert(byProfession[use.profession], use)
     end
     for _, profession in ipairs(professions) do
-        tooltip:AddLine(profession, 1, 1, 1)
+        tooltip:AddLine(profession, ns.accent.r, ns.accent.g, ns.accent.b)
         local skill = Skill(profession)
         for _, use in ipairs(byProfession[profession]) do
             local text = ("[%d] %s"):format(use.skill or 1, SpellName(use.spell))
