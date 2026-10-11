@@ -13,10 +13,10 @@
 -- profession's trainer. Nothing is saved from the window in game. Whether you
 -- know a recipe is asked of its spell, the same as for class training.
 --
--- Reagents get a tooltip line for each recipe they are used in, from
--- ns.reagents further down: checked when you know the recipe, a cross when
--- you have the profession but not the recipe, grey when you lack the
--- profession.
+-- Reagents list the recipes they are used in on their tooltip, from
+-- ns.reagents further down, under a profession header: "[50] Longjaw Mud
+-- Snapper", green when you know it, yellow when your skill would let you
+-- learn it, red when it would not.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -194,28 +194,104 @@ end
 -- Reagents: which recipes an item is used for
 --------------------------------------------------------------------------------
 
--- Reagent itemID -> the recipes that use it: { { spell, profession, recipe }, ... }.
+-- Reagent itemID -> the recipes that use it: { { spell, profession, skill, recipe }, ... }.
 -- spell is the craft's spell (whether you know it is asked of it), profession
--- the name as in SKILL_LINES, recipe the item that teaches it when a trainer
--- does not. The recipe's name comes from its spell. quest and giver, for a
+-- the name as in SKILL_LINES, skill the profession skill it needs (Wowhead's
+-- "learned at"), recipe the item that teaches it when a trainer does not. The recipe's name comes from its spell. quest and giver, for a
 -- recipe item that is a quest reward, say where to get it; faction, for one
 -- only a faction can get, makes it grey for the other.
 ns.reagents = {
     [6289] = { -- Raw Longjaw Mud Snapper
-        { spell = 7753, profession = "Cooking", recipe = 6328 }, -- Longjaw Mud Snapper
+        { spell = 7753, profession = "Cooking", skill = 50, recipe = 6328 }, -- Longjaw Mud Snapper
+    },
+    -- Fish, from Wowhead's Forever database: every cooking recipe up to 300 that takes them. Specklefin
+    -- Feast and Grand Lobster Banquet come from Carrie's Cookbook; Spinefin Halibut from the trainer.
+    [6291] = { -- Raw Brilliant Smallfish
+        { spell = 7751, profession = "Cooking", skill = 1, recipe = 6325 }, -- Brilliant Smallfish
+    },
+    [6303] = { -- Raw Slitherskin Mackerel
+        { spell = 7752, profession = "Cooking", skill = 1, recipe = 6326 }, -- Slitherskin Mackerel
+    },
+    [6317] = { -- Raw Loch Frenzy
+        { spell = 7754, profession = "Cooking", skill = 50, recipe = 6329 }, -- Loch Frenzy Delight
+    },
+    [6361] = { -- Raw Rainbow Fin Albacore
+        { spell = 7827, profession = "Cooking", skill = 50, recipe = 6368 }, -- Rainbow Fin Albacore
+    },
+    [21071] = { -- Raw Sagefish
+        { spell = 25704, profession = "Cooking", skill = 80, recipe = 21099 }, -- Smoked Sagefish
+    },
+    [6522] = { -- Deviate Fish
+        { spell = 8238, profession = "Cooking", skill = 85, recipe = 6661 }, -- Savory Deviate Delight
+    },
+    [251524] = { -- Whimsyfin
+        { spell = 1252566, profession = "Cooking", skill = 85, recipe = 251526 }, -- Savory Whimsyfin Delight
+    },
+    [6308] = { -- Raw Bristle Whisker Catfish
+        { spell = 7755, profession = "Cooking", skill = 100, recipe = 6330 }, -- Bristle Whisker Catfish
+    },
+    [6362] = { -- Raw Rockscale Cod
+        { spell = 7828, profession = "Cooking", skill = 175, recipe = 6369 }, -- Rockscale Cod
+        { spell = 1225762, profession = "Cooking", skill = 280, recipe = 239021 }, -- Specklefin Feast
+    },
+    [8365] = { -- Raw Mithril Head Trout
+        { spell = 20916, profession = "Cooking", skill = 175, recipe = 17062 }, -- Mithril Headed Trout
+    },
+    [21153] = { -- Raw Greater Sagefish
+        { spell = 25954, profession = "Cooking", skill = 175, recipe = 21219 }, -- Sagefish Delight
+    },
+    [8959] = { -- Raw Spinefin Halibut
+        { spell = 1247741, profession = "Cooking", skill = 210 }, -- Spinefin Halibut
+    },
+    [4603] = { -- Raw Spotted Yellowtail
+        { spell = 18238, profession = "Cooking", skill = 225, recipe = 13939 }, -- Spotted Yellowtail
+        { spell = 1225762, profession = "Cooking", skill = 280, recipe = 239021 }, -- Specklefin Feast
+    },
+    [13754] = { -- Raw Glossy Mightfish
+        { spell = 18239, profession = "Cooking", skill = 225, recipe = 13940 }, -- Cooked Glossy Mightfish
+    },
+    [13758] = { -- Raw Redgill
+        { spell = 18241, profession = "Cooking", skill = 225, recipe = 13941 }, -- Filet of Redgill
+        { spell = 470370, profession = "Cooking", skill = 300, recipe = 232443 }, -- Smoked Redgill
+    },
+    [13890] = { -- Raw Plated Armorfish
+        { spell = 1319313, profession = "Cooking", skill = 225, recipe = 286153 }, -- Plated Armorfish
+    },
+    [13755] = { -- Raw Winter Squid
+        { spell = 18240, profession = "Cooking", skill = 240, recipe = 13942 }, -- Grilled Squid
+    },
+    [13756] = { -- Raw Summer Bass
+        { spell = 18242, profession = "Cooking", skill = 240, recipe = 13943 }, -- Hot Smoked Bass
+    },
+    [13759] = { -- Raw Nightfin Snapper
+        { spell = 18243, profession = "Cooking", skill = 250, recipe = 13945 }, -- Nightfin Soup
+    },
+    [13760] = { -- Raw Sunscale Salmon
+        { spell = 18244, profession = "Cooking", skill = 250, recipe = 13946 }, -- Poached Sunscale Salmon
+    },
+    [13888] = { -- Darkclaw Lobster
+        { spell = 18245, profession = "Cooking", skill = 275, recipe = 13947 }, -- Lobster Stew
+        { spell = 1225763, profession = "Cooking", skill = 280, recipe = 239021 }, -- Grand Lobster Banquet
+        { spell = 470359, profession = "Cooking", skill = 300, recipe = 232437 }, -- Darkclaw Bisque
+    },
+    [13889] = { -- Raw Whitescale Salmon
+        { spell = 18247, profession = "Cooking", skill = 275, recipe = 13949 }, -- Baked Salmon
+    },
+    [13893] = { -- Large Raw Mightfish
+        { spell = 18246, profession = "Cooking", skill = 275, recipe = 13948 }, -- Mightfish Steak
     },
     [12223] = { -- Meaty Bat Wing
-        { spell = 15935, profession = "Cooking", recipe = 12226 }, -- Crispy Bat Wing
+        { spell = 15935, profession = "Cooking", skill = 1, recipe = 12226 }, -- Crispy Bat Wing
     },
     [5469] = { -- Strider Meat
-        { spell = 6416, profession = "Cooking", recipe = 5486 }, -- Strider Stew
+        { spell = 6416, profession = "Cooking", skill = 50, recipe = 5486 }, -- Strider Stew
     },
     [5503] = { -- Clam Meat
-        { spell = 6499, profession = "Cooking" }, -- Boiled Clams, from the trainer
-        { spell = 6501, profession = "Cooking", recipe = 5528 }, -- Clam Chowder
+        { spell = 6499, profession = "Cooking", skill = 50 }, -- Boiled Clams, from the trainer
+        { spell = 6501, profession = "Cooking", skill = 90, recipe = 5528 }, -- Clam Chowder
     },
     [5465] = { -- Small Spider Leg
-        { spell = 6412, profession = "Cooking", recipe = 5482, -- Kaldorei Spider Kabob
+        { spell = 6412, profession = "Cooking", skill = 10, recipe = 5482, -- Kaldorei Spider Kabob
           quest = 4161, giver = "Zarrin in Dolanaar", faction = "Alliance" }, -- Recipe of the Kaldorei
     },
 }
@@ -225,9 +301,12 @@ local function SpellName(spellID)
     return name or ("spell #" .. spellID)
 end
 
--- One line per recipe that uses the item: green check when you know it, red
--- cross when you have the profession but not the recipe (naming the recipe
--- item that teaches it), plain grey when you do not have the profession.
+-- Under the item: each profession that uses it as a header, then its
+-- recipes as "[50] Longjaw Mud Snapper", the skill it needs first. Green
+-- when you know it, yellow when you do not but your skill would let you
+-- learn it, red when it would not (or you lack the profession). Grey for one
+-- only the other faction can get. A recipe from a quest you do not know yet
+-- names the quest under it.
 local function AddReagentLines(tooltip, data)
     if not (ns.db and ns.db.reagentTooltips ~= false) or not tooltip or not tooltip.AddLine then
         return
@@ -239,22 +318,33 @@ local function AddReagentLines(tooltip, data)
     if not uses then
         return
     end
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    local professions, byProfession = {}, {}
     for _, use in ipairs(uses) do
-        local name = ("%s (%s)"):format(SpellName(use.spell), use.profession)
-        local faction = UnitFactionGroup and UnitFactionGroup("player")
-        if not Skill(use.profession) or (use.faction and faction and use.faction ~= faction) then
-            tooltip:AddLine(name, ns.grey.r, ns.grey.g, ns.grey.b)
-        elseif Known(use) then
-            tooltip:AddLine(ns.CHECK .. " " .. name, ns.known.r, ns.known.g, ns.known.b)
-        else
-            local teach = use.recipe and C_Item.GetItemNameByID and C_Item.GetItemNameByID(use.recipe)
-            if use.recipe and not teach and C_Item.RequestLoadItemDataByID then
-                C_Item.RequestLoadItemDataByID(use.recipe)
+        if not byProfession[use.profession] then
+            byProfession[use.profession] = {}
+            professions[#professions + 1] = use.profession
+        end
+        table.insert(byProfession[use.profession], use)
+    end
+    for _, profession in ipairs(professions) do
+        tooltip:AddLine(profession, 1, 1, 1)
+        local skill = Skill(profession)
+        for _, use in ipairs(byProfession[profession]) do
+            local text = ("[%d] %s"):format(use.skill or 1, SpellName(use.spell))
+            local color
+            if use.faction and faction and use.faction ~= faction then
+                color = ns.grey
+            elseif Known(use) then
+                color = ns.known
+            elseif skill and skill >= (use.skill or 1) then
+                color = ns.active
+            else
+                color = ns.missing
             end
-            tooltip:AddLine(ns.CROSS .. " " .. name .. (teach and (", " .. ns.grey.hex .. teach .. "|r") or ""),
-                ns.missing.r, ns.missing.g, ns.missing.b)
+            tooltip:AddLine(text, color.r, color.g, color.b)
             -- A quest reward: the quest in the yellow of quest links, and who gives it.
-            if use.quest then
+            if use.quest and color ~= ns.known and color ~= ns.grey then
                 local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(use.quest)
                 if not title or title == "" then
                     title = "quest #" .. use.quest
