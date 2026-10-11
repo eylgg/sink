@@ -269,6 +269,7 @@ ns.reagents = {
     },
     [6522] = { -- Deviate Fish
         { spell = 8238, profession = "Cooking", skill = 85, recipe = 6661 }, -- Savory Deviate Delight
+        { spell = 8240, profession = "Alchemy", skill = 90, recipe = 6663 }, -- Elixir of Giant Growth
     },
     [5051] = { -- Dig Rat
         { spell = 6417, profession = "Cooking", skill = 90, recipe = 5487,
@@ -486,6 +487,7 @@ ns.reagents = {
     },
     [8365] = { -- Raw Mithril Head Trout
         { spell = 20916, profession = "Cooking", skill = 175, recipe = 17062 }, -- Mithril Headed Trout
+        { spell = 1262990, profession = "Fishing", skill = 140, recipe = 273141 }, -- Fishing Rack
     },
     [13759] = { -- Raw Nightfin Snapper
         { spell = 18243, profession = "Cooking", skill = 250, recipe = 13945 }, -- Nightfin Soup
@@ -707,6 +709,19 @@ ns.reagents = {
     [7974] = { -- Zesty Clam Meat
         { spell = 20626, profession = "Cooking", skill = 225, recipe = 16767 }, -- Undermine Clam Chowder
         { spell = 1250158, profession = "Cooking", skill = 275, recipe = 250189 }, -- Clam Linguine
+    },
+    -- Fish other professions use, from Wowhead's Forever database: each fish's "reagent for" list.
+    [6358] = { -- Oily Blackmouth
+        { spell = 7836, profession = "Alchemy", skill = 80 }, -- Blackmouth Oil
+    },
+    [6359] = { -- Firefin Snapper
+        { spell = 7837, profession = "Alchemy", skill = 130 }, -- Fire Oil
+    },
+    [13422] = { -- Stonescale Eel
+        { spell = 17551, profession = "Alchemy", skill = 250 }, -- Stonescale Oil
+    },
+    [273295] = { -- Seasonal Fish Steaks
+        { spell = 1262998, profession = "Fishing", skill = 300, recipe = 273119 }, -- Fishing Hut
     },
 }
 
