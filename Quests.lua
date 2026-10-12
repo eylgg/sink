@@ -422,7 +422,7 @@ ns.questItems = {
 -- the one class that can take it ("PALADIN"); minLevel is the
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
 -- is the instance ID of the dungeon the quest is for, entry = true for one the
--- dungeon needs done before it lets you in (shown as "(to enter)"), and outside = true when
+-- dungeon needs done before it lets you in (shown as "[Entry] ..."), and outside = true when
 -- it is done in the dungeon's caves but outside the instance, as Smart Drinks
 -- in Wailing Caverns; start is how you get it.
 ns.quests = {
@@ -1196,6 +1196,21 @@ end
 -- Quest lines, for the map tooltips and the Sink tracker
 --------------------------------------------------------------------------------
 
+-- The earliest step of a quest's series, back along after, that is not done
+-- and that Sink has a record of; the quest itself when it is the one.
+local function SeriesStep(questID)
+    local step, seen = questID, {}
+    while not seen[step] do
+        seen[step] = true
+        local after = ns.quests[step] and ns.quests[step].start and ns.quests[step].start.after
+        if not (after and ns.quests[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)) then
+            break
+        end
+        step = after
+    end
+    return step
+end
+
 -- One row per quest for your faction, { state, title }, sorted: not taken,
 -- then in your log, then done, each group alphabetical. A quest in a series
 -- has its step after the name, "Hidden Enemies (3/5)", except on the first
@@ -1207,7 +1222,7 @@ local function QuestRows(questIDs)
     local rows = {}
     -- A chain's later step is left out while the step before it, in the same
     -- list, is not done: Allegiance to the Old Gods shows 1/2, then 2/2.
-    local listed = {}
+    local listed, rowFor = {}, {}
     for _, questID in ipairs(questIDs) do
         listed[questID] = true
     end
@@ -1216,16 +1231,29 @@ local function QuestRows(questIDs)
         local after = quest and quest.start and quest.start.after
         local waiting = after and listed[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)
             and QuestState(questID) == NOT_TAKEN
+        -- A series step you have not reached yet stands for the step you are on:
+        -- before Blood in the Streets is done, City of Dalaran lists it (1/3),
+        -- not Heart of Disruption (2/3), which opens the dungeon. Two quests of
+        -- one list that come to the same step list it once.
+        local shownID, shown
         if quest and ForMyFaction(quest) and not waiting then
-            local state = QuestState(questID)
-            local title = QuestTitle(questID)
-            local drop = DropText(quest)
+            shownID = QuestState(questID) == NOT_TAKEN and SeriesStep(questID) or questID
+            if not rowFor[shownID] then
+                rowFor[shownID] = true
+                shown = ns.quests[shownID]
+            end
+        end
+        if shown then
+            local state = QuestState(shownID)
+            local title = QuestTitle(shownID)
+            local drop = DropText(shown)
             -- A series that starts inside needs no "(1/5)": how to get it says enough.
-            local step = ns.QuestSeriesSuffix(questID)
-            local entry = stepByQuest[questID]
+            local step = ns.QuestSeriesSuffix(shownID)
+            local entry = stepByQuest[shownID]
             -- The first step says nothing when the name or how to get it already
             -- marks the start; later steps show there are quests to do first.
-            if step and not (entry.step == 1 and (entry.uniqueNames or drop)) then
+            -- Standing in for a later step, it always shows where it is in the series.
+            if step and (shownID ~= questID or not (entry.step == 1 and (entry.uniqueNames or drop))) then
                 title = title .. " " .. step
             end
             if drop then
@@ -1234,29 +1262,34 @@ local function QuestRows(questIDs)
                     state = IN_LOG
                 end
             end
-            if quest.outside then
+            if shown.outside then
                 title = title .. " (outside the instance)"
             end
+            -- The quest, or the chain leading to it, that the dungeon needs done to let you in.
             if quest.entry then
-                title = title .. " (to enter)"
+                title = "[Entry] " .. title
             end
             -- In your log with its objectives done: drawn as done, but still counted
             -- and sorted as in your log. One with no objectives, as Deathstalkers
             -- in Shadowfang, stays in progress until it is turned in.
-            local objectives = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(questID) or 0
-            local ready = QuestState(questID) == IN_LOG and objectives > 0 and ReadyToTurnIn(questID)
+            local objectives = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(shownID) or 0
+            local ready = QuestState(shownID) == IN_LOG and objectives > 0 and ReadyToTurnIn(shownID)
             -- One that starts from an item inside, as The Glowing Shard from Mutanus:
             -- done here once you have the item, or have started it and it asks
             -- for nothing more.
-            local start = quest.start or {}
+            local start = shown.start or {}
             if drop and start.item then
                 local have = C_Item.GetItemCount and C_Item.GetItemCount(start.item) > 0
-                ready = ready or have or (QuestState(questID) == IN_LOG and objectives == 0)
+                ready = ready or have or (QuestState(shownID) == IN_LOG and objectives == 0)
             end
-            rows[#rows + 1] = { state = state, title = title, questID = questID, ready = ready }
+            rows[#rows + 1] = { state = state, title = title, questID = shownID, ready = ready, entry = quest.entry }
         end
     end
+    -- The way in first, then by state and name.
     table.sort(rows, function(a, b)
+        if (a.entry == true) ~= (b.entry == true) then
+            return a.entry == true
+        end
         if a.state ~= b.state then
             return a.state < b.state
         end
