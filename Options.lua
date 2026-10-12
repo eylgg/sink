@@ -59,7 +59,8 @@ local function OnChanged(key)
         end
     elseif key == "trackerTalents" or key == "trackerTracking" or key == "trackerQuestItems" or key == "trackerDungeons"
         or key == "trackerClassTraining" or key == "trackerWeaponSkills" or key == "trackerCurrentDungeon"
-        or key == "trackerNearby" or key == "scanner" or key == "trackerBooks" or key == "trackerFishing" then
+        or key == "trackerNearby" or key == "scanner" or key == "trackerBooks" or key == "trackerFishing"
+        or key == "trackerProfessions" then
         if ns.RefreshTracker then
             ns.RefreshTracker()
         end
@@ -282,6 +283,9 @@ local PAGES = {
               tooltip = "The dungeons your level lets you enter that still have quests for you, with those quests." },
             { key = "trackerClassTraining", label = "Class training",
               tooltip = "The skills your class trainer can teach you now, and what they cost together." },
+            { key = "trackerProfessions", label = "Professions",
+              tooltip = "Once fishing, cooking or first aid reaches 125: the Expert book to buy to go past 150, and"
+                  .. " who sells it. Click it to see the vendor on the map." },
             { key = "trackerBooks", label = "Library books",
               tooltip = "The library books in your bags to hand in, and the ones still to find. Off at first;"
                   .. " the Library tab lists them all either way." },

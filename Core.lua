@@ -70,6 +70,7 @@ ns.defaults = {
     -- Tracker.lua
     tracker = true,            -- show the Sink tracker window
     trackerNearby = true,      -- the Nearby section, while the scanner has seen something close by
+    trackerProfessions = true, -- the Professions section: Expert books to buy for the secondary professions
     trackerBooks = false,      -- the Library Books section: the library books still to find (Library.lua)
     libraryBooksHad = {},      -- library books a character has had: [player GUID] = { [itemID] = true }
     trackerCollapsed = false,  -- the whole tracker folded to its title

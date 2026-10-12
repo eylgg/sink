@@ -863,6 +863,9 @@ ns.mapPins = {
           atlas = "innkeeper" },
     },
     [1434] = { -- Stranglethorn Vale: Grom'gol Base Camp, Horde; the zone is shared with Booty Bay
+        -- Sells the Expert book that lifts a secondary profession to 225 (Professions.lua), from Wowhead.
+        { npc = 2626, name = "Old Man Heming", note = "Sells Expert Fishing Book", x = 0.274, y = 0.77, faction = "Both",
+          icon = "Interface\\Icons\\INV_Misc_Book_09" },
         { npc = 5814, name = "Innkeeper Thulbek", note = "Innkeeper", x = 0.3149, y = 0.2975, faction = "Horde",
           atlas = "innkeeper", verified = true },
         -- The zeppelin masters: the note names where the zeppelin goes, the name
@@ -1120,6 +1123,9 @@ ns.mapPins = {
         { npc = 12596, name = "Bibilfaz Featherwhistle", note = "Gryphon Master", x = 0.428, y = 0.850, faction = "Alliance" },
     },
     [1440] = { -- Ashenvale: flight masters from Wowhead's Forever database, not yet checked in game
+        -- Sells the Expert book that lifts a secondary profession to 225 (Professions.lua), from Wowhead.
+        { npc = 3955, name = "Shandrina", note = "Sells Expert Cookbook", x = 0.495, y = 0.67, faction = "Alliance",
+          icon = "Interface\\Icons\\INV_Misc_Book_09" },
         { npc = 11901, name = "Andruk", note = "Wind Rider Master", x = 0.122, y = 0.338, faction = "Horde" },
         { npc = 4267, name = "Daelyshia", note = "Hippogryph Master", x = 0.344, y = 0.480, faction = "Alliance" },
         { npc = 12616, name = "Vhulgra", note = "Wind Rider Master", x = 0.732, y = 0.614, faction = "Horde" },
@@ -1135,6 +1141,9 @@ ns.mapPins = {
         { npc = 3841, name = "Caylais Moonfeather", note = "Hippogryph Master", x = 0.364, y = 0.454, faction = "Alliance" },
     },
     [1445] = { -- Dustwallow Marsh: flight masters from Wowhead's Forever database, not yet checked in game
+        -- Sells the Expert book that lifts a secondary profession to 225 (Professions.lua), from Wowhead.
+        { npc = 13476, name = "Balai Lok'Wein", note = "Sells Expert First Aid Book", x = 0.365, y = 0.305, faction = "Horde",
+          icon = "Interface\\Icons\\INV_Misc_Book_09" },
         { npc = 4321, name = "Baldruc", note = "Gryphon Master", x = 0.674, y = 0.512, faction = "Alliance" },
         { npc = 11899, name = "Shardi", note = "Wind Rider Master", x = 0.354, y = 0.318, faction = "Horde" },
     },
@@ -1174,6 +1183,9 @@ ns.mapPins = {
         { npc = 15178, name = "Runk Windtamer", note = "Wind Rider Master", x = 0.488, y = 0.366, faction = "Horde" },
     },
     [1417] = { -- Arathi Highlands: flight masters from Wowhead's Forever database, not yet checked in game
+        -- Sells the Expert book that lifts a secondary profession to 225 (Professions.lua), from Wowhead.
+        { npc = 2805, name = "Deneb Walker", note = "Sells Expert First Aid Book", x = 0.27, y = 0.588, faction = "Alliance",
+          icon = "Interface\\Icons\\INV_Misc_Book_09" },
         { npc = 2835, name = "Cedrik Prose", note = "Gryphon Master", x = 0.456, y = 0.460, faction = "Alliance" },
         { npc = 2851, name = "Urda", note = "Wind Rider Master", x = 0.730, y = 0.326, faction = "Horde" },
     },
@@ -1185,6 +1197,9 @@ ns.mapPins = {
         { npc = 8609, name = "Alexandra Constantine", note = "Gryphon Master", x = 0.654, y = 0.244, faction = "Alliance" },
     },
     [1443] = { -- Desolace: flight masters from Wowhead's Forever database, not yet checked in game
+        -- Sells the Expert book that lifts a secondary profession to 225 (Professions.lua), from Wowhead.
+        { npc = 12033, name = "Wulan", note = "Sells Expert Cookbook", x = 0.262, y = 0.698, faction = "Horde",
+          icon = "Interface\\Icons\\INV_Misc_Book_09" },
         { npc = 6706, name = "Baritanas Skyriver", note = "Hippogryph Master", x = 0.646, y = 0.104, faction = "Alliance" },
         { npc = 6726, name = "Thalon", note = "Wind Rider Master", x = 0.214, y = 0.740, faction = "Horde" },
     },

@@ -72,6 +72,85 @@ end
 
 ns.ProfessionSkill = Skill -- for the minimap node lines (Gathering.lua)
 
+--------------------------------------------------------------------------------
+-- Expert books: the secondary professions go past 150 with a book, not a
+-- trainer. From 125 skill, with your cap still under 225, the tracker's
+-- Professions section says which book to buy and from whom; clicking it
+-- shows that vendor on the map (their pins are in MapPins.lua). Books and
+-- vendors from Wowhead's Forever database.
+--------------------------------------------------------------------------------
+
+ns.professionBooks = {
+    { profession = "Fishing", item = 16083, name = "Expert Fishing - The Bass and You", skill = 125, cap = 225,
+      vendors = {
+          { npc = 2626, name = "Old Man Heming", where = "Booty Bay", map = 1434, x = 0.274, y = 0.770 },
+      } },
+    { profession = "Cooking", item = 16072, name = "Expert Cookbook", skill = 125, cap = 225,
+      vendors = {
+          { npc = 3955, name = "Shandrina", where = "Ashenvale", faction = "Alliance", map = 1440, x = 0.495, y = 0.670 },
+          { npc = 12033, name = "Wulan", where = "Desolace", faction = "Horde", map = 1443, x = 0.262, y = 0.698 },
+      } },
+    { profession = "First Aid", item = 16084, name = "Expert First Aid - Under Wraps", skill = 125, cap = 225,
+      vendors = {
+          { npc = 2805, name = "Deneb Walker", where = "Arathi Highlands", faction = "Alliance", map = 1417,
+            x = 0.270, y = 0.588 },
+          { npc = 13476, name = "Balai Lok'Wein", where = "Dustwallow Marsh", faction = "Horde", map = 1445,
+            x = 0.365, y = 0.305 },
+      } },
+}
+
+-- Your skill and cap in a profession, or nil without it.
+local function SkillAndCap(profession)
+    local line = SKILL_LINES[profession]
+    if not (line and C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+        return nil
+    end
+    local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, line)
+    if ok and info and not info.isHeader and (info.maxRank or 0) > 0 then
+        return info.rank or 0, info.maxRank
+    end
+    return nil
+end
+
+-- The vendor of your faction for a book.
+local function BookVendor(book)
+    local mine = UnitFactionGroup and UnitFactionGroup("player")
+    for _, vendor in ipairs(book.vendors) do
+        if not vendor.faction or vendor.faction == mine then
+            return vendor
+        end
+    end
+    return nil
+end
+
+-- The tracker's Professions section: a red line for each book you are
+-- ready for, "Buy Expert Cookbook to unlock 225"; click it for the vendor.
+function ns.ProfessionBookLines()
+    local lines = {}
+    for _, book in ipairs(ns.professionBooks) do
+        local rank, cap = SkillAndCap(book.profession)
+        local vendor = BookVendor(book)
+        if rank and cap < book.cap and rank >= book.skill and vendor then
+            local short = book.name:match("^(.-) %- ") or book.name
+            lines[#lines + 1] = { block = #lines == 0, color = ns.missing,
+                text = ("%s Buy %s to unlock %d"):format(ns.CROSS, short, book.cap),
+                onClick = function()
+                    if ns.ShowOnMap then
+                        ns.ShowOnMap({ map = vendor.map, x = vendor.x, y = vendor.y, name = vendor.name, npcID = vendor.npc })
+                    end
+                end,
+                tooltip = function(tooltip)
+                    tooltip:SetText(book.name, 1, 1, 1)
+                    tooltip:AddLine(("%s %d (Current: %d)"):format(book.profession, cap, rank),
+                        ns.grey.r, ns.grey.g, ns.grey.b)
+                    tooltip:AddLine(("Sold by %s, %s"):format(vendor.name, vendor.where), 1, 1, 1)
+                    tooltip:AddLine("Click to show on the map", ns.grey.r, ns.grey.g, ns.grey.b)
+                end }
+        end
+    end
+    return lines
+end
+
 -- Whether your skill and level are enough for a recipe now.
 local function CanLearnNow(recipe, skill)
     local level = UnitLevel and UnitLevel("player") or 0

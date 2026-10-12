@@ -31,6 +31,9 @@
 --                  and all its ranks
 --   Weapon Skills  what a weapon master can teach you now, and in which
 --                  city, and the cost as for Class Training (Weapons.lua)
+--   Professions    an Expert book to buy for fishing, cooking or first aid
+--                  once your skill reaches 125 (Professions.lua); click it
+--                  to see the vendor on the map
 --   Library Books  off by default: the library books in your bags to hand in
 --                  and the ones still to find (Library.lua); click one to see
 --                  it on the map
@@ -607,6 +610,9 @@ SECTIONS = {
     { key = "dungeons", title = "Dungeons", option = "trackerDungeons", lines = DungeonLines },
     { key = "classTraining", title = "Class Training", option = "trackerClassTraining", lines = ClassTrainingLines },
     { key = "weaponSkills", title = "Weapon Skills", option = "trackerWeaponSkills", lines = WeaponSkillLines },
+    { key = "professions", title = "Professions", option = "trackerProfessions", lines = function()
+        return ns.ProfessionBookLines and ns.ProfessionBookLines() or {}
+    end },
     { key = "library", title = "Library Books", option = "trackerBooks", lines = function()
         return ns.LibraryLines and ns.LibraryLines() or {}
     end },
