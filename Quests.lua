@@ -347,9 +347,10 @@ ns.npcs = {
     [264936] = { name = "Earthseer Farsen", map = 1426, x = 0.6480, y = 0.5840 },
     -- Excavation Site: Wetlands, from Wowhead's Forever database.
     -- City of Dalaran's quest givers, from Wowhead's Forever database.
-    [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.685, y = 0.453 },
+    [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.6862, y = 0.4512, verified = true },
     [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.615, y = 0.207 },
     [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
+    [252085] = { name = "Archmage Celindra", map = 1416, x = 0.142, y = 0.600 },
     [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
     [5502] = { name = "Shylamiir", map = 1453, x = 0.152, y = 0.496 },
     [5694] = { name = "High Sorcerer Andromath", map = 1453, x = 0.375, y = 0.816 },
@@ -520,8 +521,13 @@ ns.quests = {
     [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
         start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
     -- City of Dalaran, from Wowhead's Forever database. entry = true: done before the dungeon lets you in.
+    -- The Horde's way in is a chain of three; its second step opens the dungeon.
+    [92434] = { name = "Blood in the Streets", faction = "Horde", minLevel = 30,
+        start = { npc = 2410 }, finish = { npc = 269127 } },
     [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959, entry = true,
-        start = { npc = 269127 }, finish = { npc = 2410 } },
+        start = { after = 92434, npc = 269127 }, finish = { npc = 2410 } },
+    [97287] = { name = "Shrewd Negotiations", faction = "Horde", minLevel = 24,
+        start = { after = 96984, npc = 2410 }, finish = { npc = 252085 } },
     [96986] = { name = "The Grave Knight", faction = "Horde", minLevel = 24, dungeon = 2959,
         start = { npc = 2278 }, finish = { npc = 2278 } },
     [96987] = { name = "Opportunistic Education", faction = "Horde", minLevel = 24, dungeon = 2959,
