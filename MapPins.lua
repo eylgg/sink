@@ -1278,6 +1278,24 @@ local function ZonePosition(mapID, x, y)
     return zone.mapID, zx, zy
 end
 
+-- A dungeon's corpse point, a world position on continent 0 (the Eastern
+-- Kingdoms) or 1 (Kalimdor), as a position on that continent's map; the pin
+-- then goes on the zone it falls in. nil when the client cannot say.
+local CONTINENT_MAPS = { [0] = 1415, [1] = 1414 }
+local function CorpsePosition(corpse)
+    local continent, wx, wy = corpse[1], corpse[2], corpse[3]
+    local uiMap = CONTINENT_MAPS[continent]
+    if not (uiMap and C_Map.GetMapPosFromWorldPos and CreateVector2D) then
+        return nil
+    end
+    local ok, _, pos = pcall(C_Map.GetMapPosFromWorldPos, continent, CreateVector2D(wx, wy), uiMap)
+    if not (ok and pos) then
+        return nil
+    end
+    local x, y = pos:GetXY()
+    return uiMap, x, y
+end
+
 -- Pins built from Quests.lua, by map: each dungeon's entrance and each NPC
 -- who gives a quest, on the zone they are in. The records never change, so
 -- this is done once, the first time the map opens.
@@ -1308,9 +1326,13 @@ local function QuestPins(mapID)
         end
         for instanceID, dungeon in pairs(ns.dungeons or {}) do
             -- A dungeon whose entrance is not recorded yet has no pin.
-            if dungeon.map then
-                add(dungeon.map, { name = dungeon.name, dungeon = true, dungeonID = instanceID, minLevel = dungeon.minLevel,
-                    maxLevel = dungeon.maxLevel, entryLevel = dungeon.entryLevel, x = dungeon.x, y = dungeon.y, atlas = "Dungeon",
+            local map, x, y = dungeon.map, dungeon.x, dungeon.y
+            if not map and dungeon.corpse then
+                map, x, y = CorpsePosition(dungeon.corpse)
+            end
+            if map then
+                add(map, { name = dungeon.name, dungeon = true, dungeonID = instanceID, minLevel = dungeon.minLevel,
+                    maxLevel = dungeon.maxLevel, entryLevel = dungeon.entryLevel, x = x, y = y, atlas = "Dungeon",
                     questIDs = ns.QuestsForDungeon(instanceID) })
             end
         end

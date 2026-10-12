@@ -53,6 +53,13 @@ local _, ns = ...
 -- it minLevel counts as that. The entrance is on uiMap map at x, y; a continent map, as a dump
 -- in a cave gives, is fine, the pin goes on the zone that point is in. A
 -- dungeon without map has no pin until its entrance is recorded.
+-- corpse = { continent, x, y } instead is the Map table's corpse point, the
+-- world position your ghost is sent to when you die inside, by the entrance:
+-- continent 0 is the Eastern Kingdoms, 1 Kalimdor. The map turns it into a
+-- zone position when it opens.
+-- Wings that share one instance ID, as Scarlet Monastery's, are each keyed by
+-- name with instance = the shared ID; inside, the game says which instance
+-- but not which wing.
 -- verified = true once the position was taken in game (see MapPins.lua).
 ns.dungeons = {
     [2999] = { name = "Ruins of Lordaeron", minLevel = 15, maxLevel = 22, entryLevel = 10, map = 1458, x = 0.7261, y = 0.1148,
@@ -80,6 +87,9 @@ ns.dungeons = {
     -- Excavation Site: Wetlands, new in Forever: the portal at the top of the hill on the new road,
     -- from Wowhead's dungeon guide. Not checked in game yet.
     [2998] = { name = "Excavation Site: Wetlands", minLevel = 26, maxLevel = 33, map = 1437, x = 0.478, y = 0.563 },
+    -- City of Dalaran, new in Forever: its entrance is not recorded yet, so it has no pin. The Horde need
+    -- Heart of Disruption done to get in (see entry on its quest below).
+    [2959] = { name = "City of Dalaran", minLevel = 28, maxLevel = 35 },
     -- Gnomeregan: the way in on the surface, west of Kharanos, from Wowhead's Forever dungeon
     -- guide; the portal itself is underground in the Train Depot. Not checked in game yet.
     [90] = { name = "Gnomeregan", minLevel = 29, maxLevel = 38, map = 1426, x = 0.240, y = 0.380 },
@@ -87,6 +97,31 @@ ns.dungeons = {
     -- the same spot.
     [47] = { name = "Razorfen Kraul", minLevel = 29, maxLevel = 38, map = 1414, x = 0.5090, y = 0.7037,
         verified = true },
+    -- Levels as given in game; entrances from the Map table's corpse points, not checked in game yet.
+    scarletGraveyard = { name = "Scarlet Monastery: Graveyard", minLevel = 30, maxLevel = 38, instance = 189,
+        corpse = { 0, 2892.24, -811.26 } },
+    scarletLibrary = { name = "Scarlet Monastery: Library", minLevel = 33, maxLevel = 41, instance = 189,
+        corpse = { 0, 2892.24, -811.26 } },
+    scarletArmory = { name = "Scarlet Monastery: Armory", minLevel = 36, maxLevel = 44, instance = 189, corpse = { 0, 2892.24, -811.26 } },
+    scarletCathedral = { name = "Scarlet Monastery: Cathedral", minLevel = 38, maxLevel = 46, instance = 189,
+        corpse = { 0, 2892.24, -811.26 } },
+    [129] = { name = "Razorfen Downs", minLevel = 37, maxLevel = 46, corpse = { 1, -4662.88, -2535.87 } },
+    [70] = { name = "Uldaman", minLevel = 41, maxLevel = 51, corpse = { 0, -6060.18, -2955.00 } },
+    [209] = { name = "Zul'Farrak", minLevel = 44, maxLevel = 54, corpse = { 1, -6790.58, -2891.28 } },
+    [349] = { name = "Maraudon", minLevel = 46, maxLevel = 55, corpse = { 1, -1432.70, 2924.98 } },
+    [109] = { name = "Sunken Temple", minLevel = 50, maxLevel = 60, corpse = { 0, -10170.10, -3995.97 } },
+    [230] = { name = "Blackrock Depths", minLevel = 52, maxLevel = 60, corpse = { 0, -7178.09, -928.64 } },
+    direMaulEast = { name = "Dire Maul (East)", minLevel = 54, maxLevel = 60, instance = 429, corpse = { 1, -3908.03, 1130.00 } },
+    direMaulWest = { name = "Dire Maul (West)", minLevel = 56, maxLevel = 60, instance = 429, corpse = { 1, -3908.03, 1130.00 } },
+    direMaulNorth = { name = "Dire Maul (North)", minLevel = 56, maxLevel = 60, instance = 429, corpse = { 1, -3908.03, 1130.00 } },
+    lowerBlackrockSpire = { name = "Lower Blackrock Spire", minLevel = 55, maxLevel = 60, instance = 229,
+        corpse = { 0, -7522.53, -1233.04 } },
+    upperBlackrockSpire = { name = "Upper Blackrock Spire", minLevel = 59, maxLevel = 60, instance = 229,
+        corpse = { 0, -7522.53, -1233.04 } },
+    stratholmeService = { name = "Stratholme (Service Gate)", minLevel = 58, maxLevel = 60, instance = 329,
+        corpse = { 0, 3392.32, -3378.48 } },
+    stratholmeMain = { name = "Stratholme (Main Gate)", minLevel = 58, maxLevel = 60, instance = 329, corpse = { 0, 3392.32, -3378.48 } },
+    [289] = { name = "Scholomance", minLevel = 58, maxLevel = 60, corpse = { 0, 1274.78, -2552.56 } },
     -- New in Forever and not in this client's Map table yet, so it has no
     -- instance ID: keyed by name until it does. Levels from Wowhead's Forever
     -- dungeon overview; the portal was taken in game.
@@ -311,6 +346,13 @@ ns.npcs = {
     [250686] = { name = "Tabitha Heartweaver", map = 1421, x = 0.4450, y = 0.4290 },
     [264936] = { name = "Earthseer Farsen", map = 1426, x = 0.6480, y = 0.5840 },
     -- Excavation Site: Wetlands, from Wowhead's Forever database.
+    -- City of Dalaran's quest givers, from Wowhead's Forever database.
+    [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.685, y = 0.453 },
+    [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.615, y = 0.207 },
+    [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
+    [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
+    [5502] = { name = "Shylamiir", map = 1453, x = 0.152, y = 0.496 },
+    [5694] = { name = "High Sorcerer Andromath", map = 1453, x = 0.375, y = 0.816 },
     [13155] = { name = "Deathstalker Agent", map = 1437, x = 0.514, y = 0.592 }, -- in the hills by the entrance
     [2787] = { name = "Zaruk", map = 1417, x = 0.744, y = 0.355 },
     [3368] = { name = "Borstan", map = 1454, x = 0.575, y = 0.535 },
@@ -378,7 +420,8 @@ ns.questItems = {
 -- faction is "Horde", "Alliance" or "Both" (the default); class, when set, is
 -- the one class that can take it ("PALADIN"); minLevel is the
 -- level the quest asks for, where known, else the dungeon's is used; dungeon
--- is the instance ID of the dungeon the quest is for, and outside = true when
+-- is the instance ID of the dungeon the quest is for, entry = true for one the
+-- dungeon needs done before it lets you in (shown as "(to enter)"), and outside = true when
 -- it is done in the dungeon's caves but outside the instance, as Smart Drinks
 -- in Wailing Caverns; start is how you get it.
 ns.quests = {
@@ -476,6 +519,23 @@ ns.quests = {
         start = { drop = 260326, item = 270865 }, finish = { npc = 1077 } },
     [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
         start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
+    -- City of Dalaran, from Wowhead's Forever database. entry = true: done before the dungeon lets you in.
+    [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959, entry = true,
+        start = { npc = 269127 }, finish = { npc = 2410 } },
+    [96986] = { name = "The Grave Knight", faction = "Horde", minLevel = 24, dungeon = 2959,
+        start = { npc = 2278 }, finish = { npc = 2278 } },
+    [96987] = { name = "Opportunistic Education", faction = "Horde", minLevel = 24, dungeon = 2959,
+        start = {} }, -- Wowhead has no giver for it
+    [96988] = { name = "Source of Power", faction = "Horde", minLevel = 24, dungeon = 2959,
+        start = { npc = 11044 }, finish = { npc = 11044 } },
+    [92458] = { name = "Heart of Disruption", faction = "Alliance", minLevel = 24, dungeon = 2959,
+        start = { npc = 269127 }, finish = { npc = 269127 } },
+    [92456] = { name = "A Green Sample", faction = "Alliance", minLevel = 24, dungeon = 2959,
+        start = { npc = 5502 }, finish = { npc = 5502 } },
+    [92457] = { name = "Starving Arcane", faction = "Alliance", minLevel = 24, dungeon = 2959,
+        start = { npc = 269127 }, finish = { npc = 269127 } },
+    [92489] = { name = "Power Overwhelming", faction = "Alliance", minLevel = 24, dungeon = 2959,
+        start = { npc = 5694 }, finish = { npc = 5694 } },
     -- The Hall of Thanes, from Wowhead's Forever database and dungeon quest guide.
     [96403] = { name = "Important Heirlooms", faction = "Alliance", minLevel = 10, dungeon = 3065,
         start = { npc = 265003 }, finish = { npc = 265003 } },
@@ -1171,6 +1231,9 @@ local function QuestRows(questIDs)
             if quest.outside then
                 title = title .. " (outside the instance)"
             end
+            if quest.entry then
+                title = title .. " (to enter)"
+            end
             -- In your log with its objectives done: drawn as done, but still counted
             -- and sorted as in your log. One with no objectives, as Deathstalkers
             -- in Shadowfang, stays in progress until it is turned in.
@@ -1282,7 +1345,14 @@ function ns.CurrentDungeon()
         return nil
     end
     local dungeon, lists = ns.dungeons[instanceID], ns.dungeonBosses[instanceID]
-    if not (dungeon or lists) then
+    -- Wings sharing this instance: the game's own name for it, and every wing's quests.
+    local wings = {}
+    for key, wing in pairs(ns.dungeons) do
+        if wing.instance == instanceID then
+            wings[#wings + 1] = key
+        end
+    end
+    if not (dungeon or lists or #wings > 0) then
         return nil
     end
     local bosses = {}
@@ -1291,7 +1361,13 @@ function ns.CurrentDungeon()
         bosses[#bosses + 1] = { name = boss.name, dead = killed[boss.id] == true, rare = boss.rare }
     end
     local quests = {}
-    for _, row in ipairs(QuestRows(ns.QuestsForDungeon(instanceID))) do
+    local questIDs = {}
+    for _, key in ipairs({ instanceID, unpack(wings) }) do
+        for _, questID in ipairs(ns.QuestsForDungeon(key)) do
+            questIDs[#questIDs + 1] = questID
+        end
+    end
+    for _, row in ipairs(QuestRows(questIDs)) do
         -- One done outside the instance is not done in here.
         if row.state == IN_LOG and not ns.quests[row.questID].outside then
             local objectives
