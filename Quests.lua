@@ -20,7 +20,8 @@
 --                  after are one series, with steps: "(2/5)".
 --   { needs = id } offered once another quest is turned in, one that is not a
 --                  step of the same series: Raptor Horns before Smart Drinks.
---                  With npc as well, like after.
+--                  A list, needs = { id, id }, for several. With npc as well,
+--                  like after.
 -- A quest's objective = { npc = id } is an NPC you go to while the quest is
 -- in your log, such as Neeru Fireblade for Hidden Enemies 2/5; that NPC gets
 -- a "Quest Objective" pin until the objective is done. With item = id as
@@ -350,6 +351,7 @@ ns.npcs = {
     [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.6862, y = 0.4512, verified = true },
     [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.6160, y = 0.2085, verified = true },
     [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
+    [2437] = { name = "Keeper Bel'varil", map = 1424, x = 0.615, y = 0.208 },
     [252085] = { name = "Archmage Celindra", map = 1416, x = 0.142, y = 0.600 },
     [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
     [5502] = { name = "Shylamiir", map = 1453, x = 0.152, y = 0.496 },
@@ -521,12 +523,21 @@ ns.quests = {
     [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
         start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
     -- City of Dalaran, from Wowhead's Forever database. entry = true: done before the dungeon lets you in.
-    -- The Horde's way in: Key to the City for the sewer key, then a chain of three whose second
-    -- step opens the dungeon.
+    -- The Horde's way in, from Wowhead's attunement guide: in Tarren Mill, Key to the City,
+    -- Prison Break In then Dalaran Patrols, and Stone Tokens then Bracers of Binding; then a chain
+    -- of three whose second step, Heart of Disruption, opens the dungeon.
     [93680] = { name = "Key to the City", faction = "Horde", minLevel = 30,
         start = { npc = 2410 }, finish = { npc = 2410 } },
+    [544] = { name = "Prison Break In", faction = "Horde", minLevel = 30,
+        start = { npc = 2410 }, finish = { npc = 2410 } },
+    [545] = { name = "Dalaran Patrols", faction = "Horde", minLevel = 30,
+        start = { after = 544, npc = 2410 }, finish = { npc = 2410 } },
+    [556] = { name = "Stone Tokens", faction = "Horde", minLevel = 30,
+        start = { npc = 2437 }, finish = { npc = 2437 } },
+    [557] = { name = "Bracers of Binding", faction = "Horde", minLevel = 30,
+        start = { after = 556, npc = 2437 }, finish = { npc = 2437 } },
     [92434] = { name = "Blood in the Streets", faction = "Horde", minLevel = 30,
-        start = { needs = 93680, npc = 2410 }, finish = { npc = 269127 } },
+        start = { needs = { 93680, 545, 557 }, npc = 2410 }, finish = { npc = 269127 } },
     [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959, entry = true,
         start = { after = 92434, npc = 269127 }, finish = { npc = 2410 } },
     [97287] = { name = "Shrewd Negotiations", faction = "Horde", minLevel = 24,
@@ -709,6 +720,23 @@ local function Append(index, key, value)
     table.insert(index[key], value)
 end
 
+-- The quests that must be turned in before a quest's start: the step before
+-- it in its series (after) first, then what it needs, one ID or a list. With
+-- withNeeds false, only after.
+local function Before(start, withNeeds)
+    local list = {}
+    if start.after then
+        list[#list + 1] = start.after
+    end
+    if withNeeds ~= false then
+        local needs = start.needs
+        for _, id in ipairs(type(needs) == "table" and needs or { needs }) do
+            list[#list + 1] = id
+        end
+    end
+    return list
+end
+
 -- A quest's objective NPCs as a list, whether it names one or several.
 function ns.QuestObjectiveNPCs(quest)
     local objective = quest.objective
@@ -738,8 +766,10 @@ do
             Append(nextQuest, start.after, questID)
             followUp[start.after] = questID
         end
-        if start.needs then
-            unlocks[start.needs] = questID
+        for _, id in ipairs(Before(start)) do
+            if id ~= start.after then
+                unlocks[id] = questID
+            end
         end
     end
     -- A series starts at a quest something follows but that follows nothing.
@@ -837,8 +867,9 @@ local function LeadsToDungeon(questID)
             if step and not leadsToDungeon[step] then
                 leadsToDungeon[step] = true
                 local start = ns.quests[step] and ns.quests[step].start or {}
-                mark(start.after)
-                mark(start.needs)
+                for _, id in ipairs(Before(start)) do
+                    mark(id)
+                end
             end
         end
         for id, quest in pairs(ns.quests) do
@@ -953,8 +984,8 @@ local function Available(questID)
         return false
     end
     local start = quest.start or {}
-    for _, before in ipairs({ start.after or false, start.needs or false }) do
-        if before and not C_QuestLog.IsQuestFlaggedCompleted(before) then
+    for _, before in ipairs(Before(start)) do
+        if not C_QuestLog.IsQuestFlaggedCompleted(before) then
             return false
         end
     end
@@ -1080,8 +1111,8 @@ local function CurrentStep(questID)
         seen[step] = true
         local start = ns.quests[step] and ns.quests[step].start or {}
         local before
-        for _, id in ipairs({ start.after or false, start.needs or false }) do
-            if not before and id and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+        for _, id in ipairs(Before(start)) do
+            if not before and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
                 before = id
             end
         end
@@ -1127,8 +1158,8 @@ function ns.QuestNextStep(questID)
         if NPCPlace(start.npc) then
             next.action, next.place = "Pick it up from", NPCPlace(start.npc)
             -- An earlier quest Sink has no record of comes first, such as quest 65 before Red Silk Bandanas.
-            for _, id in ipairs({ start.after or false, start.needs or false }) do
-                if id and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+            for _, id in ipairs(Before(start)) do
+                if not C_QuestLog.IsQuestFlaggedCompleted(id) then
                     next.note = "Needs an earlier quest first"
                 end
             end
@@ -1209,8 +1240,8 @@ local function SeriesStep(questID, withNeeds)
         seen[step] = true
         local start = ns.quests[step] and ns.quests[step].start or {}
         local before
-        for _, id in ipairs({ start.after or false, withNeeds and start.needs or false }) do
-            if not before and id and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+        for _, id in ipairs(Before(start, withNeeds == true)) do
+            if not before and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
                 before = id
             end
         end
@@ -1220,6 +1251,33 @@ local function SeriesStep(questID, withNeeds)
         step = before
     end
     return step
+end
+
+-- Every quest you can take now on the way to a quest: down each branch of
+-- what it needs and the steps before it, the first not done whose own
+-- prerequisites are; the quest itself once nothing is left before it.
+local function StepsNow(questID)
+    local steps, seen = {}, {}
+    local function walk(id)
+        if seen[id] then
+            return
+        end
+        seen[id] = true
+        local open = {}
+        for _, before in ipairs(Before(ns.quests[id] and ns.quests[id].start or {})) do
+            if ns.quests[before] and not C_QuestLog.IsQuestFlaggedCompleted(before) then
+                open[#open + 1] = before
+            end
+        end
+        if #open == 0 then
+            steps[#steps + 1] = id
+        end
+        for _, before in ipairs(open) do
+            walk(before)
+        end
+    end
+    walk(questID)
+    return steps
 end
 
 -- One row per quest for your faction, { state, title }, sorted: not taken,
@@ -1243,57 +1301,68 @@ local function QuestRows(questIDs)
         local waiting = after and listed[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)
             and QuestState(questID) == NOT_TAKEN
         -- A series step you have not reached yet stands for the step you are on:
-        -- before Blood in the Streets is done, City of Dalaran lists it (1/3),
-        -- not Heart of Disruption (2/3), which opens the dungeon. Two quests of
-        -- one list that come to the same step list it once.
-        local shownID, shown
+        -- before Prison Break In is done, its chain lists it (1/2), not Dalaran
+        -- Patrols (2/2). A dungeon's way in lists every step you can take now,
+        -- one per branch of what it needs: Key to the City, Prison Break In and
+        -- Stone Tokens together for City of Dalaran. Two quests of one list that
+        -- come to the same step list it once.
+        local shownIDs = {}
         if quest and ForMyFaction(quest) and not waiting then
-            shownID = QuestState(questID) == NOT_TAKEN and SeriesStep(questID, quest.entry) or questID
+            if QuestState(questID) ~= NOT_TAKEN then
+                shownIDs = { questID }
+            elseif quest.entry then
+                shownIDs = StepsNow(questID)
+            else
+                shownIDs = { SeriesStep(questID) }
+            end
+        end
+        for _, shownID in ipairs(shownIDs) do
+            local shown
             if not rowFor[shownID] then
                 rowFor[shownID] = true
                 shown = ns.quests[shownID]
             end
-        end
-        if shown then
-            local state = QuestState(shownID)
-            local title = QuestTitle(shownID)
-            local drop = DropText(shown)
-            -- A series that starts inside needs no "(1/5)": how to get it says enough.
-            local step = ns.QuestSeriesSuffix(shownID)
-            local entry = stepByQuest[shownID]
-            -- The first step says nothing when the name or how to get it already
-            -- marks the start; later steps show there are quests to do first.
-            -- Standing in for a later step, it always shows where it is in the series.
-            if step and (shownID ~= questID or not (entry.step == 1 and (entry.uniqueNames or drop))) then
-                title = title .. " " .. step
-            end
-            if drop then
-                title = title .. " (" .. drop .. ")"
-                if state == NOT_TAKEN then
-                    state = IN_LOG
+            if shown then
+                local state = QuestState(shownID)
+                local title = QuestTitle(shownID)
+                local drop = DropText(shown)
+                -- A series that starts inside needs no "(1/5)": how to get it says enough.
+                local step = ns.QuestSeriesSuffix(shownID)
+                local entry = stepByQuest[shownID]
+                -- The first step says nothing when the name or how to get it already
+                -- marks the start; later steps show there are quests to do first.
+                -- Standing in for a later step, it always shows where it is in the series.
+                if step and (shownID ~= questID or not (entry.step == 1 and (entry.uniqueNames or drop))) then
+                    title = title .. " " .. step
                 end
+                if drop then
+                    title = title .. " (" .. drop .. ")"
+                    if state == NOT_TAKEN then
+                        state = IN_LOG
+                    end
+                end
+                if shown.outside then
+                    title = title .. " (outside the instance)"
+                end
+                -- The quest, or the chain leading to it, that the dungeon needs done to let you in.
+                if quest.entry then
+                    title = "[Entry] " .. title
+                end
+                -- In your log with its objectives done: drawn as done, but still counted
+                -- and sorted as in your log. One with no objectives, as Deathstalkers
+                -- in Shadowfang, stays in progress until it is turned in.
+                local objectives = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(shownID) or 0
+                local ready = QuestState(shownID) == IN_LOG and objectives > 0 and ReadyToTurnIn(shownID)
+                -- One that starts from an item inside, as The Glowing Shard from Mutanus:
+                -- done here once you have the item, or have started it and it asks
+                -- for nothing more.
+                local start = shown.start or {}
+                if drop and start.item then
+                    local have = C_Item.GetItemCount and C_Item.GetItemCount(start.item) > 0
+                    ready = ready or have or (QuestState(shownID) == IN_LOG and objectives == 0)
+                end
+                rows[#rows + 1] = { state = state, title = title, questID = shownID, ready = ready, entry = quest.entry }
             end
-            if shown.outside then
-                title = title .. " (outside the instance)"
-            end
-            -- The quest, or the chain leading to it, that the dungeon needs done to let you in.
-            if quest.entry then
-                title = "[Entry] " .. title
-            end
-            -- In your log with its objectives done: drawn as done, but still counted
-            -- and sorted as in your log. One with no objectives, as Deathstalkers
-            -- in Shadowfang, stays in progress until it is turned in.
-            local objectives = C_QuestLog.GetNumQuestObjectives and C_QuestLog.GetNumQuestObjectives(shownID) or 0
-            local ready = QuestState(shownID) == IN_LOG and objectives > 0 and ReadyToTurnIn(shownID)
-            -- One that starts from an item inside, as The Glowing Shard from Mutanus:
-            -- done here once you have the item, or have started it and it asks
-            -- for nothing more.
-            local start = shown.start or {}
-            if drop and start.item then
-                local have = C_Item.GetItemCount and C_Item.GetItemCount(start.item) > 0
-                ready = ready or have or (QuestState(shownID) == IN_LOG and objectives == 0)
-            end
-            rows[#rows + 1] = { state = state, title = title, questID = shownID, ready = ready, entry = quest.entry }
         end
     end
     -- The way in first, then by state and name.
