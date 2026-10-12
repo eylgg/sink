@@ -348,7 +348,7 @@ ns.npcs = {
     -- Excavation Site: Wetlands, from Wowhead's Forever database.
     -- City of Dalaran's quest givers, from Wowhead's Forever database.
     [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.6862, y = 0.4512, verified = true },
-    [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.615, y = 0.207 },
+    [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.6160, y = 0.2085, verified = true },
     [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
     [252085] = { name = "Archmage Celindra", map = 1416, x = 0.142, y = 0.600 },
     [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
@@ -521,9 +521,12 @@ ns.quests = {
     [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
         start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
     -- City of Dalaran, from Wowhead's Forever database. entry = true: done before the dungeon lets you in.
-    -- The Horde's way in is a chain of three; its second step opens the dungeon.
+    -- The Horde's way in: Key to the City for the sewer key, then a chain of three whose second
+    -- step opens the dungeon.
+    [93680] = { name = "Key to the City", faction = "Horde", minLevel = 30,
+        start = { npc = 2410 }, finish = { npc = 2410 } },
     [92434] = { name = "Blood in the Streets", faction = "Horde", minLevel = 30,
-        start = { npc = 2410 }, finish = { npc = 269127 } },
+        start = { needs = 93680, npc = 2410 }, finish = { npc = 269127 } },
     [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959, entry = true,
         start = { after = 92434, npc = 269127 }, finish = { npc = 2410 } },
     [97287] = { name = "Shrewd Negotiations", faction = "Horde", minLevel = 24,
@@ -1197,16 +1200,24 @@ end
 --------------------------------------------------------------------------------
 
 -- The earliest step of a quest's series, back along after, that is not done
--- and that Sink has a record of; the quest itself when it is the one.
-local function SeriesStep(questID)
+-- and that Sink has a record of; the quest itself when it is the one. With
+-- needs as well, for a dungeon's way in, back along the quests it needs too:
+-- City of Dalaran's starts at Key to the City.
+local function SeriesStep(questID, withNeeds)
     local step, seen = questID, {}
     while not seen[step] do
         seen[step] = true
-        local after = ns.quests[step] and ns.quests[step].start and ns.quests[step].start.after
-        if not (after and ns.quests[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)) then
+        local start = ns.quests[step] and ns.quests[step].start or {}
+        local before
+        for _, id in ipairs({ start.after or false, withNeeds and start.needs or false }) do
+            if not before and id and ns.quests[id] and not C_QuestLog.IsQuestFlaggedCompleted(id) then
+                before = id
+            end
+        end
+        if not before then
             break
         end
-        step = after
+        step = before
     end
     return step
 end
@@ -1237,7 +1248,7 @@ local function QuestRows(questIDs)
         -- one list that come to the same step list it once.
         local shownID, shown
         if quest and ForMyFaction(quest) and not waiting then
-            shownID = QuestState(questID) == NOT_TAKEN and SeriesStep(questID) or questID
+            shownID = QuestState(questID) == NOT_TAKEN and SeriesStep(questID, quest.entry) or questID
             if not rowFor[shownID] then
                 rowFor[shownID] = true
                 shown = ns.quests[shownID]
