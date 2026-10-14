@@ -352,6 +352,8 @@ ns.npcs = {
     [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.6862, y = 0.4512, verified = true },
     [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.6160, y = 0.2085, verified = true },
     [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
+    -- Inside City of Dalaran. Not on Wowhead, so keyed by name until "/sink dump target" gives her ID.
+    rexxie = { name = "Rexxie Copperclutch", instance = 2959 },
     [252085] = { name = "Archmage Celindra", map = 1416, x = 0.142, y = 0.600 },
     [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
     [5502] = { name = "Shylamiir", map = 1453, x = 0.152, y = 0.496 },
@@ -541,7 +543,7 @@ ns.quests = {
     [96986] = { name = "The Grave Knight", faction = "Horde", minLevel = 24, dungeon = 2959,
         start = { npc = 2278 }, finish = { npc = 2278 } },
     [96987] = { name = "Opportunistic Education", faction = "Horde", minLevel = 24, dungeon = 2959,
-        start = {} }, -- Wowhead has no giver for it
+        start = { npc = "rexxie" }, finish = { npc = "rexxie" } },
     [96988] = { name = "Source of Power", faction = "Horde", minLevel = 24, dungeon = 2959,
         start = { npc = 11044 }, finish = { npc = 11044 } },
     [92458] = { name = "Heart of Disruption", faction = "Alliance", minLevel = 24, dungeon = 2959,
