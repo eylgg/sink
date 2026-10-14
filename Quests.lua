@@ -88,9 +88,10 @@ ns.dungeons = {
     -- Excavation Site: Wetlands, new in Forever: the portal at the top of the hill on the new road,
     -- from Wowhead's dungeon guide. Not checked in game yet.
     [2998] = { name = "Excavation Site: Wetlands", minLevel = 26, maxLevel = 33, map = 1437, x = 0.478, y = 0.563 },
-    -- City of Dalaran, new in Forever: its entrance is not recorded yet, so it has no pin. The Horde need
-    -- Heart of Disruption done to get in (see entry on its quest below).
-    [2959] = { name = "City of Dalaran", minLevel = 28, maxLevel = 35 },
+    -- City of Dalaran, new in Forever: the portal taken in game is the Horde's back door, in
+    -- Silverpine Forest. The Horde need the quests marked entry done first (see below).
+    [2959] = { name = "City of Dalaran", minLevel = 28, maxLevel = 35, map = 1421, x = 0.6932, y = 0.4560,
+        verified = true },
     -- Gnomeregan: the way in on the surface, west of Kharanos, from Wowhead's Forever dungeon
     -- guide; the portal itself is underground in the Train Depot. Not checked in game yet.
     [90] = { name = "Gnomeregan", minLevel = 29, maxLevel = 38, map = 1426, x = 0.240, y = 0.380 },
@@ -351,7 +352,6 @@ ns.npcs = {
     [269127] = { name = "Image of Archmage Modera", map = 1421, x = 0.6862, y = 0.4512, verified = true },
     [2410] = { name = "Magus Wordeen Voidglare", map = 1424, x = 0.6160, y = 0.2085, verified = true },
     [2278] = { name = "Melisara", map = 1424, x = 0.625, y = 0.205 },
-    [2437] = { name = "Keeper Bel'varil", map = 1424, x = 0.615, y = 0.208 },
     [252085] = { name = "Archmage Celindra", map = 1416, x = 0.142, y = 0.600 },
     [11044] = { name = "Doctor Martin Felben", map = 1458, x = 0.463, y = 0.743 },
     [5502] = { name = "Shylamiir", map = 1453, x = 0.152, y = 0.496 },
@@ -523,22 +523,18 @@ ns.quests = {
     [98824] = { name = "Prehistoric Prism", faction = "Alliance", minLevel = 24,
         start = { after = 95810, npc = 1077 }, finish = { npc = 5387 } },
     -- City of Dalaran, from Wowhead's Forever database. entry = true: done before the dungeon lets you in.
-    -- The Horde's way in, from Wowhead's attunement guide: in Tarren Mill, Key to the City,
-    -- Prison Break In then Dalaran Patrols, and Stone Tokens then Bracers of Binding; then a chain
-    -- of three whose second step, Heart of Disruption, opens the dungeon.
+    -- The Horde's way in, from Wowhead's attunement guide and play: in Tarren Mill, Key to the City,
+    -- and Prison Break In then Dalaran Patrols; then Blood in the Streets, the last of them (entry).
+    -- Taking Heart of Disruption from Modera after it gives the sewer key; it is the dungeon's own quest.
     [93680] = { name = "Key to the City", faction = "Horde", minLevel = 30,
         start = { npc = 2410 }, finish = { npc = 2410 } },
     [544] = { name = "Prison Break In", faction = "Horde", minLevel = 30,
         start = { npc = 2410 }, finish = { npc = 2410 } },
     [545] = { name = "Dalaran Patrols", faction = "Horde", minLevel = 30,
         start = { after = 544, npc = 2410 }, finish = { npc = 2410 } },
-    [556] = { name = "Stone Tokens", faction = "Horde", minLevel = 30,
-        start = { npc = 2437 }, finish = { npc = 2437 } },
-    [557] = { name = "Bracers of Binding", faction = "Horde", minLevel = 30,
-        start = { after = 556, npc = 2437 }, finish = { npc = 2437 } },
-    [92434] = { name = "Blood in the Streets", faction = "Horde", minLevel = 30,
-        start = { needs = { 93680, 545, 557 }, npc = 2410 }, finish = { npc = 269127 } },
-    [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959, entry = true,
+    [92434] = { name = "Blood in the Streets", faction = "Horde", minLevel = 30, dungeon = 2959, entry = true,
+        start = { needs = { 93680, 545 }, npc = 2410 }, finish = { npc = 269127 } },
+    [96984] = { name = "Heart of Disruption", faction = "Horde", minLevel = 24, dungeon = 2959,
         start = { after = 92434, npc = 269127 }, finish = { npc = 2410 } },
     [97287] = { name = "Shrewd Negotiations", faction = "Horde", minLevel = 24,
         start = { after = 96984, npc = 2410 }, finish = { npc = 252085 } },
@@ -1332,7 +1328,8 @@ local function QuestRows(questIDs)
                 -- The first step says nothing when the name or how to get it already
                 -- marks the start; later steps show there are quests to do first.
                 -- Standing in for a later step, it always shows where it is in the series.
-                if step and (shownID ~= questID or not (entry.step == 1 and (entry.uniqueNames or drop))) then
+                if step and (shownID ~= questID or quest.entry
+                        or not (entry.step == 1 and (entry.uniqueNames or drop))) then
                     title = title .. " " .. step
                 end
                 if drop then
