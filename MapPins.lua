@@ -455,6 +455,9 @@ ns.mapPins = {
         { npc = 251379, name = "Dorii Brightwhisper", note = "Mage Trainer", x = 0.4154, y = 0.2368, faction = "Alliance",
           icon = "Interface\\Icons\\ClassIcon_Mage", teachesUpTo = 6, verified = true },
         -- The town in the south-east, taken in game.
+        -- The airship to Mulgore: the note is where it goes, the name the NPC, so clicking targets them.
+        { npc = 275270, name = "Windshapers Dockmaster", note = "Airship to Mulgore", x = 0.5808, y = 0.8046,
+          faction = "Horde", atlas = "poi-horde", verified = true },
         { npc = 254345, name = "Syriel Nightrain", note = "Herbalist", x = 0.5788, y = 0.7553,
           icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
         { npc = 257037, name = "Zelena Favorbreeze", note = "Auctioneer", x = 0.5791, y = 0.7712,
@@ -1862,10 +1865,11 @@ local function PinKind(pin, profession)
     elseif profession == false then
         return "showProfessionTrainers"
     end
-    -- Zeppelins, boats and teleporters are titled for where they take you,
+    -- Zeppelins, airships, boats and teleporters are titled for where they take you,
     -- cave and crypt entrances for what they lead into.
     local title = pin.note or pin.name or ""
-    if title:find("^Zeppelin to ") or title:find("^Boat to ") or title:find("^Teleport to ") then
+    if title:find("^Zeppelin to ") or title:find("^Boat to ") or title:find("^Teleport to ")
+        or title:find("^Airship to ") then
         return "showTravel"
     elseif title:find("^Entrance to ") then
         return "showEntrances" -- caves and crypts
