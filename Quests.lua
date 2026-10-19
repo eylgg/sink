@@ -1362,7 +1362,21 @@ local function QuestRows(questIDs)
                     local have = C_Item.GetItemCount and C_Item.GetItemCount(start.item) > 0
                     ready = ready or have or (QuestState(shownID) == IN_LOG and objectives == 0)
                 end
-                rows[#rows + 1] = { state = state, title = title, questID = shownID, ready = ready, entry = quest.entry }
+                -- A quest to do first, outside the dungeon (Raptor Horns, Key to the City):
+                -- red until it is turned in, even in your log, as yellow means ready for
+                -- the dungeon; with its objectives done, a green line under it says so.
+                local note
+                if shownID ~= questID and shown.dungeon ~= quest.dungeon then
+                    if state ~= DONE then
+                        state, ready = NOT_TAKEN, false
+                    end
+                    if QuestState(shownID) == IN_LOG and objectives > 0 and ReadyToTurnIn(shownID) then
+                        local finisher = shown.finish and ns.npcs[shown.finish.npc]
+                        note = "Objectives complete" .. (finisher and (": turn in to " .. finisher.name) or "")
+                    end
+                end
+                rows[#rows + 1] = { state = state, title = title, questID = shownID, ready = ready, entry = quest.entry,
+                    note = note }
             end
         end
     end
@@ -1399,6 +1413,9 @@ function ns.AddQuestLines(tooltip, questIDs)
     for _, row in ipairs(QuestRows(questIDs)) do
         local text, color = ns.QuestRowText(row)
         tooltip:AddLine(text, color.r, color.g, color.b)
+        if row.note then
+            tooltip:AddLine("    " .. row.note, ns.known.r, ns.known.g, ns.known.b)
+        end
     end
 end
 

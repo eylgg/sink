@@ -482,6 +482,10 @@ local function DungeonLines()
                 end
             end
             lines[#lines + 1] = line
+            -- A quest to do first with its objectives done: a green line under it.
+            if row.note then
+                lines[#lines + 1] = { text = "      " .. row.note, color = ns.known }
+            end
         end
     end
     return lines
