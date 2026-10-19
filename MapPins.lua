@@ -402,6 +402,10 @@ ns.mapPins = {
         { npc = 3310, name = "Doras", note = "Wind Rider Master", x = 0.452, y = 0.638, faction = "Horde" },
     },
     [1412] = { -- Mulgore
+        -- The Skycutter to Zephras Isle, the other end of the one from there: the note is where it
+        -- goes, the name the NPC, so clicking targets him.
+        { npc = 262502, name = "Brix Xizzix", note = "Skycutter to Zephras Isle", x = 0.3434, y = 0.2566,
+          faction = "Horde", atlas = "poi-horde", verified = true },
         { npc = 3060, name = "Gart Mistrunner", note = "Druid Trainer", x = 0.4465, y = 0.7655,
           icon = "Interface\\Icons\\ClassIcon_Druid", verified = true },
         { npc = 3062, name = "Meela Dawnstrider", note = "Shaman Trainer", x = 0.4459, y = 0.7656,
@@ -455,8 +459,8 @@ ns.mapPins = {
         { npc = 251379, name = "Dorii Brightwhisper", note = "Mage Trainer", x = 0.4154, y = 0.2368, faction = "Alliance",
           icon = "Interface\\Icons\\ClassIcon_Mage", teachesUpTo = 6, verified = true },
         -- The town in the south-east, taken in game.
-        -- The airship to Mulgore: the note is where it goes, the name the NPC, so clicking targets them.
-        { npc = 275270, name = "Windshapers Dockmaster", note = "Airship to Mulgore", x = 0.5808, y = 0.8046,
+        -- The Skycutter to Mulgore: the note is where it goes, the name the NPC, so clicking targets them.
+        { npc = 275270, name = "Windshapers Dockmaster", note = "Skycutter to Mulgore", x = 0.5808, y = 0.8046,
           faction = "Horde", atlas = "poi-horde", verified = true },
         { npc = 254345, name = "Syriel Nightrain", note = "Herbalist", x = 0.5788, y = 0.7553,
           icon = "Interface\\Icons\\Trade_Herbalism", verified = true },
@@ -1865,11 +1869,11 @@ local function PinKind(pin, profession)
     elseif profession == false then
         return "showProfessionTrainers"
     end
-    -- Zeppelins, airships, boats and teleporters are titled for where they take you,
+    -- Zeppelins, Skycutters, boats and teleporters are titled for where they take you,
     -- cave and crypt entrances for what they lead into.
     local title = pin.note or pin.name or ""
     if title:find("^Zeppelin to ") or title:find("^Boat to ") or title:find("^Teleport to ")
-        or title:find("^Airship to ") then
+        or title:find("^Skycutter to ") then
         return "showTravel"
     elseif title:find("^Entrance to ") then
         return "showEntrances" -- caves and crypts

@@ -381,7 +381,7 @@ local KIND_TOOLTIPS = {
         .. " in your log or not taken.",
     showQuestNPCs = "Quest givers while they have a quest for you, the NPCs a quest sends you to or"
         .. " that take it in, and the next stop of a treasure hunt such as the Cozy Sleeping Bag.",
-    showTravel = "Zeppelins, airships, boats and teleporters, titled for where they take you.",
+    showTravel = "Zeppelins, Skycutters, boats and teleporters, titled for where they take you.",
     showEntrances = "Cave and crypt entrances, such as the Entrance to Crypts in Tirisfal Glades.",
     showEliteQuests = "Elites that drop an item starting a quest, shown until you have done that quest. Gold dragon.",
     showRares = "Rare mobs, such as Bayne in Tirisfal Glades. Silver dragon.",

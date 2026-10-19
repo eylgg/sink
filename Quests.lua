@@ -1298,20 +1298,18 @@ local function QuestRows(questIDs)
         local after = quest and quest.start and quest.start.after
         local waiting = after and listed[after] and not C_QuestLog.IsQuestFlaggedCompleted(after)
             and QuestState(questID) == NOT_TAKEN
-        -- A series step you have not reached yet stands for the step you are on:
-        -- before Prison Break In is done, its chain lists it (1/2), not Dalaran
-        -- Patrols (2/2). A dungeon's way in lists every step you can take now,
-        -- one per branch of what it needs: Key to the City, Prison Break In and
-        -- Stone Tokens together for City of Dalaran. Two quests of one list that
+        -- A quest you cannot take yet stands for every step you can take now
+        -- on the way to it, one per branch of its series and what it needs: a
+        -- chain lists the step you are on (Hidden Enemies 1/5, not 3/5), Smart
+        -- Drinks lists Raptor Horns, and City of Dalaran's way in lists Key to
+        -- the City and Prison Break In together. Two quests of one list that
         -- come to the same step list it once.
         local shownIDs = {}
         if quest and ForMyFaction(quest) and not waiting then
             if QuestState(questID) ~= NOT_TAKEN then
                 shownIDs = { questID }
-            elseif quest.entry then
-                shownIDs = StepsNow(questID)
             else
-                shownIDs = { SeriesStep(questID) }
+                shownIDs = StepsNow(questID)
             end
         end
         for _, shownID in ipairs(shownIDs) do
@@ -1344,8 +1342,12 @@ local function QuestRows(questIDs)
                     title = title .. " (outside the instance)"
                 end
                 -- The quest, or the chain leading to it, that the dungeon needs done to let you in.
+                -- A quest it needs first, outside its series, says which it is for:
+                -- "Raptor Horns (for Smart Drinks)". The way in says [Entry] instead.
                 if quest.entry then
                     title = "[Entry] " .. title
+                elseif shownID ~= questID and SeriesStep(questID) ~= shownID then
+                    title = ("%s (for %s)"):format(title, QuestTitle(questID))
                 end
                 -- In your log with its objectives done: drawn as done, but still counted
                 -- and sorted as in your log. One with no objectives, as Deathstalkers
